@@ -87,5 +87,19 @@ You're the boss. The engineer does the typing. Read the full playbook in
 
 ---
 
+## 🛠️ Made with
+
+| What | Name | Role |
+|---|---|---|
+| Model | **Mercury 3** | the AI model driving the building |
+| App | **Claude Code** | the tool where the model does the work |
+| Platform | **[Inception Labs](https://platform.inceptionlabs.ai/)** | where Mercury 3 runs |
+| Method | **OpenSpec** | spec-driven delivery (student-driver mode) |
+
+This whole project was **driven by [Mercury 3](https://platform.inceptionlabs.ai/)
+running in Claude Code**, with the student as product owner.
+
+---
+
 _EPIC-MN · epic-mn.com · all data invented · made for students, by people
 who love making things._
