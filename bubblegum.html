@@ -84,7 +84,12 @@ body{
   background:var(--card);border:1px solid var(--line);color:var(--dim);
   border-radius:999px;padding:8px 14px;font:inherit;font-size:11px;letter-spacing:.14em;
   text-transform:uppercase;cursor:pointer;backdrop-filter:blur(8px)}
-#fresh:hover{color:var(--txt);border-color:var(--pink)}
+#fresh:hover,#musicBtn:hover{color:var(--txt);border-color:var(--pink)}
+#musicBtn{position:fixed;bottom:14px;left:132px;z-index:12;pointer-events:auto;
+  background:var(--card);border:1px solid var(--line);color:var(--dim);
+  border-radius:999px;padding:8px 14px;font:inherit;font-size:11px;letter-spacing:.14em;
+  text-transform:uppercase;cursor:pointer;backdrop-filter:blur(8px)}
+#musicBtn.off{opacity:.55}
 #note{position:fixed;bottom:16px;right:18px;z-index:12;pointer-events:none;
   color:var(--dim);font-size:10.5px;letter-spacing:.12em;text-align:right;line-height:1.6}
 #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(16px);
@@ -130,6 +135,7 @@ body{
   </div>
 </div>
 
+<button id="musicBtn" type="button">🎵 on</button>
 <button id="fresh" type="button">↺ start fresh</button>
 <div id="note">hand-built · local-only<br>no accounts · no internet</div>
 <div id="flash"></div>
@@ -196,6 +202,61 @@ function blip(freq, dur, type, vol){
   o.start(t); o.stop(t+dur+.02);
 }
 function popSound(){ blip(520+Math.random()*220, .12, "triangle", .09); }
+
+/* ---------- retro chiptune (synthesized, no files) ---------- */
+const music = { on:true, step:0, time:0, timer:null, master:null };
+const BASS = [110,110,131,131,147,147,165,165];
+const LEAD = [440,440,554,659,880,659,554,440];
+function ensureMusic(){
+  if(!AC) return;
+  if(!music.master){
+    music.master = AC.createGain();
+    music.master.gain.value = .05;
+    music.master.connect(AC.destination);
+    music.time = AC.currentTime + .1;
+    music.timer = setInterval(stepMusic, 90);
+  }
+}
+function tone(f, t, dur, type, vol){
+  const o = AC.createOscillator(), g = AC.createGain();
+  o.type = type; o.frequency.value = f;
+  g.gain.setValueAtTime(vol, t);
+  g.gain.exponentialRampToValueAtTime(.0001, t+dur);
+  o.connect(g); g.connect(music.master);
+  o.start(t); o.stop(t+dur+.02);
+}
+function noiseHat(t){
+  const len = .03;
+  const buf = AC.createBuffer(1, Math.floor(AC.sampleRate*len), AC.sampleRate);
+  const d = buf.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i] = Math.random()*2-1;
+  const src = AC.createBufferSource(); src.buffer = buf;
+  const g = AC.createGain();
+  g.gain.setValueAtTime(.03, t);
+  g.gain.exponentialRampToValueAtTime(.0001, t+len);
+  src.connect(g); g.connect(music.master);
+  src.start(t);
+}
+function stepMusic(){
+  if(!music.on || !AC || !music.master) return;
+  while(music.time < AC.currentTime + .12){
+    const s = music.step % 16;
+    const t = music.time;
+    if(s % 2 === 0) tone(BASS[(s/2) % 8] * (s < 8 ? 1 : 2), t, .15, "square", .06);
+    if(s % 4 === 2) tone(LEAD[s % 8], t, .18, "triangle", .05);
+    if(s % 8 === 4) noiseHat(t);
+    music.time += 60/132/4;
+    music.step++;
+  }
+}
+document.getElementById("musicBtn").addEventListener("click", () => {
+  audio();
+  ensureMusic();
+  music.on = !music.on;
+  const b = document.getElementById("musicBtn");
+  b.textContent = music.on ? "🎵 on" : "🎵 off";
+  b.classList.toggle("off", !music.on);
+});
 function goldSound(){ blip(880, .18, "square", .06); blip(1320, .22, "triangle", .05); }
 function sourSound(){ blip(140, .35, "sawtooth", .09); }
 function overSound(){ blip(220, .5, "sawtooth", .07); blip(110, .7, "sine", .08); }
@@ -688,6 +749,7 @@ cv.addEventListener("pointerdown", e => {
   setAim(e);
   G.aim.hold = true;
   audio();
+  ensureMusic();
   zapAt(G.aim.x, G.aim.y);
 });
 cv.addEventListener("pointermove", e => { setAim(e); });
