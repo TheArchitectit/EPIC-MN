@@ -1,0 +1,825 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Zigzag Clubhouse — Hand-Built</title>
+<meta name="description" content="A clubhouse website built entirely by hand — for the Firhaven Career Fair.">
+<style>
+/* ============================================================
+   ZIGZAG CLUBHOUSE · hand-built, zero frameworks, zero internet
+   ============================================================ */
+:root{
+  --ink:#0d0a17; --ink2:#151022; --card:rgba(255,255,255,.045);
+  --line:rgba(255,255,255,.12); --txt:#f4effc; --dim:#a99ec4;
+  --a:#ffb35c; --b:#ff4da6; --c:#8b5cf6; --glow:rgba(255,77,166,.45);
+  --serif:Georgia,"Times New Roman",serif;
+  --sans:"Trebuchet MS","Gill Sans",system-ui,sans-serif;
+}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--ink); color:var(--txt);
+  font-family:var(--sans); line-height:1.55;
+  overflow-x:hidden;
+}
+::selection{background:var(--b);color:#fff}
+a{color:var(--a);text-decoration:none}
+
+/* ---------- backdrop ---------- */
+#bg{position:fixed;inset:0;z-index:0;display:block}
+.glow{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+   radial-gradient(600px 400px at 15% 20%, var(--glow), transparent 70%),
+   radial-gradient(700px 500px at 85% 30%, rgba(139,92,246,.28), transparent 70%),
+   radial-gradient(800px 600px at 50% 95%, rgba(255,179,92,.10), transparent 70%);
+}
+.vig{position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(120% 90% at 50% 30%, transparent 55%, rgba(0,0,0,.55));
+}
+.grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.5;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='.08'/%3E%3C/svg%3E");
+  mix-blend-mode:overlay;
+}
+.wrap{position:relative;z-index:2;max-width:1180px;margin:0 auto;padding:0 22px 80px}
+
+/* ---------- header ---------- */
+.top{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  flex-wrap:wrap;padding:18px 0 8px;
+}
+.brand{display:flex;align-items:center;gap:12px}
+.mark{width:44px;height:44px;border-radius:14px;flex:none;
+  background:linear-gradient(135deg,var(--a),var(--b) 55%,var(--c));
+  display:grid;place-items:center;font-weight:900;font-size:20px;color:#fff;
+  box-shadow:0 0 0 3px rgba(255,255,255,.08), 0 8px 30px var(--glow);
+}
+.bname{font-weight:900;letter-spacing:.06em;font-size:15px}
+.bsub{font-size:11px;letter-spacing:.22em;color:var(--dim);text-transform:uppercase}
+.nav{display:flex;gap:6px;flex-wrap:wrap}
+.nav a{font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:800;
+  color:var(--dim);padding:9px 14px;border:1px solid transparent;border-radius:999px;
+  transition:.2s}
+.nav a:hover{color:var(--txt);border-color:var(--line)}
+.chip{font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;font-weight:800;
+  color:var(--a);border:1px solid rgba(255,179,92,.45);border-radius:999px;padding:7px 12px;
+  background:rgba(255,179,92,.08);white-space:nowrap}
+
+/* ---------- hero ---------- */
+.hero{padding:64px 0 40px;text-align:center;position:relative}
+.eyebrow{display:inline-flex;gap:10px;align-items:center;font-size:11px;letter-spacing:.32em;
+  text-transform:uppercase;color:var(--dim);border:1px solid var(--line);
+  border-radius:999px;padding:8px 16px;background:var(--card);backdrop-filter:blur(8px)}
+.eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--b);
+  box-shadow:0 0 12px var(--b);animation:pulse 1.6s infinite}
+@keyframes pulse{50%{opacity:.35}}
+.h1{font-size:clamp(44px,9vw,110px);font-weight:900;letter-spacing:.01em;line-height:.98;
+  margin:26px 0 8px;text-shadow:0 0 60px var(--glow)}
+.h1 .grad{background:linear-gradient(100deg,var(--a),var(--b) 55%,var(--c));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.h1 small{display:block;font-size:.4em;font-weight:400;letter-spacing:.06em;color:var(--dim);
+  font-family:var(--serif);font-style:italic;margin-top:14px;text-shadow:none}
+.sub{max-width:620px;margin:0 auto;color:var(--dim);font-size:15.5px}
+.herocta{margin-top:30px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn{font:inherit;font-weight:800;font-size:14px;letter-spacing:.1em;text-transform:uppercase;
+  border-radius:999px;padding:14px 26px;cursor:pointer;border:1px solid transparent;transition:.2s}
+.btn.primary{background:linear-gradient(100deg,var(--a),var(--b));color:#fff;
+  box-shadow:0 12px 40px var(--glow)}
+.btn.primary:hover{transform:translateY(-3px);box-shadow:0 18px 50px var(--glow)}
+.btn.ghost{background:var(--card);color:var(--txt);border-color:var(--line);
+  backdrop-filter:blur(8px)}
+.btn.ghost:hover{border-color:var(--a);color:var(--a)}
+.livemeta{display:flex;gap:26px;justify-content:center;flex-wrap:wrap;margin-top:38px;
+  font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.livemeta b{color:var(--txt);font-size:16px;display:block;letter-spacing:.02em}
+.livemeta .l{text-align:center}
+.livemeta .l span{color:var(--a)}
+
+/* ---------- ticker ---------- */
+.ticker{overflow:hidden;border-block:1px solid var(--line);padding:14px 0;margin:34px 0 0;
+  position:relative}
+.ticker .track{display:flex;gap:44px;width:max-content;animation:scroll 26s linear infinite}
+.ticker:hover .track{animation-play-state:paused}
+.ticker span{font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--dim);
+  white-space:nowrap}
+.ticker span::after{content:"◆";color:var(--b);margin-left:44px;font-size:9px}
+@keyframes scroll{to{transform:translateX(-50%)}}
+
+/* ---------- sections ---------- */
+section{margin-top:96px}
+.h2{font-size:clamp(28px,4.6vw,46px);font-weight:900;letter-spacing:.01em;margin:0 0 8px}
+.h2 em{font-family:var(--serif);font-style:italic;font-weight:400;
+  background:linear-gradient(100deg,var(--a),var(--b));-webkit-background-clip:text;
+  background-clip:text;color:transparent}
+.lead{color:var(--dim);max-width:560px;margin:0 0 30px}
+
+/* ---------- playground ---------- */
+.playgrid{display:grid;grid-template-columns:1.15fr .85fr;gap:18px}
+@media(max-width:880px){.playgrid{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:22px;
+  padding:18px;backdrop-filter:blur(10px)}
+.panel h3{margin:0 0 12px;font-size:12px;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--dim);font-weight:800}
+.win{background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:16px;
+  padding:16px;font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;font-size:13.5px;
+  line-height:1.7;min-height:180px;white-space:pre-wrap;color:#efe9ff}
+.win .cmt{color:#7c6fa8}
+.win .ok{color:#4ade80}
+.win .err{color:#fb7185}
+.runrow{display:flex;gap:10px;margin-top:12px;align-items:center;flex-wrap:wrap}
+.runrow input{flex:1;min-width:180px;font:inherit;font-size:13.5px;
+  font-family:ui-monospace,Consolas,monospace;background:rgba(0,0,0,.35);
+  border:1px solid var(--line);border-radius:12px;padding:12px 14px;color:var(--txt);
+  outline:none;transition:.2s}
+.runrow input:focus{border-color:var(--b)}
+.btn.run{background:linear-gradient(100deg,var(--b),var(--c));box-shadow:0 8px 30px var(--glow)}
+.btn.run:hover{transform:translateY(-2px)}
+.hint{font-size:12px;color:var(--dim);margin-top:10px;white-space:pre-wrap;line-height:1.6}
+.swatches{display:flex;gap:10px;margin-top:8px;flex-wrap:wrap}
+.sw{width:54px;height:54px;border-radius:14px;border:2px solid transparent;cursor:pointer;
+  transition:.2s;position:relative}
+.sw:hover{transform:translateY(-3px)}
+.sw.on{border-color:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.15)}
+.sw small{position:absolute;left:50%;bottom:-20px;transform:translateX(-50%);
+  font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);white-space:nowrap}
+.preview{margin-top:40px}
+.preview .demo{border-radius:18px;height:150px;border:1px solid var(--line);
+  background:linear-gradient(120deg,var(--a),var(--b) 55%,var(--c));
+  position:relative;overflow:hidden}
+.preview .demo::after{content:"";position:absolute;inset:0;
+  background:radial-gradient(200px 120px at 30% 25%, rgba(255,255,255,.35), transparent 70%)}
+.preview figcaption{font-size:12px;color:var(--dim);margin-top:9px;letter-spacing:.08em}
+
+/* ---------- club ---------- */
+.clubtabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px}
+.clubtabs button{font:inherit;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;
+  font-weight:800;color:var(--dim);border:1px solid var(--line);border-radius:999px;
+  padding:9px 16px;background:transparent;cursor:pointer;transition:.2s}
+.clubtabs button:hover{color:var(--txt)}
+.clubtabs button.on{color:#fff;border-color:transparent;
+  background:linear-gradient(100deg,var(--b),var(--c));box-shadow:0 6px 24px var(--glow)}
+.autocard{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;
+  margin-bottom:26px}
+.score{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;
+  backdrop-filter:blur(10px)}
+.score .k{font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--dim);
+  font-weight:800}
+.score .v{font-size:16px;font-weight:800;margin-top:6px}
+.score .m{font-size:12.5px;color:var(--dim);margin-top:4px}
+.score .tag{display:inline-block;margin-top:10px;font-size:10px;font-weight:800;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--a);
+  border:1px solid rgba(255,179,92,.4);border-radius:999px;padding:4px 10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;
+  transition:.2s}
+.card:hover{border-color:var(--a);transform:translateY(-3px)}
+.card h4{margin:0 0 4px;font-size:15px}
+.card .who{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--b);
+  font-weight:800}
+.card .desc{font-size:13px;color:var(--dim);margin-top:8px}
+.evrow{display:flex;gap:12px;align-items:flex-start;background:var(--card);
+  border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:10px;
+  transition:.2s}
+.evrow:hover{border-color:var(--b);transform:translateX(3px)}
+.evdate{flex:none;width:56px;text-align:center;border-radius:14px;padding:8px 4px;
+  background:linear-gradient(150deg,var(--a),var(--b));color:#fff}
+.evdate b{display:block;font-size:20px;line-height:1.1}
+.evdate span{font-size:9px;letter-spacing:.2em;text-transform:uppercase}
+.evbody{flex:1}
+.evbody h4{margin:0 0 2px;font-size:15px}
+.evbody .meta{font-size:12.5px;color:var(--dim)}
+.evbody .chip{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--b);
+  border:1px solid rgba(255,77,166,.4);border-radius:999px;padding:3px 9px;display:inline-block;
+  margin-top:8px;font-weight:800}
+.go{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+  border-radius:999px;padding:9px 16px;border:1px solid transparent;cursor:pointer;
+  background:rgba(255,255,255,.08);color:var(--txt);align-self:center;transition:.2s;flex:none}
+.go:hover{border-color:var(--a)}
+.go.on{background:linear-gradient(100deg,var(--b),var(--c));color:#fff}
+.boardrow{display:flex;gap:12px;background:var(--card);border:1px solid var(--line);
+  border-radius:18px;padding:14px;margin-bottom:10px}
+.ab{width:40px;height:40px;border-radius:12px;flex:none;display:grid;place-items:center;
+  font-weight:900;background:linear-gradient(135deg,var(--a),var(--b));color:#fff}
+.boardbody{flex:1}
+.boardbody h4{margin:0 0 2px;font-size:14px}
+.boardbody p{margin:0;font-size:13px;color:var(--dim)}
+.boardbody .pin{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--c);
+  border:1px solid rgba(139,92,246,.5);border-radius:999px;padding:2px 8px;margin-left:8px}
+.composer{display:flex;gap:10px;margin-bottom:18px}
+.composer textarea{flex:1;min-height:64px;font:inherit;font-size:13.5px;color:var(--txt);
+  background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:14px;padding:12px;
+  resize:vertical;outline:none}
+.composer textarea:focus{border-color:var(--b)}
+.slotrow{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 16px;
+  margin-bottom:8px;flex-wrap:wrap}
+.slotrow b{font-family:ui-monospace,Consolas,monospace;font-size:14px}
+.slotrow .st{font-size:12.5px;color:var(--dim)}
+.slotrow .st.yours{color:#4ade80}
+.slotrow .st.taken{color:var(--b)}
+.roomrow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.roomrow button{font:inherit;font-size:12px;font-weight:800;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--dim);border:1px solid var(--line);border-radius:999px;
+  padding:8px 14px;background:transparent;cursor:pointer;transition:.2s}
+.roomrow button.on{color:#fff;background:var(--ink2);border-color:var(--b)}
+.empty{text-align:center;color:var(--dim);padding:34px 10px;border:1px dashed var(--line);
+  border-radius:18px;font-size:13.5px}
+
+/* ---------- careers ---------- */
+.rolechips{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 26px}
+.rolechips span{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+  border:1px solid var(--line);border-radius:999px;padding:10px 16px;background:var(--card)}
+.rolechips span:nth-child(1){border-color:rgba(255,179,92,.5);color:var(--a)}
+.rolechips span:nth-child(2){border-color:rgba(255,77,166,.5);color:var(--b)}
+.rolechips span:nth-child(3){border-color:rgba(139,92,246,.5);color:var(--c)}
+.rolechips span:nth-child(4){border-color:rgba(74,222,128,.5);color:#4ade80}
+.carelist{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.carelist .card h4{font-size:13px;letter-spacing:.14em;text-transform:uppercase}
+.carelist .desc{font-size:13px}
+
+/* ---------- footer ---------- */
+.foot{margin-top:110px;border-top:1px solid var(--line);padding-top:26px;text-align:center;
+  color:var(--dim);font-size:12.5px;letter-spacing:.08em}
+.foot b{color:var(--txt)}
+
+/* ---------- toast / modal ---------- */
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);
+  background:var(--ink2);border:1px solid var(--line);color:var(--txt);font-size:13px;
+  font-weight:700;letter-spacing:.05em;border-radius:999px;padding:12px 22px;z-index:60;
+  opacity:0;pointer-events:none;transition:.3s;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ---------- reduced motion ---------- */
+@media (prefers-reduced-motion: reduce){
+  .ticker .track,.eyebrow .dot{animation:none}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<canvas id="bg"></canvas>
+<div class="glow"></div>
+<div class="vig"></div>
+<div class="grain"></div>
+
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <div class="mark">Z</div>
+      <div>
+        <div class="bname">ZIGZAG CLUBHOUSE</div>
+        <div class="bsub">hand-built · firhaven · 2026</div>
+      </div>
+    </div>
+    <nav class="nav">
+      <a href="#hero">Top</a>
+      <a href="#play">Playground</a>
+      <a href="#club">The club</a>
+      <a href="#careers">Careers</a>
+    </nav>
+    <span class="chip">· 0 frameworks · 0 plugins · live</span>
+  </header>
+
+  <section class="hero" id="hero">
+    <div class="eyebrow"><span class="dot"></span>this page was built by a person, from zero</div>
+    <h1 class="h1">MAKE IT<br><span class="grad">HUM</span><small>welcome to the clubhouse — a working website, hand-written for you</small></h1>
+    <p class="sub">No website builder. No borrowed template. No internet calls. Just code, written by hand, glowing on your screen. Everything below is real and yours to touch.</p>
+    <div class="herocta">
+      <a class="btn primary" href="#club">Enter the club ↓</a>
+      <a class="btn ghost" href="#play">Try the playground</a>
+    </div>
+    <div class="livemeta">
+      <div class="l"><span id="metFps">--</span>frames/s<b>rendering now</b></div>
+      <div class="l"><span id="metPts">--</span>particles<b>alive on this page</b></div>
+      <div class="l"><span id="metLines">--</span>connections<b>drawn each frame</b></div>
+      <div class="l"><span id="metBytes">--</span>KB<b>one file, hand-written</b></div>
+    </div>
+  </section>
+
+  <div class="ticker" aria-hidden="true">
+    <div class="track" id="ticker"></div>
+  </div>
+
+  <section id="play">
+    <h2 class="h2">The playground <em>— make it yours</em></h2>
+    <p class="lead">This page is alive. Type a command, hit RUN, and watch the whole club change. This is the feeling of building software — instant, visible power.</p>
+    <div class="playgrid">
+      <div class="panel">
+        <h3>⌁ live console</h3>
+        <div class="win" id="console"></div>
+        <div class="runrow">
+          <input id="cmd" spellcheck="false" aria-label="Command line" placeholder="try: background neon">
+          <button class="btn run" id="runBtn" type="button">RUN</button>
+        </div>
+        <div class="hint" id="hints"></div>
+      </div>
+      <div class="panel">
+        <h3>◉ palette</h3>
+        <div class="swatches" id="swatches"></div>
+        <div class="preview">
+          <div class="demo" id="demo"></div>
+          <figcaption id="palName">sunset — the default mood</figcaption>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="club">
+    <h2 class="h2">The club <em>— live tonight</em></h2>
+    <p class="lead">A tiny, invented clubhouse — members, events, notices, room bookings. Everything on this page is real, interactive code. It's all waiting for you; no sign-in, no demo gate.</p>
+    <div class="clubtabs" id="clubtabs">
+      <button data-view="home" class="on">Home</button>
+      <button data-view="events">Events</button>
+      <button data-view="members">Members</button>
+      <button data-view="board">Board</button>
+      <button data-view="bookings">Bookings</button>
+    </div>
+    <div id="clubview"></div>
+    <div style="margin-top:18px;text-align:right">
+      <button class="btn ghost" id="freshBtn" type="button">↺ start fresh</button>
+    </div>
+  </section>
+
+  <section id="careers">
+    <h2 class="h2">Who made this? <em>People. You could.</em></h2>
+    <p class="lead">Every ounce of what you just saw — the glowing particles, the live console, the club itself — was made by humans with a browser, a keyboard, and practice. No magic, no secret tools.</p>
+    <div class="rolechips">
+      <span>◆ creative coder</span><span>◆ interface designer</span><span>◆ systems thinker</span><span>◆ story builder</span>
+    </div>
+    <div class="carelist">
+      <div class="card"><h4>Light & motion</h4><div class="desc">A canvas drawing hundreds of particles and threads in real time — fewer than 200 lines, written by hand.</div></div>
+      <div class="card"><h4>Live console</h4><div class="desc">You just changed the page's whole mood with one command. That's the core loop of software: you write, it responds.</div></div>
+      <div class="card"><h4>A working product</h4><div class="desc">Events, a roster, a notice board, bookings — all local, all invented, all real code you can poke and break and fix.</div></div>
+      <div class="card"><h4>Your turn</h4><div class="desc">High school is the perfect time to start. Build a silly page. Break it. Change the colors. That's the whole career, in miniature.</div></div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <b>Zigzag Clubhouse</b> · built by hand for the Firhaven Career Fair · runs entirely in this browser · local-only, no accounts<br>
+    <span style="opacity:.7">every particle on this page says hello 👋</span>
+  </footer>
+</div>
+
+<div id="toast" role="status"></div>
+
+<script>
+"use strict";
+/* ============================================================
+   Hand-written engine: canvas field, palace console, club data.
+   ============================================================ */
+
+/* ---------- palette presets ---------- */
+const PALETTES = {
+  sunset: { a:"#ffb35c", b:"#ff4da6", c:"#8b5cf6", gl:"rgba(255,77,166,.45)", name:"sunset" },
+  neon:   { a:"#22d3ee", b:"#f0f", c:"#6366f1", gl:"rgba(34,211,238,.4)", name:"neon" },
+  aurora: { a:"#34f0c6", b:"#14b8a6", c:"#7dd3fc", gl:"rgba(52,240,198,.35)", name:"aurora" },
+  mono:   { a:"#e5e0f0", b:"#b8aed8", c:"#8a7fae", gl:"rgba(200,190,230,.25)", name:"mono" },
+};
+let PAL = PALETTES.sunset;
+const CX = document.documentElement.style;
+
+function applyPalette(p, silent){
+  PAL = p;
+  CX.setProperty("--a", p.a); CX.setProperty("--b", p.b);
+  CX.setProperty("--c", p.c); CX.setProperty("--glow", p.gl);
+  const sw = document.querySelectorAll(".sw");
+  sw.forEach(el => el.classList.toggle("on", el.dataset.pal === p.name));
+  document.getElementById("palName").textContent = p.name + " — the current mood";
+  const demo = document.getElementById("demo");
+  demo.style.background = "linear-gradient(120deg,"+p.a+","+p.b+" 55%,"+p.c+")";
+  if(!silent) toast("palette set → "+p.name);
+}
+
+/* ---------- toast ---------- */
+const toastEl = document.getElementById("toast");
+let toastT;
+function toast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add("show");
+  clearTimeout(toastT);
+  toastT = setTimeout(() => toastEl.classList.remove("show"), 2600);
+}
+
+/* ---------- canvas field ---------- */
+const cv = document.getElementById("bg"), ctx = cv.getContext("2d");
+let W, H, DPR, particles = [], N = 0, speed = 1.2, orbits = true, fps = 60;
+const mouse = { x:-1e4, y:-1e4, active:false };
+
+function resize(){
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = innerWidth; H = innerHeight;
+  cv.width = W*DPR; cv.height = H*DPR;
+  cv.style.width = W+"px"; cv.style.height = H+"px";
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  N = Math.min(110, Math.floor(W*H/16000));
+  spawn();
+}
+function spawn(){
+  particles = [];
+  for(let i=0;i<N;i++){
+    particles.push({
+      x:Math.random()*W, y:Math.random()*H,
+      vx:(Math.random()-.5)*speed, vy:(Math.random()-.5)*speed,
+      r:Math.random()*1.8+.6, hue:Math.random()
+    });
+  }
+}
+function step(){
+  const sp = speed;
+  for(const p of particles){
+    p.x += p.vx*sp; p.y += p.vy*sp;
+    if(p.x<0||p.x>W) p.vx*=-1;
+    if(p.y<0||p.y>H) p.vy*=-1;
+    p.x = Math.max(0,Math.min(W,p.x)); p.y = Math.max(0,Math.min(H,p.y));
+    if(p.x<0||p.x>W) p.vx*=-1;
+    if(p.y<0||p.y>H) p.vy*=-1;
+    if(mouse.active){
+      const dx = p.x-mouse.x, dy = p.y-mouse.y, d2 = dx*dx+dy*dy;
+      if(d2 < 22000){
+        const d = Math.sqrt(d2)||1, f = (1 - d/150)*0.09;
+        p.x += dx/d*f*sp*3; p.y += dy/d*f*sp*3;
+      }
+    }
+  }
+}
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  let lines = 0;
+  for(let i=0;i<N;i++){
+    const p = particles[i];
+    const c = p.hue < .5 ? PAL.a : (p.hue < .85 ? PAL.b : PAL.c);
+    ctx.globalAlpha = .8;
+    ctx.fillStyle = c;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,7); ctx.fill();
+    for(let j=i+1;j<N;j++){
+      const q = particles[j];
+      const dx = p.x-q.x, dy = p.y-q.y, d2 = dx*dx+dy*dy;
+      if(d2 < 13000){
+        ctx.globalAlpha = (1 - Math.sqrt(d2)/115) * .16;
+        ctx.strokeStyle = PAL.c;
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y); ctx.stroke();
+        lines++;
+      }
+    }
+  }
+  if(mouse.active){
+    ctx.globalAlpha = .5; ctx.fillStyle = PAL.b;
+    ctx.beginPath(); ctx.arc(mouse.x,mouse.y,3,0,7); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  return lines;
+}
+let raf, last = performance.now(), acc = 0;
+function loop(now){
+  const dt = now-last; last = now;
+  step();
+  const lines = draw();
+  // fps meter
+  acc += dt;
+  if(acc > 700){
+    fps = Math.max(1, Math.round(1000/dt));
+    document.getElementById("metFps").textContent = fps;
+    document.getElementById("metPts").textContent = N;
+    document.getElementById("metLines").textContent = lines;
+    acc = 0;
+  }
+  raf = requestAnimationFrame(loop);
+}
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+if(reduced){
+  resize(); draw();
+  document.getElementById("metFps").textContent = "—";
+  document.getElementById("metPts").textContent = N;
+  document.getElementById("metLines").textContent = "—";
+}else{
+  addEventListener("resize", resize);
+  resize();
+  raf = requestAnimationFrame(loop);
+}
+addEventListener("pointermove", e => {
+  mouse.x = e.clientX; mouse.y = e.clientY; mouse.active = true;
+});
+addEventListener("pointerleave", () => { mouse.active = false; });
+
+/* ---------- ticker ---------- */
+const TICK = ["0 frameworks","0 plugins","0 trackers","1 human builder","100% invented data","hand-written CSS","hand-written JS","no internet calls","local-only","make it hum"];
+const tickEl = document.getElementById("ticker");
+tickEl.innerHTML = TICK.concat(TICK).map(t => "<span>"+t+"</span>").join("");
+document.getElementById("metBytes").textContent = Math.round(document.documentElement.outerHTML.length/1024);
+
+/* ---------- playground console ---------- */
+const consoleEl = document.getElementById("console");
+const hintsEl = document.getElementById("hints");
+function log(line, cls){
+  const d = document.createElement("div");
+  d.className = cls || "";
+  d.textContent = line;
+  consoleEl.appendChild(d);
+  consoleEl.scrollTop = consoleEl.scrollHeight;
+}
+function bootConsole(){
+  log("ZIGZAG OS — dev console v2.6", "cmt");
+  log("> type a command below and press RUN", "cmt");
+  log("> try: background neon · speed 12 · orbits off · wow", "cmt");
+  hintsEl.textContent = "commands: background sunset|neon|aurora|mono · speed 0–40 · orbits on|off · wow · help";
+}
+function runCmd(raw){
+  const line = raw.trim().toLowerCase();
+  if(!line) return;
+  log("> "+raw);
+  const [cmd, ...rest] = line.split(/\s+/);
+  const arg = rest.join(" ");
+  switch(cmd){
+    case "background":
+    case "bg": {
+      const p = PALETTES[arg];
+      if(p){ applyPalette(p); log("✓ palette → "+p.name, "ok"); }
+      else log("✗ unknown palette: "+arg+" (sunset · neon · aurora · mono)", "err");
+      break;
+    }
+    case "speed": {
+      const v = parseFloat(arg);
+      if(Number.isFinite(v) && v >= 0 && v <= 40){
+        speed = v; log("✓ particle speed → "+v, "ok");
+        if(!reduced) particles.forEach(p => { p.vx = (Math.random()-.5)*v*.6; p.vy = (Math.random()-.5)*v*.6; });
+        else log("ℹ motion is off on this device — speed saved anyway", "cmt");
+      }
+      else log("✗ speed needs a number from 0 to 40", "err");
+      break;
+    }
+    case "orbits": {
+      if(arg === "on" || arg === "off"){ orbits = arg === "on"; log("✓ orbits → "+arg, "ok"); }
+      else log("✗ use: orbits on / orbits off", "err");
+      break;
+    }
+    case "wow": {
+      log("✦ WOW ENGAGED — glitter cannon armed", "ok");
+      toast("✦ wow! that's the feeling");
+      if(!reduced){
+        for(let i=0;i<26;i++){
+          const p = { x:W/2, y:H/2, vx:(Math.random()-.5)*14, vy:(Math.random()-.5)*14, r:Math.random()*2.4+.8, hue:Math.random() };
+          particles.push(p);
+        }
+      }
+      break;
+    }
+    case "help": {
+      log("· background sunset | neon | aurora | mono", "cmt");
+      log("· speed 0–40  · orbits on|off  · wow", "cmt");
+      break;
+    }
+    default:
+      log("✗ unknown command — try: help", "err");
+  }
+}
+bootConsole();
+document.getElementById("runBtn").addEventListener("click", () => {
+  const inp = document.getElementById("cmd");
+  runCmd(inp.value); inp.value = "";
+  inp.focus();
+});
+document.getElementById("cmd").addEventListener("keydown", e => {
+  if(e.key === "Enter"){
+    e.preventDefault();
+    const inp = e.target;
+    runCmd(inp.value); inp.value = "";
+  }
+});
+
+/* swatches */
+const swWrap = document.getElementById("swatches");
+Object.keys(PALETTES).forEach(name => {
+  const p = PALETTES[name];
+  const b = document.createElement("button");
+  b.className = "sw" + (name === PAL.name ? " on" : "");
+  b.dataset.pal = name;
+  b.setAttribute("aria-label", "palette "+name);
+  b.style.background = "linear-gradient(135deg,"+p.a+","+p.b+" 55%,"+p.c+")";
+  b.innerHTML = "<small>"+name+"</small>";
+  b.addEventListener("click", () => applyPalette(p));
+  swWrap.appendChild(b);
+});
+
+/* ---------- club data (all invented, local-only) ---------- */
+const KEY = "zz.clubhouse.v2";
+const SEEDV = "v2";
+const ME = { name:"Robin Park", role:"Welcome Desk", hue:24 };
+const ROOMS = [
+  { id:"main-hall", name:"Main Hall", cap:80 },
+  { id:"den", name:"The Den", cap:20 },
+  { id:"loft", name:"Loft", cap:30 },
+  { id:"screening", name:"Screening Room", cap:25 },
+  { id:"kitchenette", name:"Kitchenette", cap:10 },
+];
+const DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const SLOTS = ["09:00","12:00","15:00","18:00","21:00"];
+const HOURS = { "09:00":9,"12:00":12,"15:00":15,"18:00":18,"21:00":21 };
+
+const MEMBERS = [
+  { name:"Maya Chen", role:"Steward", hue:180, fact:"Keeps the plant wall alive." },
+  { name:"Jonah Reed", role:"DJ", hue:340, fact:"Once spun 3 hours from one record." },
+  { name:"Priya Nair", role:"Gardener", hue:120, fact:"Knows every fern by name." },
+  { name:"Sam Osei", role:"Game Lead", hue:30, fact:"Undefeated at Boggle." },
+  { name:"Lena Fischer", role:"Record Keeper", hue:260, fact:"Filing by color, always." },
+  { name:"Tomás Ruiz", role:"Coffee Captain", hue:25, fact:"The espresso machine has feelings." },
+  { name:"Ada Whitfield", role:"Stage Manager", hue:210, fact:"40 ways to tape a cable." },
+  { name:"Raj Patel", role:"Welcome Desk", hue:50, fact:"Remembers every coffee order." },
+  { name:ME.name, role:ME.role, hue:ME.hue, fact:"Arrived with a ukulele." },
+];
+const EVENTS = [
+  { id:"e1", title:"Community Garden Workday", tag:"garden", day:0, start:"10:00", end:"13:00", room:"garden", host:"Priya Nair", going:4, blurb:"Gloves and good company. We plant the late-summer beds." },
+  { id:"e2", title:"Vinyl Swap & Chat", tag:"music", day:1, start:"18:30", end:"20:30", room:"den", host:"Lena Fischer", going:7, blurb:"Bring a record you love, leave with a story." },
+  { id:"e3", title:"Wednesday Jazz Night", tag:"music", day:2, start:"19:00", end:"22:00", room:"main-hall", host:"Jonah Reed", going:12, blurb:"House trio plus whoever brings an instrument." },
+  { id:"e4", title:"Board Game Marathon", tag:"games", day:3, start:"17:00", end:"23:00", room:"loft", host:"Sam Osei", going:9, blurb:"Cozy games to cutthroat ones. Snacks on the long table." },
+  { id:"e5", title:"Open Mic First Friday", tag:"community", day:4, start:"20:00", end:"23:00", room:"main-hall", host:"Ada Whitfield", going:14, blurb:"Five minutes each: songs, poems, terrible jokes, great ones." },
+  { id:"e6", title:"Film Club: Moonlight Kino", tag:"film", day:5, start:"19:30", end:"22:00", room:"screening", host:"Tomás Ruiz", going:6, blurb:"A restored weird little classic, popcorn included." },
+];
+const POSTS = [
+  { id:"p1", author:"Maya Chen", pinned:true, ts:Date.now()-26*36e5, text:"Winter party planning meetup — Thursday 6pm in the Loft. All welcome!" },
+  { id:"p2", author:"Tomás Ruiz", pinned:false, ts:Date.now()-5*36e5, text:"New espresso machine in the kitchenette. Please be kind to it." },
+  { id:"p3", author:"Ada Whitfield", pinned:false, ts:Date.now()-40*6e4, text:"Looking for two stagehands for Open Mic Friday — sign up at the desk!" },
+];
+function seed(){
+  return { seed:SEEDV, members:MEMBERS, events:EVENTS, posts:POSTS, rooms:ROOMS,
+    going:[], bookings:[], uiView:"home", uiRoom:"loft", uiDay:2 };
+}
+function load(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(raw){ const s = JSON.parse(raw); if(s && s.seed === SEEDV) return s; }
+  }catch(e){}
+  return null;
+}
+let state = load() || seed();
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+
+/* helpers */
+function esc(s){ return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function evdate(off){
+  const d = new Date(); d.setDate(d.getDate()+off);
+  return { dayNum:d.getDate(), month:d.toLocaleDateString("en-US",{month:"short"}), weekday:DAYS[off] };
+}
+function roomById(id){ return ROOMS.find(r=>r.id===id) || { name:id, cap:"—" }; }
+function hueC(h){ return "hsl("+h+" 65% 58%)"; }
+function init(n){ return n.split(/\s+/).map(x=>x[0]).slice(0,2).join("").toUpperCase(); }
+
+/* club views */
+function chip(tag){
+  return '<span class="chip">'+esc(tag)+'</span>';
+}
+function homeView(){
+  const next = [...state.events].sort((a,b)=>a.day-b.day||a.start.localeCompare(b.start))[0];
+  const d = evdate(next.day);
+  const room = roomById(next.room);
+  const latest = state.posts[0];
+  const member = state.members[Math.floor(Math.random()*state.members.length)];
+  return `
+    <div class="autocard">
+      <div class="score"><div class="k">◆ next event</div>
+        <div class="v">${esc(next.title)}</div>
+        <div class="m">${d.weekday} · ${next.start} · ${esc(room.name)} · with ${esc(next.host)}</div>
+        ${chip(next.tag)}
+      </div>
+      <div class="score"><div class="k">◉ someone in the house</div>
+        <div class="v">${esc(member.name)}</div>
+        <div class="m">${esc(member.role)} — ${esc(member.fact)}</div>
+      </div>
+      <div class="score"><div class="k">📌 latest notice</div>
+        <div class="v">${esc(latest.author)}</div>
+        <div class="m">${esc(latest.text)}</div>
+      </div>
+    </div>
+    <div class="empty">This whole club is yours — jump into the tabs above. No account, no gate, just code.</div>`;
+}
+function eventsView(){
+  const list = [...state.events].sort((a,b)=>a.day-b.day||a.start.localeCompare(b.start));
+  return '<div style="display:flex;flex-direction:column">'+ list.map(ev => {
+    const d = evdate(ev.day), room = roomById(ev.room);
+    const going = state.going.includes(ev.id);
+    const count = ev.going + (going ? 1 : 0);
+    return `<div class="evrow">
+      <div class="evdate"><b>${d.dayNum}</b><span>${d.month}</span></div>
+      <div class="evbody">
+        <h4>${esc(ev.title)}</h4>
+        <div class="meta">${d.weekday} · ${ev.start}–${ev.end} · ${esc(room.name)} · ${esc(ev.host)}</div>
+        ${chip(ev.tag)}
+      </div>
+      <button class="go ${going?'on':''}" data-going="${ev.id}" type="button">${going ? "Going ✔" : "I'm in"}</button>
+      <div class="meta" style="align-self:center;font-size:12px">${count} in</div>
+    </div>`;
+  }).join("") + '</div>';
+}
+function membersView(){
+  return '<div class="grid">'+ state.members.map(m => `
+    <div class="card">
+      <div style="width:44px;height:44px;border-radius:13px;display:grid;place-items:center;font-weight:900;color:#fff;background:${hueC(m.hue)}">${init(m.name)}</div>
+      <h4>${esc(m.name)}</h4>
+      <div class="who">${esc(m.role)}</div>
+      <div class="desc">${esc(m.fact)}</div>
+    </div>`).join("") + '</div>';
+}
+function boardView(){
+  const posts = [...state.posts].sort((a,b)=>(b.pinned-a.pinned)||(b.ts-a.ts));
+  return `
+    <div class="composer">
+      <textarea id="postInput" placeholder="Post something for the house…" aria-label="New notice"></textarea>
+      <button class="btn run" id="postBtn" type="button" style="align-self:flex-end">Post</button>
+    </div>
+    <div id="postlist">` + posts.map(p => `
+      <div class="boardrow">
+        <div class="ab" style="background:${hueC(p.author.length*37%360)}">${init(p.author)}</div>
+        <div class="boardbody">
+          <h4>${esc(p.author)}${p.pinned?'<span class="pin">📌 pinned</span>':''}</h4>
+          <p>${esc(p.text)}</p>
+        </div>
+      </div>`).join("") + '</div>';
+}
+function bookingsView(){
+  const room = ROOMS.find(r=>r.id===state.uiRoom) || ROOMS[0];
+  const key = (r,d,s) => r+"|"+d+"|"+s;
+  const mine = state.bookings.filter(b=>b.by===ME.name);
+  const rows = SLOTS.map(slot => {
+    const k = key(room.id, state.uiDay, slot);
+    const b = state.bookings.find(x=>x.key===k);
+    const hour = HOURS[slot];
+    const past = state.uiDay < 0 || (state.uiDay === 0 && hour <= new Date().getHours());
+    let st = "", act = "";
+    if(b && b.by===ME.name){ st = '<span class="st yours">booked by you</span>'; act = '<button class="go" data-cancel="'+k+'" type="button">Cancel</button>'; }
+    else if(b){ st = '<span class="st taken">taken</span>'; }
+    else if(past){ st = '<span class="st">past</span>'; }
+    else { st = '<span class="st">free</span>'; act = '<button class="go" data-book="'+k+'" type="button">Book</button>'; }
+    return '<div class="slotrow"><b>'+slot+'</b>'+st+act+'</div>';
+  }).join("");
+  return `
+    <div class="roomrow">${ROOMS.map(r=>`<button class="${r.id===state.uiRoom?'on':''}" data-room="${r.id}" type="button">${esc(r.name)} · ${r.cap}</button>`).join("")}</div>
+    <div class="roomrow" style="margin-top:0">${DAYS.map((d,i)=>`<button class="${i===state.uiDay?'on':''}" data-day="${i}" type="button">${d}</button>`).join("")}</div>
+    <div id="slotrows">${rows}</div>
+    <div style="margin-top:20px" class="card">
+      <h4 style="margin:0 0 10px">Your bookings</h4>
+      ${mine.length ? mine.map(b=>{ const r=roomById(b.roomId); const d=evdate(b.day);
+        return `<div class="slotrow"><b>${esc(r.name)}</b><span class="st yours">${d.weekday} · ${b.slot}</span><button class="go" data-cancel="${b.key}" type="button">Cancel</button></div>`;
+      }).join("") : '<div class="empty" style="padding:16px">Nothing booked yet — claim a free slot above.</div>'}
+    </div>`;
+}
+const VIEWS = { home:homeView, events:eventsView, members:membersView, board:boardView, bookings:bookingsView };
+
+function renderClub(){
+  const body = document.getElementById("clubview");
+  body.innerHTML = VIEWS[state.uiView]();
+  document.querySelectorAll("#clubtabs button").forEach(b =>
+    b.classList.toggle("on", b.dataset.view === state.uiView));
+}
+
+document.getElementById("clubtabs").addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if(!b) return;
+  state.uiView = b.dataset.view; save(); renderClub();
+});
+document.getElementById("clubview").addEventListener("click", e => {
+  const g = e.target.closest("[data-going]");
+  if(g){
+    const id = g.dataset.going;
+    const i = state.going.indexOf(id);
+    if(i === -1) state.going.push(id); else state.going.splice(i,1);
+    save(); renderClub(); toast(i === -1 ? "you're in ✓" : "marked out"); return;
+  }
+  const book = e.target.closest("[data-book]");
+  if(book){
+    const k = book.dataset.book;
+    if(state.bookings.some(b=>b.key===k)){ toast("that slot is already taken"); return; }
+    const [r,d,s] = k.split("|");
+    state.bookings.push({ key:k, roomId:r, day:+d, slot:s, by:ME.name, ts:Date.now() });
+    save(); renderClub(); toast("booked ✓ — it's yours"); return;
+  }
+  const cancel = e.target.closest("[data-cancel]");
+  if(cancel){
+    state.bookings = state.bookings.filter(b=>b.key!==cancel.dataset.cancel);
+    save(); renderClub(); toast("canceled"); return;
+  }
+  const rp = e.target.closest("[data-room]");
+  if(rp){ state.uiRoom = rp.dataset.room; save(); renderClub(); return; }
+  const dp = e.target.closest("[data-day]");
+  if(dp){ state.uiDay = +dp.dataset.day; save(); renderClub(); }
+});
+document.getElementById("clubview").addEventListener("click", e => {
+  if(e.target.id === "postBtn"){
+    const inp = document.getElementById("postInput");
+    const t = inp.value.trim();
+    if(!t) return;
+    state.posts.unshift({ id:"p"+Date.now(), author:ME.name, pinned:false, ts:Date.now(), text:t });
+    save(); renderClub(); toast("posted to the board");
+  }
+});
+document.getElementById("freshBtn").addEventListener("click", () => {
+  state = seed(); save(); renderClub(); toast("↺ fresh house data restored");
+});
+
+renderClub();
+
+/* ---------- boot meta ---------- */
+log("ZIGZAG OS ready · "+N+" particles online", "ok");
+</script>
+</body>
+</html>
