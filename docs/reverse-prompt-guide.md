@@ -1,5 +1,6 @@
 # Reverse Prompting with OpenSpec — Student Playbook
 
+> Part of **EPIC-MN** (epic-mn.com) — getting students excited about AI in IT.
 > You are the **product owner**. The AI is your **engineer**.
 > You describe what you imagine. The engineer asks smart questions, writes
 > the plan, shows it to you, and only then builds — stopping for your

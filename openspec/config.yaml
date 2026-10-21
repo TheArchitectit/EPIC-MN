@@ -2,11 +2,14 @@ schema: spec-driven
 
 # Project context (optional)
 context: |
-  Zigzag Clubhouse is a fictional venue; ALL data is invented.
-  The app is local-only: static vanilla HTML/CSS/JS, no accounts,
-  no backend, no online services, persistence via localStorage,
-  with a demo reset control.
-  Vibe: playful & creative.
+  EPIC-MN (https://epic-mn.com/): public showcase to get students
+  excited about AI in IT, for career events. The student is the
+  product owner and drives; Claude runs ALL OpenSpec mechanics via
+  the CLI and narrates each step in plain language.
+  Example #1 is the Zigzag Clubhouse (fictional venue; ALL data
+  invented). Apps are local-only: static vanilla HTML/CSS/JS, no
+  accounts, no backend, no online services, persistence via
+  localStorage, with a restore control. Vibe: playful & flashy.
 # Add only constraints that should guide OpenSpec artifacts and workflows.
 # Include constraints an agent cannot infer by reading the code.
 # Keep general project documentation and discoverable codebase facts out.

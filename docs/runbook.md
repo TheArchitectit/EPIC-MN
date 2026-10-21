@@ -1,5 +1,7 @@
 # Demo Session Runbook — The 10-Minute Ride
 
+> Part of **EPIC-MN** (epic-mn.com) — getting students excited about AI in IT.
+
 A script for the teacher or booth host. The student is the driver; you're
 the narrator keeping the ride on the rails. Time totals ~10–12 minutes —
 comfortable for a career fair rotation.

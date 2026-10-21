@@ -1,23 +1,35 @@
-# ⚡ Zigzag Clubhouse — Hand-Built + The Reverse-Prompting Playbook
+# 🔷 EPIC-MN — AI in IT, built by hand
 
-A tiny, flashy website **built entirely by hand** — zero frameworks, zero
-plugins, zero internet calls — plus a complete student-facing playbook for
-learning **reverse prompting** with **OpenSpec**.
+**Mission: get students excited about AI in IT.** Everything in this repo is
+hand-built — zero frameworks, zero plugins, zero internet calls — and
+designed so a **student drives** the building process, with the engineer
+(Claude) executing and narrating every step.
 
-Built for the Firhaven Career Fair: the idea is that a **student drives** —
-they own the idea, I'm the engineer — and every step of making software is
-visible, narrated, and documented.
+This is the public showcase for **https://epic-mn.com/**. Every example,
+playbook, and script here is meant to be run live, in front of a class, on
+a laptop with nothing but a browser.
 
 ---
 
-## 🚀 Run it
+## 🎯 Why this repo exists
 
-The app is one file. Double-click it, or serve it:
+Software isn't born as code. It starts as a thought, becomes a plan, and
+only then becomes code. We make all three visible:
+
+- kids say **what they imagine**, in their own words
+- the engineer turns that into a **real spec** (OpenSpec), asking targeted
+  questions along the way — *reverse prompting*
+- they see the whole journey: blueprint → design → tasks → build → ship
+
+They leave having **made something real**, not just watched a demo.
+
+## 🚀 Run the current example
 
 ```bash
 # option A — just open it
 open index.html        # macOS
 xdg-open index.html    # Linux
+
 # option B — serve it
 python3 -m http.server 8123
 # then visit http://localhost:8123
@@ -29,7 +41,7 @@ Everything is local-only, invented data, no accounts, no installs.
 
 | Path | What it is |
 |---|---|
-| `index.html` | The hand-built clubhouse app (canvas particles, live console, events, members, board, bookings) |
+| `index.html` | **Example #1 — the Clubhouse**: a hand-built app with living canvas, live console, events, members, board, bookings |
 | `docs/reverse-prompt-guide.md` | **The playbook** — how students reverse-prompt with OpenSpec, with examples and drills |
 | `docs/runbook.md` | The 10-minute demo session script for the teacher/host (with troubleshooting) |
 | `docs/event-card.md` | A printable one-page journey card for the booth |
@@ -60,5 +72,5 @@ You're the boss. The engineer does the typing. Read the full playbook in
 
 ---
 
-_Built with Claude Code · all data invented · made for students, by people
+_EPIC-MN · epic-mn.com · all data invented · made for students, by people
 who love making things._
