@@ -23,16 +23,18 @@ only then becomes code. We make all three visible:
 
 They leave having **made something real**, not just watched a demo.
 
-## 🚀 Run the current example
+## 🚀 Run the examples
 
 ```bash
-# option A — just open it
-open index.html        # macOS
-xdg-open index.html    # Linux
+# option A — just open them
+open index.html        # macOS — Example #1, the Clubhouse
+open bubblegum.html    # Example #2, Bubblegum Zap (the game)
+xdg-open index.html    # Linux same files
 
-# option B — serve it
+# option B — serve everything
 python3 -m http.server 8123
-# then visit http://localhost:8123
+# then visit http://localhost:8123/ (clubhouse) and
+#         http://localhost:8123/bubblegum.html (game)
 ```
 
 Everything is local-only, invented data, no accounts, no installs.
@@ -42,12 +44,13 @@ Everything is local-only, invented data, no accounts, no installs.
 | Path | What it is |
 |---|---|
 | `index.html` | **Example #1 — the Clubhouse**: a hand-built app with living canvas, live console, events, members, board, bookings |
+| `bubblegum.html` | **Example #2 — Bubblegum Zap**: the arcade game — retro chiptune, aim-assist laser/missiles, random gum objects, escalating 1-minute rounds |
 | `docs/reverse-prompt-guide.md` | **The playbook** — how students reverse-prompt with OpenSpec, with examples and drills |
 | `docs/runbook.md` | The 10-minute demo session script for the teacher/host (with troubleshooting) |
 | `docs/event-card.md` | A printable one-page journey card for the booth |
 | `LICENSE` | BSD 3-Clause — free to reuse, share, and remix |
 | `.claude/CLAUDE.md` | The exact contract that keeps Claude in **student-driver mode** |
-| `openspec/` | Real OpenSpec artifacts from building this app — proof the workflow works end-to-end |
+| `openspec/` | Real OpenSpec artifacts — both examples were built as archived changes, so the specs show the full journey end-to-end |
 
 ## 🎓 The 7-phase journey
 
@@ -60,6 +63,18 @@ Everything is local-only, invented data, no accounts, no installs.
 | 5 | validate | 🕵️ Check | green checks |
 | 6 | apply / build | 🔨 Build | the app comes alive |
 | 7 | archive | 🚀 Ship | the final spec is saved forever |
+
+## 📜 Built with the full OpenSpec loop
+
+Every feature here went through the whole student-driver journey — brainstorm →
+blueprint → floor plan → to-do → check → build → ship — and each change was
+archived into its spec:
+
+- `openspec/specs/clubhouse/spec.md` — the clubhouse (Example #1)
+- `openspec/specs/bubblegum-zap/spec.md` — the game, including the tuning,
+  weapons, and retro-music changes (Example #2)
+
+`openspec/changes/archive/` holds the complete history of every change.
 
 ## 🤝 How reverse prompting works
 
