@@ -61,7 +61,7 @@ and phase escalation making the game faster as the round progresses.
 - **WHEN** a sour gum bubble is left unpopped for too long
 - **THEN** the game punishes the player with a small score penalty
 
-#### Scenario: Moderate pace that escalates
+#### Scenario: Slower pace
 - **WHEN** the player starts a round
 - **THEN** the pace is gentler than the original but livelier than the
   slow tuning, and it speeds up through score milestones and round phases
