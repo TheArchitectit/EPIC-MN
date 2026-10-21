@@ -92,6 +92,10 @@ body{
   font-size:13px;font-weight:700;z-index:40;opacity:0;transition:.3s;pointer-events:none;
   backdrop-filter:blur(8px)}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#flash{position:fixed;inset:0;z-index:25;pointer-events:none;
+  background:radial-gradient(circle at var(--fx,50%) 30%, rgba(255,255,255,.4), transparent 55%);
+  opacity:0;transition:opacity .6s}
+#flash.on{opacity:1;transition:opacity .08s}
 @media (max-width:560px){
   #brand{display:none}
   .scorebox{padding:6px 10px;min-width:74px}
@@ -128,6 +132,7 @@ body{
 
 <button id="fresh" type="button">↺ start fresh</button>
 <div id="note">hand-built · local-only<br>no accounts · no internet</div>
+<div id="flash"></div>
 <div id="toast" role="status"></div>
 
 <script>
@@ -160,12 +165,16 @@ let BEST = loadBest();
 const G = {
   playing:true, score:0, combo:0, comboT:0, lastPop:0,
   misses:0, maxMiss:3, level:1, t:0, timeLeft:60000,
+  aim:{x:innerWidth/2,y:innerHeight/2,hold:false,active:false}, beamHalf:16,
+  missileT:0, spreadT:0, boostT:0, freezeT:0, gravT:0, goldRainT:0,
+  objects:[], objT:6000, phase:"A", missiles:[],
   bubbles:[], parts:[], floats:[],
   spawnT:400, nextEvT:9000,
   ev:null, evT:0, timeScale:1, forceGold:false, gravity:1, storm:false,
   shake:0, muted:false,
 };
 const MAX_BUBBLES = 42;
+const MAX_OBJECTS = 3;
 const SPAWN_MIN = 150;
 const MISS_BOX = 1.0; /* room to spare above screen */
 
@@ -192,10 +201,10 @@ function sourSound(){ blip(140, .35, "sawtooth", .09); }
 function overSound(){ blip(220, .5, "sawtooth", .07); blip(110, .7, "sine", .08); }
 
 /* ---------- bubbles ---------- */
-function makeBubble(forcedGold){
+function makeBubble(forcedGold, forcedType){
   const r = 26 + Math.random()*30;
-  const type = forcedGold || (G.forceGold && Math.random() < .8) ? "gold"
-    : (Math.random() < .09 ? "sour" : "normal");
+  const type = forcedType || ((forcedGold || (G.forceGold && Math.random() < .8)) ? "gold"
+    : (Math.random() < .09 ? "sour" : "normal"));
   const speed = (0.9 + G.level*0.16) * (0.75 + Math.random()*0.5) * 0.5; /* chill: 50% slower */
   return {
     x: Math.random()*(W-r*2)+r,
@@ -207,9 +216,9 @@ function makeBubble(forcedGold){
     hue: Math.random(),
   };
 }
-function spawnBubble(forcedGold){
+function spawnBubble(forcedGold, forcedType){
   if(G.bubbles.length >= MAX_BUBBLES) return;
-  G.bubbles.push(makeBubble(forcedGold));
+  G.bubbles.push(makeBubble(forcedGold, forcedType));
 }
 function spawnBurst(n){
   for(let i=0;i<n;i++) spawnBubble(true);
@@ -262,6 +271,54 @@ function causeMiss(b, idx){
   }
 }
 
+/* ---------- gum objects ---------- */
+function collectObject(o, i){
+  G.objects.splice(i, 1);
+  burst(o.x, o.y, "#ff9ff3", 16, 5);
+  goldSound();
+  const fx = ["jackpot","boost","goldrain","freeze","gravity","heart","sourrain"];
+  const pick = fx[Math.floor(Math.random()*fx.length)];
+  switch(pick){
+    case "jackpot":
+      G.score += 250;
+      addFloat("+250 JACKPOT!", o.x, o.y-20, "gold");
+      showBanner("🎰 JACKPOT! +250", 1200);
+      break;
+    case "boost":
+      G.boostT = 5000;
+      showBanner("🚀 MISSILE BOOST!", 1200);
+      break;
+    case "goldrain":
+      G.goldRainT = 4000;
+      showBanner("⭐ GOLD RAIN!", 1200);
+      break;
+    case "freeze":
+      G.freezeT = 2000;
+      showBanner("🧊 BUBBLE FREEZE!", 1200);
+      break;
+    case "gravity":
+      G.gravT = 5000;
+      showBanner("🔄 GRAVITY FLIP!", 1200);
+      break;
+    case "heart":
+      if(G.misses > 0){
+        G.misses--; updateHearts();
+        showBanner("❤️ EXTRA HEART!", 1200);
+      } else {
+        G.score += 100;
+        addFloat("+100", o.x, o.y-20, "gold");
+        showBanner("💖 +100!", 1200);
+      }
+      break;
+    case "sourrain":
+      for(let k=0;k<6;k++) spawnBubble(false, "sour");
+      showBanner("🍋 SOUR RAIN!", 1200);
+      break;
+  }
+  updateHUD(true);
+  flash();
+}
+
 /* ---------- chaos events ---------- */
 const EVENTS = [
   { key:"tsunami", name:"🌊 GUM TSUNAMI", dur:6000,
@@ -280,14 +337,24 @@ const EVENTS = [
     start(){ G.storm = true; }, end(){ G.storm = false; },
   },
 ];
+function showBanner(text, dur){
+  const bn = document.getElementById("banner");
+  bn.textContent = text;
+  bn.classList.add("show");
+  clearTimeout(bn._t);
+  bn._t = setTimeout(() => bn.classList.remove("show"), dur || 1400);
+}
+function flash(){
+  const el = document.getElementById("flash");
+  el.style.setProperty("--fx", (100 * G.aim.x / Math.max(1,W)) + "%");
+  el.classList.remove("on"); void el.offsetWidth; el.classList.add("on");
+  setTimeout(() => el.classList.remove("on"), 90);
+}
 function fireEvent(){
   const ev = EVENTS[Math.floor(Math.random()*EVENTS.length)];
   G.ev = ev; G.evT = ev.dur;
   if(ev.start) ev.start();
-  const bn = document.getElementById("banner");
-  bn.textContent = ev.name;
-  bn.classList.add("show");
-  setTimeout(() => bn.classList.remove("show"), 1400);
+  showBanner(ev.name, 1400);
 }
 function endEvent(){
   const ev = G.ev;
@@ -331,26 +398,127 @@ function update(dt){
   if(G.timeLeft <= 0 && G.playing){ G.timeLeft = 0; gameOver("time"); return; }
   const ts = dt * G.timeScale;
 
+  /* escalating phases */
+  const newPhase = G.t < 15000 ? "A" : (G.t < 40000 ? "B" : "C");
+  if(newPhase !== G.phase){
+    G.phase = newPhase;
+    if(newPhase === "B") showBanner("🔫 WEAPONS ONLINE!", 1400);
+    if(newPhase === "C") showBanner("🔥 FINAL FRENZY!", 1600);
+  }
+
+  /* effect timers */
+  if(G.boostT > 0) G.boostT -= dt;
+  if(G.freezeT > 0) G.freezeT -= dt;
+  if(G.gravT > 0) G.gravT -= dt;
+  if(G.goldRainT > 0) G.goldRainT -= dt;
+  const grav = G.gravT > 0 ? -1 : 1;
+  const tsMove = G.freezeT > 0 ? 0 : ts;
+
   /* spawn */
   G.spawnT -= dt;
-  const interval = G.storm ? 170 : Math.max(SPAWN_MIN, 950 - G.level*55);
+  const baseInt = G.phase === "A" ? 950 : (G.phase === "B" ? 700 : 450);
+  const interval = G.storm ? 170 : Math.max(SPAWN_MIN, baseInt - G.level*50);
   if(G.spawnT <= 0){
-    spawnBubble();
-    if(G.storm) spawnBubble();
+    spawnBubble(G.goldRainT > 0);
+    if(G.storm) spawnBubble(G.goldRainT > 0);
     G.spawnT = interval * (0.7 + Math.random()*0.6);
+  }
+
+  /* gum objects */
+  G.objT -= dt;
+  if((G.phase === "B" || G.phase === "C") && G.objT <= 0 && G.objects.length < MAX_OBJECTS){
+    G.objects.push({
+      x: Math.random()*(W-90)+45, y: H + 40,
+      r: 34, vy: -.45, wob: Math.random()*6.28, wobS: .02,
+    });
+    G.objT = G.phase === "C" ? 4000 : 6000;
+  }
+
+  /* aim-assist fire */
+  if(G.aim.hold && G.playing){
+    G.missileT -= dt;
+    G.spreadT -= dt;
+    const cad = G.boostT > 0 ? 0.4 : 1.2;
+    if(G.missileT <= 0 && G.phase !== "A" && G.bubbles.length){
+      G.missileT = cad;
+      const targets = [...G.bubbles]
+        .sort((a,b) => Math.hypot(a.x-G.aim.x, a.y) - Math.hypot(b.x-G.aim.x, b.y))
+        .slice(0,4);
+      const tx = targets.reduce((s,p) => s+p.x, 0)/targets.length;
+      const ty = targets.reduce((s,p) => s+p.y, 0)/targets.length;
+      G.missiles.push({ x:G.aim.x, y:H+20, tx, ty, t:0, dur:520 });
+      blip(200, .06, "square", .05);
+    }
+    if(G.spreadT <= 0){
+      G.spreadT = 0.6;
+      [36,-36].forEach(off => {
+        const bx = G.aim.x + off;
+        let best = null, bd = 1e9;
+        for(const b of G.bubbles){
+          const d = Math.abs(b.x - bx);
+          if(d < bd){ bd = d; best = b; }
+        }
+        if(best) popBubble(best, G.bubbles.indexOf(best));
+      });
+    }
+    for(let i=G.bubbles.length-1;i>=0;i--){
+      const b = G.bubbles[i];
+      if(Math.abs(b.x - G.aim.x) < G.beamHalf + b.r*0.4) popBubble(b, i);
+    }
+    for(let i=G.objects.length-1;i>=0;i--){
+      const o = G.objects[i];
+      if(Math.abs(o.x - G.aim.x) < o.r + G.beamHalf) collectObject(o, i);
+    }
   }
 
   /* event timer */
   if(G.ev){ G.evT -= dt; if(G.evT <= 0) endEvent(); }
-  else { G.nextEvT -= dt; if(G.nextEvT <= 0){ fireEvent(); G.nextEvT = 12000 + Math.random()*7000; } }
+  else {
+    G.nextEvT -= dt;
+    if(G.nextEvT <= 0){
+      fireEvent();
+      const scale = G.phase === "C" ? 2 : 1;
+      G.nextEvT = (12000 + Math.random()*7000) / scale;
+    }
+  }
+
+  /* missiles */
+  for(let i=G.missiles.length-1;i>=0;i--){
+    const m = G.missiles[i];
+    m.t += dt;
+    m.x += (m.tx - m.x)*0.1;
+    m.y += (m.ty - m.y)*0.1;
+    if(Math.hypot(m.tx-m.x, m.ty-m.y) < 18 || m.y < -50){
+      burst(m.x, m.y, "#ffd166", 22, 6);
+      blip(90, .35, "sawtooth", .08);
+      for(let j=G.bubbles.length-1;j>=0;j--){
+        const b = G.bubbles[j];
+        if(Math.hypot(b.x-m.x, b.y-m.y) < 80) popBubble(b, j);
+      }
+      for(let j=G.objects.length-1;j>=0;j--){
+        const o = G.objects[j];
+        if(Math.hypot(o.x-m.x, o.y-m.y) < 80) collectObject(o, j);
+      }
+      G.missiles.splice(i, 1);
+    }
+  }
+
+  /* gum objects drift */
+  for(let i=G.objects.length-1;i>=0;i--){
+    const o = G.objects[i];
+    o.wob += o.wobS*tsMove;
+    o.y += o.vy*grav*tsMove;
+    o.x += Math.sin(o.wob)*0.4;
+    if(o.y < -60) G.objects.splice(i, 1);
+  }
 
   /* bubbles */
   for(let i=G.bubbles.length-1;i>=0;i--){
     const b = G.bubbles[i];
     b.life += ts;
     b.wob += b.wobS*ts;
-    b.x += b.vx*ts + Math.sin(b.wob)*0.5;
-    b.y += b.vy*G.gravity*ts;
+    b.x += b.vx*tsMove + Math.sin(b.wob)*0.5;
+    b.y += b.vy*grav*tsMove;
     b.sourT += dt;
     if(b.type === "sour" && b.sourT > b.sourLimit){
       causeMiss(b, i);
@@ -426,7 +594,38 @@ function draw(){
   }
   ctx.globalAlpha = 1;
 
-  /* shake translate handled by caller via css? */
+  /* gum objects */
+  for(const o of G.objects){
+    const g2 = ctx.createRadialGradient(o.x-o.r*.3, o.y-o.r*.3, 6, o.x, o.y, o.r);
+    g2.addColorStop(0,"#fff0fa"); g2.addColorStop(.5,"#d97bf0"); g2.addColorStop(1,"#8a3fb0");
+    ctx.shadowColor = "#ff9ff3"; ctx.shadowBlur = 30;
+    ctx.fillStyle = g2;
+    ctx.beginPath(); ctx.arc(o.x, o.y, o.r, 0, 7); ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = "rgba(255,255,255,.9)";
+    ctx.beginPath(); ctx.arc(o.x-o.r*.3, o.y-o.r*.3, o.r*.16, 0, 7); ctx.fill();
+    ctx.font = "bold " + Math.floor(o.r*.8) + "px sans-serif";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText("🎁", o.x, o.y+2);
+  }
+
+  /* weapons: beam + reticle */
+  if(G.playing && G.aim.active){
+    if(G.aim.hold){
+      const w = G.beamHalf*2;
+      const bg = ctx.createLinearGradient(0, 0, 0, H);
+      bg.addColorStop(0,"rgba(116,235,213,0)");
+      bg.addColorStop(1,"rgba(116,235,213,.28)");
+      ctx.fillStyle = bg;
+      ctx.fillRect(G.aim.x-w/2, 0, w, H);
+      ctx.strokeStyle = "rgba(255,255,255,.7)"; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(G.aim.x, 20); ctx.lineTo(G.aim.x, H); ctx.stroke();
+    }
+    ctx.strokeStyle = "#ffd166"; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(G.aim.x, G.aim.y, 16, 0, 7); ctx.stroke();
+    ctx.fillStyle = "rgba(255,209,102,.9)";
+    ctx.beginPath(); ctx.arc(G.aim.x, G.aim.y, 3, 0, 7); ctx.fill();
+  }
 }
 
 /* ---------- floats DOM ---------- */
@@ -465,6 +664,11 @@ requestAnimationFrame(loop);
 function zapAt(x,y){
   if(!G.playing) return;
   audio();
+  for(let i=G.objects.length-1;i>=0;i--){
+    const o = G.objects[i];
+    const dx = x-o.x, dy = y-o.y;
+    if(dx*dx + dy*dy < o.r*o.r){ collectObject(o, i); return; }
+  }
   for(let i=G.bubbles.length-1;i>=0;i--){
     const b = G.bubbles[i];
     const dx = x-b.x, dy = y-b.y;
@@ -474,14 +678,26 @@ function zapAt(x,y){
     }
   }
 }
+function setAim(e){
+  const r = cv.getBoundingClientRect();
+  G.aim.x = e.clientX - r.left;
+  G.aim.y = e.clientY - r.top;
+  G.aim.active = true;
+}
 cv.addEventListener("pointerdown", e => {
-  const rect = cv.getBoundingClientRect();
-  zapAt(e.clientX-rect.left, e.clientY-rect.top);
+  setAim(e);
+  G.aim.hold = true;
+  audio();
+  zapAt(G.aim.x, G.aim.y);
 });
+cv.addEventListener("pointermove", e => { setAim(e); });
+window.addEventListener("pointerup", () => { G.aim.hold = false; });
+window.addEventListener("pointercancel", () => { G.aim.hold = false; });
 
 /* ---------- game over / restart ---------- */
 function gameOver(reason){
   G.playing = false;
+  G.aim.hold = false;
   overSound();
   const timeUp = reason === "time";
   document.getElementById("overTitle").textContent = timeUp ? "⏰ TIME'S UP!" : "💥 POPPED OUT";
@@ -495,8 +711,11 @@ function gameOver(reason){
 }
 function startGame(){
   G.playing = true; G.score = 0; G.combo = 0; G.misses = 0; G.level = 1;
-  G.bubbles = []; G.parts = []; G.floats = [];
+  G.bubbles = []; G.parts = []; G.floats = []; G.objects = []; G.missiles = [];
   G.spawnT = 400; G.nextEvT = 9000; G.timeScale = 1; G.forceGold = false; G.timeLeft = 60000;
+  G.objT = 6000; G.phase = "A";
+  G.boostT = 0; G.freezeT = 0; G.gravT = 0; G.goldRainT = 0;
+  G.aim.hold = false; G.aim.active = false;
   G.gravity = 1; G.storm = false; G.shake = 0;
   if(G.ev && G.ev.end) G.ev.end();
   G.ev = null; G.evT = 0;
