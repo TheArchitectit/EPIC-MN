@@ -31,7 +31,9 @@ Everything is local-only, invented data, no accounts, no installs.
 |---|---|
 | `index.html` | The hand-built clubhouse app (canvas particles, live console, events, members, board, bookings) |
 | `docs/reverse-prompt-guide.md` | **The playbook** — how students reverse-prompt with OpenSpec, with examples and drills |
+| `docs/runbook.md` | The 10-minute demo session script for the teacher/host (with troubleshooting) |
 | `docs/event-card.md` | A printable one-page journey card for the booth |
+| `LICENSE` | BSD 3-Clause — free to reuse, share, and remix |
 | `.claude/CLAUDE.md` | The exact contract that keeps Claude in **student-driver mode** |
 | `openspec/` | Real OpenSpec artifacts from building this app — proof the workflow works end-to-end |
 
