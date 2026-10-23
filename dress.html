@@ -1,0 +1,734 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dress Studio — EPIC-MN</title>
+<meta name="description" content="A retro dress-up studio: mix and match a big closet on a paper-doll model, save looks to a lookbook, export PNGs. Example #5 of EPIC-MN.">
+<style>
+/* ============================================================
+   DRESS STUDIO · retro fashion arcade · hand-built
+   ============================================================ */
+:root{
+  --ink:#12062b; --ink2:#1d0b3f; --txt:#fff6e9; --dim:rgba(255,246,233,.66);
+  --card:rgba(255,255,255,.07); --line:rgba(255,255,255,.16);
+  --pink:#ff2d95; --cyan:#2de2e6; --yellow:#ffd166; --mint:#6ff2c5; --purple:#8b5cf6;
+  --hard:6px 6px 0 rgba(0,0,0,.45);
+  --mono:ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --sans:"Trebuchet MS","Gill Sans",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;min-height:100%}
+body{
+  font-family:var(--sans);color:var(--txt);
+  background:
+    radial-gradient(1200px 600px at 50% -10%, #2a1060 0%, transparent 60%),
+    repeating-linear-gradient(0deg, transparent 0 38px, rgba(255,255,255,.03) 38px 39px),
+    repeating-linear-gradient(90deg, transparent 0 38px, rgba(255,255,255,.03) 38px 39px),
+    var(--ink);
+  user-select:none;-webkit-user-select:none;touch-action:manipulation;
+}
+
+/* ---------- chrome ---------- */
+#top{max-width:980px;margin:0 auto;padding:22px 18px 8px;display:flex;
+  justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap}
+#brand h1{margin:0;font-family:var(--mono);font-size:clamp(26px,6vw,44px);
+  font-weight:900;letter-spacing:.08em;line-height:1;
+  color:var(--pink);text-shadow:3px 3px 0 var(--cyan), 6px 6px 0 rgba(0,0,0,.45)}
+#brand p{margin:8px 0 0;font-family:var(--mono);font-size:11px;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--dim)}
+
+/* ---------- buttons ---------- */
+.btn{font:inherit;font-family:var(--mono);font-weight:900;font-size:13px;
+  letter-spacing:.12em;text-transform:uppercase;cursor:pointer;
+  border:3px solid var(--txt);border-radius:6px;padding:12px 18px;
+  background:var(--ink2);color:var(--txt);box-shadow:var(--hard);
+  transition:transform .08s, box-shadow .08s}
+.btn:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 rgba(0,0,0,.45)}
+.btn:active{transform:translate(3px,3px);box-shadow:2px 2px 0 rgba(0,0,0,.45)}
+.btn.primary{background:var(--pink);color:#fff}
+.btn.cyan{background:var(--cyan);color:#08222a}
+.btn.yellow{background:var(--yellow);color:#3a2400}
+.btn.mint{background:var(--mint);color:#06331f}
+.btn.ghost{background:transparent;border-color:var(--line);color:var(--dim);box-shadow:none}
+.btn.ghost:hover{color:var(--txt);border-color:var(--txt)}
+
+/* ---------- studio layout ---------- */
+main{max-width:980px;margin:0 auto;padding:10px 18px 40px}
+.lede{font-size:15px;color:var(--dim);max-width:620px;margin:6px 0 18px}
+.studio{display:grid;grid-template-columns:minmax(280px,420px) 1fr;gap:22px;align-items:start}
+@media (max-width:760px){.studio{grid-template-columns:1fr}}
+
+/* ---------- stage ---------- */
+.stage{position:relative;display:flex;justify-content:center}
+#doll{width:100%;max-width:420px;height:auto;image-rendering:auto;
+  border:4px solid var(--txt);border-radius:12px;box-shadow:var(--hard);display:block}
+
+/* ---------- closet ---------- */
+.closet h2{font-family:var(--mono);font-size:18px;letter-spacing:.14em;
+  text-transform:uppercase;margin:0 0 12px;color:var(--yellow)}
+.cat{margin:0 0 14px}
+.cat .catname{font-family:var(--mono);font-size:10px;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--dim);margin:0 0 8px}
+.chips{display:flex;gap:10px;flex-wrap:wrap}
+.chip{width:74px;padding:8px 6px 6px;border:3px solid var(--line);border-radius:10px;
+  background:var(--card);cursor:pointer;box-shadow:var(--hard);text-align:center;
+  transition:transform .08s, border-color .08s}
+.chip:hover{transform:translate(-2px,-2px)}
+.chip canvas{width:56px;height:56px;display:block;margin:0 auto;image-rendering:auto}
+.chip .cname{font-family:var(--mono);font-size:9px;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--dim);margin-top:5px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.chip.on{border-color:var(--yellow);outline:3px solid var(--yellow);outline-offset:1px}
+.chip.on .cname{color:var(--yellow)}
+
+/* ---------- save row ---------- */
+.saverow{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:22px 0 8px}
+#look-name{font:inherit;font-family:var(--mono);font-size:14px;letter-spacing:.08em;
+  background:var(--ink2);border:3px solid var(--line);border-radius:6px;
+  color:var(--txt);padding:12px 14px;min-width:200px;box-shadow:var(--hard)}
+#look-name:focus{outline:none;border-color:var(--cyan)}
+
+/* ---------- lookbook ---------- */
+.galhead{display:flex;justify-content:space-between;align-items:center;
+  gap:12px;flex-wrap:wrap;margin:30px 0 14px}
+.galhead h2{font-family:var(--mono);font-size:20px;letter-spacing:.14em;
+  text-transform:uppercase;margin:0;color:var(--cyan)}
+.galgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px}
+.gitem{background:var(--card);border:3px solid var(--line);border-radius:10px;
+  padding:12px;box-shadow:var(--hard);text-align:center}
+.gitem canvas{width:84px;height:112px;border:2px solid var(--line);
+  border-radius:6px;background:var(--ink2)}
+.gitem .gname{font-family:var(--mono);font-size:12px;letter-spacing:.1em;
+  margin:8px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gitem .grow{display:flex;gap:8px;justify-content:center}
+.gitem .btn{padding:8px 10px;font-size:11px}
+.gempty{font-family:var(--mono);font-size:13px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--dim);padding:18px;text-align:center;
+  border:3px dashed var(--line);border-radius:10px}
+
+/* ---------- flourishes / toast ---------- */
+.fl{position:fixed;z-index:40;pointer-events:none;font-family:var(--mono);
+  font-weight:900;font-size:22px;letter-spacing:.08em;text-transform:uppercase;
+  text-shadow:2px 2px 0 rgba(0,0,0,.5);animation:fl .85s ease-out forwards}
+@keyframes fl{to{transform:translateY(-72px);opacity:0}}
+.fl.got{color:var(--mint)}
+.fl.miss{color:var(--pink)}
+.spark{position:absolute;font-size:22px;pointer-events:none;animation:spark 1.4s ease-out forwards}
+@keyframes spark{to{transform:translateY(-70px) rotate(220deg);opacity:0}}
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);
+  opacity:0;background:var(--ink2);border:3px solid var(--cyan);color:var(--txt);
+  font-family:var(--mono);font-size:13px;letter-spacing:.12em;text-transform:uppercase;
+  padding:12px 20px;border-radius:8px;box-shadow:var(--hard);z-index:50;
+  transition:.25s;pointer-events:none;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ---------- foot ---------- */
+.foot{max-width:980px;margin:10px auto 30px;padding:0 18px;font-family:var(--mono);
+  font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);text-align:center}
+.foot b{color:var(--cyan)}
+
+@media (max-width:520px){
+  .chip{width:64px}
+  .chip canvas{width:48px;height:48px}
+  .btn{padding:11px 13px;font-size:11px}
+}
+</style>
+</head>
+<body>
+
+<header id="top">
+  <div id="brand">
+    <h1>DRESS STUDIO</h1>
+    <p>mix · match · model · export</p>
+  </div>
+  <button class="btn ghost" id="btn-reset">↺ reset</button>
+</header>
+
+<main>
+  <p class="lede">Tap pieces from the closet to dress the model — mix tops, bottoms,
+    dresses, shoes, hats, bags, and jewelry. Save your best looks to the
+    <b>lookbook</b>, or export a <b>PNG</b> and take the look home.</p>
+
+  <div class="studio">
+    <div class="stage">
+      <canvas id="doll" width="480" height="640" aria-label="fashion model"></canvas>
+    </div>
+    <div class="closet">
+      <h2>👒 the closet</h2>
+      <div id="cats"></div>
+    </div>
+  </div>
+
+  <div class="saverow">
+    <input id="look-name" type="text" maxlength="24" placeholder="name your look…" aria-label="look name">
+    <button class="btn yellow" id="btn-save">★ save to lookbook</button>
+    <button class="btn cyan" id="btn-export">⬇ save as PNG</button>
+    <button class="btn ghost" id="btn-strip">✕ undress</button>
+  </div>
+
+  <div class="galhead">
+    <h2>🖼 lookbook</h2>
+  </div>
+  <div class="galgrid" id="galgrid"></div>
+</main>
+
+<div class="foot"><b>EPIC-MN</b> · example #5 · all data invented · local-only</div>
+<div id="toast" role="status"></div>
+
+<script>
+"use strict";
+/* ============================================================
+   DRESS STUDIO · paper-doll stylist · localStorage · zero deps
+   layer order: body → dress | (top → bottom) → shoes → bag →
+   jewelry → hat
+   ============================================================ */
+
+const STAGE_W = 480, STAGE_H = 640;
+const MAX_LOOKS = 24;
+
+/* ---------- garment pieces (all drawn in code) ---------- */
+/* box = [x,y,w,h] frames the closet-chip preview */
+
+function roundRect(c, x, y, w, h, r){
+  c.beginPath();
+  c.moveTo(x + r, y);
+  c.arcTo(x + w, y, x + w, y + h, r);
+  c.arcTo(x + w, y + h, x, y + h, r);
+  c.arcTo(x, y + h, x, y, r);
+  c.arcTo(x, y, x + w, y, r);
+  c.closePath();
+  c.fill();
+}
+
+const PIECES = {
+  top: [
+    { id:"tee", name:"Tee", box:[150,150,180,150], draw(c){
+      c.fillStyle = "#ff2d95";
+      roundRect(c, 196, 178, 88, 118, 16);                 /* torso */
+      roundRect(c, 168, 184, 36, 62, 14);                  /* left sleeve */
+      roundRect(c, 276, 184, 36, 62, 14);                  /* right sleeve */
+    }},
+    { id:"blouse", name:"Blouse", box:[150,150,180,170], draw(c){
+      c.fillStyle = "#2de2e6";
+      roundRect(c, 198, 178, 84, 122, 18);
+      roundRect(c, 178, 182, 26, 116, 12);                 /* long sleeves */
+      roundRect(c, 276, 182, 26, 116, 12);
+      c.fillStyle = "#fff6e9";
+      roundRect(c, 226, 182, 28, 14, 6);                   /* collar */
+    }},
+    { id:"jacket", name:"Jacket", box:[150,150,180,170], draw(c){
+      c.fillStyle = "#8b5cf6";
+      roundRect(c, 186, 176, 108, 132, 16);
+      c.fillStyle = "#12062b";
+      c.fillRect(236, 182, 8, 122);                        /* open front line */
+      c.fillStyle = "#ffd166";
+      c.fillRect(232, 186, 4, 114);                        /* zipper */
+      c.fillRect(244, 186, 4, 114);
+    }},
+  ],
+  bottom: [
+    { id:"skirt", name:"Skirt", box:[150,270,180,130], draw(c){
+      c.fillStyle = "#ffd166";
+      c.beginPath();
+      c.moveTo(192, 286); c.lineTo(288, 286);
+      c.lineTo(312, 386); c.lineTo(168, 386);
+      c.closePath(); c.fill();
+      c.fillStyle = "#ff2d95";
+      c.fillRect(192, 286, 96, 14);                        /* waistband */
+    }},
+    { id:"jeans", name:"Jeans", box:[150,280,180,180], draw(c){
+      c.fillStyle = "#3b82f6";
+      roundRect(c, 190, 288, 100, 34, 10);
+      roundRect(c, 194, 310, 40, 168, 12);
+      roundRect(c, 246, 310, 40, 168, 12);
+    }},
+    { id:"shorts", name:"Shorts", box:[150,280,180,110], draw(c){
+      c.fillStyle = "#6ff2c5";
+      roundRect(c, 190, 288, 100, 30, 10);
+      roundRect(c, 194, 308, 42, 62, 10);
+      roundRect(c, 244, 308, 42, 62, 10);
+    }},
+  ],
+  dress: [
+    { id:"gown", name:"Ball Gown", box:[120,150,240,300], draw(c){
+      c.fillStyle = "#ff2d95";
+      roundRect(c, 198, 178, 84, 128, 18);                 /* bodice */
+      c.beginPath();                                        /* huge skirt */
+      c.moveTo(186, 292); c.lineTo(294, 292);
+      c.quadraticCurveTo(360, 420, 356, 500);
+      c.quadraticCurveTo(240, 548, 124, 500);
+      c.quadraticCurveTo(120, 420, 186, 292);
+      c.closePath(); c.fill();
+      c.fillStyle = "#ffd166";                              /* sash */
+      c.fillRect(196, 286, 88, 16);
+    }},
+    { id:"sundress", name:"Sun Dress", box:[140,150,200,280], draw(c){
+      c.fillStyle = "#ffd166";
+      roundRect(c, 204, 180, 72, 104, 14);                  /* bodice */
+      c.beginPath();                                        /* A-line */
+      c.moveTo(194, 278); c.lineTo(286, 278);
+      c.lineTo(316, 428); c.lineTo(164, 428);
+      c.closePath(); c.fill();
+      c.fillStyle = "#2de2e6";                              /* straps */
+      c.fillRect(212, 168, 12, 26);
+      c.fillRect(256, 168, 12, 26);
+    }},
+    { id:"cocktail", name:"Cocktail", box:[140,150,200,280], draw(c){
+      c.fillStyle = "#ff4d4d";
+      roundRect(c, 202, 178, 76, 132, 16);                  /* fitted */
+      c.beginPath();                                        /* flared hem */
+      c.ellipse(240, 360, 92, 52, 0, 0, Math.PI * 2);
+      c.fill();
+      c.fillStyle = "#fff6e9";                              /* belt */
+      c.fillRect(202, 292, 76, 12);
+    }},
+  ],
+  shoes: [
+    { id:"sneakers", name:"Sneakers", box:[170,470,140,80], draw(c){
+      c.fillStyle = "#2de2e6";
+      roundRect(c, 196, 502, 42, 30, 10);
+      roundRect(c, 244, 502, 42, 30, 10);
+      c.fillStyle = "#fff6e9";
+      c.fillRect(196, 524, 42, 8);
+      c.fillRect(244, 524, 42, 8);
+    }},
+    { id:"heels", name:"Heels", box:[170,470,140,80], draw(c){
+      c.fillStyle = "#ff2d95";
+      c.beginPath();
+      c.moveTo(200, 530); c.lineTo(236, 530); c.lineTo(236, 508);
+      c.closePath(); c.fill();
+      c.beginPath();
+      c.moveTo(248, 530); c.lineTo(284, 530); c.lineTo(284, 508);
+      c.closePath(); c.fill();
+      c.fillRect(200, 528, 10, 14);
+      c.fillRect(248, 528, 10, 14);
+    }},
+    { id:"boots", name:"Boots", box:[170,420,140,120], draw(c){
+      c.fillStyle = "#a16207";
+      roundRect(c, 192, 442, 46, 92, 12);
+      roundRect(c, 242, 442, 46, 92, 12);
+      c.fillStyle = "#ffd166";
+      c.fillRect(192, 452, 46, 8);
+      c.fillRect(242, 452, 46, 8);
+    }},
+  ],
+  bag: [
+    { id:"purse", name:"Purse", box:[260,270,120,110], draw(c){
+      c.strokeStyle = "#ffd166"; c.lineWidth = 6;
+      c.beginPath(); c.arc(318, 292, 30, Math.PI * 1.15, Math.PI * 1.85); c.stroke();
+      c.fillStyle = "#ff2d95";
+      roundRect(c, 288, 292, 60, 46, 12);
+      c.fillStyle = "#ffd166";
+      c.fillRect(310, 292, 16, 10);
+    }},
+    { id:"tote", name:"Tote", box:[260,270,120,120], draw(c){
+      c.strokeStyle = "#fff6e9"; c.lineWidth = 6;
+      c.beginPath(); c.arc(318, 296, 26, Math.PI * 1.15, Math.PI * 1.85); c.stroke();
+      c.fillStyle = "#2de2e6";
+      roundRect(c, 284, 296, 68, 58, 10);
+      c.fillStyle = "#12062b";
+      c.fillRect(308, 316, 20, 18);
+    }},
+    { id:"backpack", name:"Pack", box:[260,240,120,130], draw(c){
+      c.fillStyle = "#6ff2c5";
+      roundRect(c, 286, 242, 62, 84, 16);
+      c.fillStyle = "#22c55e";
+      roundRect(c, 298, 268, 38, 30, 8);
+      c.strokeStyle = "#22c55e"; c.lineWidth = 7;
+      c.beginPath(); c.moveTo(292, 252); c.lineTo(268, 276); c.stroke();
+    }},
+  ],
+  jewelry: [
+    { id:"necklace", name:"Necklace", box:[180,130,120,80], draw(c){
+      c.fillStyle = "#ffd166";
+      for(let i = 0; i <= 8; i++){
+        const a = Math.PI * (0.15 + 0.7 * i / 8);
+        c.beginPath();
+        c.arc(240 + Math.cos(a) * 40, 178 + Math.sin(a) * 26, 7, 0, Math.PI * 2);
+        c.fill();
+      }
+      c.beginPath(); c.arc(240, 210, 10, 0, Math.PI * 2); c.fill(); /* pendant */
+    }},
+    { id:"earrings", name:"Earrings", box:[160,90,160,80], draw(c){
+      c.fillStyle = "#ffd166";
+      c.beginPath(); c.arc(188, 122, 9, 0, Math.PI * 2); c.fill();
+      c.beginPath(); c.arc(292, 122, 9, 0, Math.PI * 2); c.fill();
+      c.beginPath(); c.arc(188, 142, 6, 0, Math.PI * 2); c.fill();
+      c.beginPath(); c.arc(292, 142, 6, 0, Math.PI * 2); c.fill();
+    }},
+    { id:"bracelet", name:"Bracelet", box:[270,270,90,70], draw(c){
+      c.strokeStyle = "#ffd166"; c.lineWidth = 8;
+      c.beginPath(); c.arc(298, 300, 16, Math.PI * 0.7, Math.PI * 1.3); c.stroke();
+      c.fillStyle = "#ff2d95";
+      c.beginPath(); c.arc(282, 296, 6, 0, Math.PI * 2); c.fill();
+    }},
+  ],
+  hat: [
+    { id:"crown", name:"Crown", box:[170,40,140,90], draw(c){
+      c.fillStyle = "#ffd166";
+      c.beginPath();
+      c.moveTo(196, 88); c.lineTo(196, 56); c.lineTo(216, 74);
+      c.lineTo(240, 44); c.lineTo(264, 74); c.lineTo(284, 56);
+      c.lineTo(284, 88); c.closePath(); c.fill();
+      c.fillStyle = "#ff2d95";
+      c.beginPath(); c.arc(240, 70, 8, 0, Math.PI * 2); c.fill();
+      c.fillStyle = "#2de2e6";
+      c.beginPath(); c.arc(214, 78, 5, 0, Math.PI * 2); c.fill();
+      c.beginPath(); c.arc(266, 78, 5, 0, Math.PI * 2); c.fill();
+    }},
+    { id:"beanie", name:"Beanie", box:[170,40,140,90], draw(c){
+      c.fillStyle = "#ff4d4d";
+      c.beginPath(); c.arc(240, 92, 56, Math.PI, 0); c.fill();
+      c.fillStyle = "#fff6e9";
+      roundRect(c, 184, 84, 112, 18, 9);
+      c.beginPath(); c.arc(240, 40, 12, 0, Math.PI * 2); c.fill();
+    }},
+    { id:"sunhat", name:"Sun Hat", box:[150,30,180,110], draw(c){
+      c.fillStyle = "#ffd166";
+      c.beginPath(); c.ellipse(240, 92, 92, 26, 0, 0, Math.PI * 2); c.fill();
+      c.beginPath(); c.arc(240, 76, 46, Math.PI, 0); c.fill();
+      c.fillStyle = "#ff2d95";
+      c.fillRect(198, 80, 84, 12);
+    }},
+  ],
+};
+
+const CATS = [
+  ["top", "👕 tops"], ["bottom", "🩳 bottoms"], ["dress", "👗 dresses"],
+  ["shoes", "👠 shoes"], ["hat", "👑 hats"], ["bag", "👜 bags"],
+  ["jewelry", "📿 jewelry"],
+];
+
+/* ---------- app state ---------- */
+const state = {
+  worn: { top:null, bottom:null, dress:null, shoes:null, hat:null, bag:null, jewelry:null },
+};
+
+const pieceById = (cat, id) => (PIECES[cat] || []).find(p => p.id === id);
+
+/* ---------- persistence (lookbook) ---------- */
+const GKEY = "dress-studio-lookbook:v1";
+
+function seed(){ return { items: [] }; }
+
+function loadLooks(){
+  try{
+    const raw = localStorage.getItem(GKEY);
+    if(!raw) return seed();
+    const g = JSON.parse(raw);
+    return { items: (g && Array.isArray(g.items)) ? g.items : [] };
+  }catch(e){ return seed(); }
+}
+
+function saveLooks(){
+  try{ localStorage.setItem(GKEY, JSON.stringify(looks)); }catch(e){}
+}
+
+let looks = loadLooks();
+
+/* ---------- toast & flourishes ---------- */
+const toastEl = document.getElementById("toast");
+let toastT;
+function toast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add("show");
+  clearTimeout(toastT);
+  toastT = setTimeout(() => toastEl.classList.remove("show"), 2600);
+}
+
+function flourish(text, kind, x, y){
+  const el = document.createElement("div");
+  el.className = "fl " + (kind || "got");
+  el.textContent = text;
+  el.style.left = (x != null ? x : innerWidth / 2 - 60) + "px";
+  el.style.top = (y != null ? y : innerHeight / 2 - 40) + "px";
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 900);
+}
+
+function sparkBurst(host){
+  const glyphs = ["✦","★","◆","✧","★"];
+  for(let i = 0; i < 8; i++){
+    const s = document.createElement("div");
+    s.className = "spark";
+    s.textContent = glyphs[i % glyphs.length];
+    s.style.left = (10 + Math.random() * 80) + "%";
+    s.style.top = (30 + Math.random() * 50) + "%";
+    s.style.color = ["var(--yellow)","var(--pink)","var(--cyan)","var(--mint)"][i % 4];
+    s.style.animationDelay = (Math.random() * .5) + "s";
+    host.appendChild(s);
+    setTimeout(() => s.remove(), 2200);
+  }
+}
+
+/* ---------- drawing: model + looks ---------- */
+function drawBackdrop(c){
+  const g = c.createLinearGradient(0, 0, 0, STAGE_H);
+  g.addColorStop(0, "#2a1060");
+  g.addColorStop(1, "#7a2b6e");
+  c.fillStyle = g;
+  c.fillRect(0, 0, STAGE_W, STAGE_H);
+  c.fillStyle = "rgba(255,255,255,.08)";
+  for(let x = 0; x < STAGE_W; x += 48) c.fillRect(x, 0, 2, STAGE_H);
+  for(let y = 0; y < STAGE_H; y += 48) c.fillRect(0, y, STAGE_W, 2);
+  c.fillStyle = "rgba(0,0,0,.25)";
+  c.beginPath(); c.ellipse(240, 580, 130, 28, 0, 0, Math.PI * 2); c.fill(); /* shadow */
+}
+
+function drawModel(c){
+  /* skin */
+  c.fillStyle = "#f0c8a0";
+  roundRect(c, 178, 186, 22, 120, 11);                     /* arms */
+  roundRect(c, 280, 186, 22, 120, 11);
+  roundRect(c, 206, 288, 26, 190, 13);                     /* legs */
+  roundRect(c, 248, 288, 26, 190, 13);
+  roundRect(c, 198, 478, 42, 30, 12);                      /* feet */
+  roundRect(c, 242, 478, 42, 30, 12);
+  roundRect(c, 198, 176, 84, 130, 20);                     /* torso base */
+  c.beginPath(); c.arc(240, 118, 54, 0, Math.PI * 2); c.fill(); /* head */
+  /* base romper so the model is never "naked" */
+  c.fillStyle = "#f4f1de";
+  roundRect(c, 202, 182, 76, 118, 18);
+  c.fillRect(202, 268, 76, 18);
+  /* face */
+  c.fillStyle = "#12062b";
+  c.beginPath(); c.arc(222, 116, 6, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.arc(258, 116, 6, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = "#12062b"; c.lineWidth = 4; c.lineCap = "round";
+  c.beginPath(); c.arc(240, 134, 16, 0.25, Math.PI - 0.25); c.stroke();
+  /* hair */
+  c.fillStyle = "#5b3a29";
+  c.beginPath(); c.arc(240, 104, 56, Math.PI * 0.98, Math.PI * 2.02); c.fill();
+  c.fillRect(184, 100, 24, 66);
+  c.fillRect(272, 100, 24, 66);
+  c.fillStyle = "#f0c8a0";
+  c.beginPath(); c.arc(240, 128, 40, 0, Math.PI); c.fill(); /* face opening */
+  c.fillStyle = "#12062b";
+  c.beginPath(); c.arc(222, 116, 6, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.arc(258, 116, 6, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.arc(240, 134, 16, 0.25, Math.PI - 0.25); c.stroke();
+}
+
+function drawLook(c, worn){
+  drawBackdrop(c);
+  drawModel(c);
+  /* fixed layer order: dress | (top → bottom) → shoes → bag → jewelry → hat */
+  if(worn.dress){
+    const p = pieceById("dress", worn.dress);
+    if(p) p.draw(c);
+  }else{
+    const t = pieceById("top", worn.top);
+    if(t) t.draw(c);
+    const b = pieceById("bottom", worn.bottom);
+    if(b) b.draw(c);
+  }
+  const s = pieceById("shoes", worn.shoes);   if(s) s.draw(c);
+  const g = pieceById("bag", worn.bag);       if(g) g.draw(c);
+  const j = pieceById("jewelry", worn.jewelry); if(j) j.draw(c);
+  const h = pieceById("hat", worn.hat);       if(h) h.draw(c);
+}
+
+const doll = document.getElementById("doll");
+const dollCtx = doll.getContext("2d");
+
+function renderStage(){
+  drawLook(dollCtx, state.worn);
+  /* chip selection rings */
+  document.querySelectorAll(".chip").forEach(chip => {
+    const cat = chip.getAttribute("data-cat");
+    chip.classList.toggle("on", state.worn[cat] === chip.getAttribute("data-id"));
+  });
+}
+
+/* ---------- closet ---------- */
+function renderCloset(){
+  const wrap = document.getElementById("cats");
+  wrap.textContent = "";
+  CATS.forEach(([cat, label]) => {
+    const catEl = document.createElement("div");
+    catEl.className = "cat";
+    const h = document.createElement("p");
+    h.className = "catname";
+    h.textContent = label;
+    catEl.appendChild(h);
+    const row = document.createElement("div");
+    row.className = "chips";
+    PIECES[cat].forEach(piece => {
+      const chip = document.createElement("button");
+      chip.className = "chip";
+      chip.setAttribute("data-cat", cat);
+      chip.setAttribute("data-id", piece.id);
+      const mini = document.createElement("canvas");
+      mini.width = 56; mini.height = 56;
+      const mc = mini.getContext("2d");
+      /* frame the piece's box into the chip */
+      const [bx, by, bw, bh] = piece.box;
+      const k = Math.min(52 / bw, 52 / bh);
+      mc.translate((56 - bw * k) / 2 - bx * k, (56 - bh * k) / 2 - by * k);
+      mc.scale(k, k);
+      piece.draw(mc);
+      const nm = document.createElement("div");
+      nm.className = "cname";
+      nm.textContent = piece.name;
+      chip.appendChild(mini);
+      chip.appendChild(nm);
+      chip.addEventListener("click", () => wear(cat, piece.id));
+      row.appendChild(chip);
+    });
+    catEl.appendChild(row);
+    wrap.appendChild(catEl);
+  });
+}
+
+/* ---------- styling flow ---------- */
+function wear(cat, id){
+  const slot = cat;
+  if(state.worn[slot] === id){
+    state.worn[slot] = null;                    /* tap again = take off */
+    renderStage();
+    return;
+  }
+  state.worn[slot] = id;
+  /* dress XOR top+bottom */
+  if(slot === "dress"){ state.worn.top = null; state.worn.bottom = null; }
+  if(slot === "top" || slot === "bottom"){ state.worn.dress = null; }
+  renderStage();
+}
+
+function undress(){
+  state.worn = { top:null, bottom:null, dress:null, shoes:null, hat:null, bag:null, jewelry:null };
+  renderStage();
+  toast("model back to bare");
+}
+
+/* ---------- lookbook ---------- */
+const galgrid = document.getElementById("galgrid");
+
+function renderLooks(){
+  galgrid.textContent = "";
+  if(!looks.items.length){
+    const d = document.createElement("div");
+    d.className = "gempty";
+    d.textContent = "no looks saved yet — style something!";
+    galgrid.appendChild(d);
+    return;
+  }
+  looks.items.forEach(item => {
+    const card = document.createElement("div");
+    card.className = "gitem";
+    const thumb = document.createElement("canvas");
+    thumb.width = 84; thumb.height = 112;
+    const tc = thumb.getContext("2d");
+    tc.save();
+    tc.scale(84 / STAGE_W, 112 / STAGE_H);
+    drawLook(tc, item.worn || {});
+    tc.restore();
+    const name = document.createElement("div");
+    name.className = "gname";
+    name.textContent = item.name;
+    const row = document.createElement("div");
+    row.className = "grow";
+    const open = document.createElement("button");
+    open.className = "btn mint";
+    open.textContent = "open";
+    open.addEventListener("click", () => openLook(item.id));
+    const del = document.createElement("button");
+    del.className = "btn primary";
+    del.textContent = "delete";
+    del.addEventListener("click", () => deleteLook(item.id));
+    row.appendChild(open);
+    row.appendChild(del);
+    card.appendChild(thumb);
+    card.appendChild(name);
+    card.appendChild(row);
+    galgrid.appendChild(card);
+  });
+}
+
+function currentName(){
+  const v = document.getElementById("look-name").value.trim();
+  return v || "My Look";
+}
+
+function saveLook(){
+  if(looks.items.length >= MAX_LOOKS){
+    toast("lookbook is full — delete one first");
+    return;
+  }
+  const item = {
+    id: "look-" + Date.now(),
+    name: currentName(),
+    worn: Object.assign({}, state.worn),
+    created: Date.now(),
+  };
+  looks.items.unshift(item);
+  saveLooks();
+  renderLooks();
+  flourish("saved!", "got");
+  sparkBurst(document.querySelector("main"));
+  toast("★ “" + item.name + "” in the lookbook");
+}
+
+function openLook(id){
+  const item = looks.items.find(i => i.id === id);
+  if(!item) return;
+  state.worn = Object.assign(
+    { top:null, bottom:null, dress:null, shoes:null, hat:null, bag:null, jewelry:null },
+    item.worn || {}
+  );
+  document.getElementById("look-name").value = item.name;
+  renderStage();
+  toast("opened “" + item.name + "”");
+}
+
+function deleteLook(id){
+  looks.items = looks.items.filter(i => i.id !== id);
+  saveLooks();
+  renderLooks();
+  toast("look deleted");
+}
+
+/* ---------- export PNG ---------- */
+function exportPNG(){
+  const out = document.createElement("canvas");
+  out.width = STAGE_W * 2;
+  out.height = STAGE_H * 2;
+  const oc = out.getContext("2d");
+  oc.scale(2, 2);
+  drawLook(oc, state.worn);
+  const url = out.toDataURL("image/png");
+  const slug = currentName().toLowerCase().replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "my-look";
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = slug + ".png";
+  a.click();
+  flourish("PNG saved!", "got");
+  sparkBurst(document.querySelector("main"));
+  toast("⬇ " + slug + ".png — check your downloads");
+}
+
+/* ---------- reset ---------- */
+function resetAll(){
+  undress();
+  looks = seed();
+  saveLooks();
+  document.getElementById("look-name").value = "";
+  renderLooks();
+  toast("↺ fresh dress data restored");
+}
+
+/* ---------- events ---------- */
+document.getElementById("btn-save").addEventListener("click", saveLook);
+document.getElementById("btn-export").addEventListener("click", exportPNG);
+document.getElementById("btn-strip").addEventListener("click", undress);
+document.getElementById("btn-reset").addEventListener("click", resetAll);
+
+/* ---------- boot: studio ready immediately ---------- */
+renderCloset();
+renderStage();
+renderLooks();
+</script>
+</body>
+</html>

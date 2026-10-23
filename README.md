@@ -31,14 +31,16 @@ open index.html        # macOS — Example #1, the Clubhouse
 open bubblegum.html    # Example #2, Bubblegum Zap (the game)
 open study.html        # Example #3, Study Quest (the study arcade)
 open art.html          # Example #4, Art Arcade (pixel studio)
+open dress.html        # Example #5, Dress Studio (the fashion arcade)
 xdg-open index.html    # Linux same files
 
 # option B — serve everything
 python3 -m http.server 8123
 # then visit http://localhost:8123/ (clubhouse),
 #         http://localhost:8123/bubblegum.html (game),
-#         http://localhost:8123/study.html (study arcade), and
-#         http://localhost:8123/art.html (pixel studio)
+#         http://localhost:8123/study.html (study arcade),
+#         http://localhost:8123/art.html (pixel studio), and
+#         http://localhost:8123/dress.html (fashion arcade)
 ```
 
 Everything is local-only, invented data, no accounts, no installs.
@@ -51,6 +53,7 @@ Everything is local-only, invented data, no accounts, no installs.
 | `bubblegum.html` | **Example #2 — Bubblegum Zap**: the arcade game — retro chiptune, aim-assist laser/missiles, random gum objects, escalating 1-minute rounds |
 | `study.html` | **Example #3 — Study Quest**: the retro study arcade — flashcard decks by subject (Math, Vocab, History), flip/mark drilling, missed cards come back until the deck is clear |
 | `art.html` | **Example #4 — Art Arcade**: the retro pixel studio — paint/erase/fill/undo on a chunky grid, a gallery wall of saved drawings, and PNG export to take art home |
+| `dress.html` | **Example #5 — Dress Studio**: the retro fashion arcade — dress a paper-doll model from a mix-and-match closet (tops, dresses, shoes, hats, bags, jewelry), save looks to a lookbook, export PNGs |
 | `docs/reverse-prompt-guide.md` | **The playbook** — how students reverse-prompt with OpenSpec, with examples and drills |
 | `docs/runbook.md` | The 10-minute demo session script for the teacher/host (with troubleshooting) |
 | `docs/event-card.md` | A printable one-page journey card for the booth |
@@ -81,6 +84,7 @@ archived into its spec:
   weapons, and retro-music changes (Example #2)
 - `openspec/specs/study-app/spec.md` — the study arcade (Example #3)
 - `openspec/specs/art-studio/spec.md` — the pixel studio (Example #4)
+- `openspec/specs/dress-studio/spec.md` — the fashion studio (Example #5)
 
 `openspec/changes/archive/` holds the complete history of every change.
 
