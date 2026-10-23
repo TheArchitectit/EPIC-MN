@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cop Chase — EPIC-MN</title>
+<style>
+  :root {
+    --bg: #120a2e;
+    --bg2: #1c1140;
+    --road: #241652;
+    --pink: #ff2e88;
+    --cyan: #22e6ff;
+    --gold: #ffd23f;
+    --green: #3dffa0;
+    --ink: #0b0620;
+    --paper: #f4eeff;
+    --shadow: 5px 5px 0 var(--ink);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+      repeating-linear-gradient(0deg, rgba(0,0,0,0.12) 0 2px, transparent 2px 5px),
+      radial-gradient(1200px 700px at 50% -10%, #2b1b6b 0%, var(--bg) 60%);
+    color: var(--paper);
+    font-family: "Courier New", "Verdana", monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 14px 10px 26px;
+  }
+  .top {
+    width: 100%;
+    max-width: 620px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(22px, 5vw, 34px);
+    letter-spacing: 3px;
+    color: var(--gold);
+    text-shadow: 3px 3px 0 var(--pink), 6px 6px 0 rgba(0,0,0,0.45);
+    font-weight: 900;
+  }
+  .btn {
+    font-family: inherit;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    color: var(--ink);
+    background: var(--cyan);
+    border: 3px solid var(--ink);
+    border-radius: 12px;
+    padding: 10px 14px;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    touch-action: manipulation;
+  }
+  .btn:hover { transform: translate(-1px, -1px); box-shadow: 6px 6px 0 var(--ink); }
+  .btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink); }
+  .btn.ghost { background: var(--bg2); color: var(--paper); border-color: var(--pink); }
+  .btn.big { font-size: 18px; padding: 14px 26px; background: var(--pink); color: #fff; }
+  .btn.gas { background: var(--green); min-width: 92px; }
+  .btn.brake { background: var(--gold); min-width: 92px; }
+  .btn.gas.on { background: #7dffc4; box-shadow: 2px 2px 0 var(--ink), 0 0 18px var(--green); }
+  .btn.brake.on { background: #ffe98a; box-shadow: 2px 2px 0 var(--ink), 0 0 18px var(--gold); }
+  .btn.steer { font-size: 22px; min-width: 74px; background: var(--cyan); }
+  main {
+    width: 100%;
+    max-width: 620px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .boardwrap {
+    position: relative;
+    margin: 0 auto;
+    border-radius: 14px;
+    border: 4px solid var(--ink);
+    box-shadow: 8px 8px 0 rgba(0,0,0,0.5);
+    overflow: hidden;
+    background: var(--bg2);
+    width: 100%;
+    max-width: 560px;
+    align-self: center;
+  }
+  canvas {
+    width: 100%;
+    height: auto;
+    display: block;
+    image-rendering: pixelated;
+  }
+  .screen {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    text-align: center;
+    padding: 18px;
+    background: rgba(18, 10, 46, 0.82);
+  }
+  .screen.hidden { display: none; }
+  .screen h2 {
+    margin: 0;
+    font-size: clamp(26px, 7vw, 40px);
+    letter-spacing: 3px;
+    color: var(--cyan);
+    text-shadow: 3px 3px 0 var(--pink);
+    font-weight: 900;
+  }
+  .rules {
+    font-size: 13px;
+    line-height: 1.9;
+    letter-spacing: 1px;
+    color: var(--paper);
+  }
+  .big-score {
+    font-size: clamp(40px, 10vw, 62px);
+    font-weight: 900;
+    color: var(--gold);
+    text-shadow: 4px 4px 0 var(--pink);
+  }
+  .banner {
+    background: var(--gold);
+    color: var(--ink);
+    font-weight: 900;
+    letter-spacing: 2px;
+    padding: 8px 14px;
+    border-radius: 12px;
+    border: 3px solid var(--ink);
+    box-shadow: var(--shadow);
+    margin: 6px;
+    animation: bounce 0.7s ease-in-out infinite alternate;
+  }
+  .banner.hidden { display: none; }
+  @keyframes bounce {
+    from { transform: translateY(0) rotate(-2deg); }
+    to { transform: translateY(-5px) rotate(2deg); }
+  }
+  .status {
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: var(--cyan);
+    text-align: center;
+    min-height: 16px;
+  }
+  .hud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 12px 0 6px;
+    justify-content: space-between;
+  }
+  .stat {
+    flex: 1 1 100px;
+    background: var(--bg2);
+    border: 3px solid var(--ink);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 6px 10px;
+    text-align: center;
+  }
+  .stat .lbl {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--cyan);
+    font-weight: 900;
+  }
+  .stat .val {
+    display: block;
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--gold);
+  }
+  .levers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+  }
+  .toast {
+    position: absolute;
+    left: 50%;
+    top: 14px;
+    transform: translateX(-50%);
+    background: var(--gold);
+    color: var(--ink);
+    font-weight: 900;
+    letter-spacing: 1px;
+    padding: 12px 22px;
+    border-radius: 999px;
+    border: 3px solid var(--ink);
+    box-shadow: var(--shadow);
+    z-index: 60;
+  }
+  .toast.hidden { display: none; }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>COP CHASE</h1>
+  <button id="btn-records" class="btn ghost">CLEAR RECORDS</button>
+</header>
+<main>
+  <div class="boardwrap">
+    <canvas id="road" width="540" height="720"></canvas>
+    <div id="screen-ready" class="screen">
+      <h2>NEON GETAWAY!</h2>
+      <div class="rules">
+        ⛽ GAS TO FLY · BRAKE TO SURVIVE<br>
+        ◀ ▶ WEAVE THROUGH THE TRAFFIC<br>
+        🚔 HARD BRAKE MAKES COPS OVERSHOOT<br>
+        ⏱ CHECKPOINT GATES ADD TIME ON THE CLOCK
+      </div>
+      <button id="btn-start" class="btn big">START THE CHASE</button>
+      <div class="status">↑ / W gas · ↓ / S brake · ← → or A / D steer · Enter to start</div>
+    </div>
+    <div id="screen-over" class="screen hidden">
+      <h2 id="over-title">BUSTED!</h2>
+      <div id="over-newbest" class="banner hidden">NEW BEST!</div>
+      <div id="over-score" class="big-score">0</div>
+      <div id="over-info" class="rules">0m · 0 CHECKPOINTS</div>
+      <button id="btn-again" class="btn big">PLAY AGAIN</button>
+    </div>
+    <div id="toast" class="toast hidden"></div>
+  </div>
+
+  <section class="hud">
+    <div class="stat"><span class="lbl">SCORE</span><span id="hud-score" class="val">0</span></div>
+    <div class="stat"><span class="lbl">TIME</span><span id="hud-time" class="val">50s</span></div>
+    <div class="stat"><span class="lbl">SPEED</span><span id="hud-speed" class="val">0</span></div>
+    <div class="stat"><span class="lbl">BEST</span><span id="hud-best" class="val">--</span></div>
+  </section>
+
+  <div class="levers">
+    <button id="btn-left" class="btn steer">◀</button>
+    <button id="btn-gas" class="btn gas">⛽ GAS</button>
+    <button id="btn-brake" class="btn brake">🛑 BRAKE</button>
+    <button id="btn-right" class="btn steer">▶</button>
+  </div>
+  <div id="status" class="status">the neon highway is calling... gas!</div>
+</main>
+
+<script>
+  "use strict";
+
+  // ---------- constants ----------
+  var GKEY = "cop-chase:v1";
+  var TICK_MS = 100;
+  var LANES = 5;
+  var LANE_W = 96;
+  var ROAD_L = 30;
+  var HERO_Y = 560;
+  var MIN_SPEED = 80;
+  var MAX_SPEED = 440;
+  var CRUISE = 240;
+  var GAS_ACC = 28;
+  var BRAKE_ACC = 36;
+  var DRAG = 4;
+  var BAND_GAP = 260;
+  var START_TIME = 50;
+  var CHECKPOINT_DIST = 3000;
+  var CHECKPOINT_BONUS = 25;
+  var COP_START = 500;
+  var COP2_START = 680;
+  var COP_CATCH_BASE = 4;
+  var COP_HEAT_CATCH = 2;
+  var OVERSHOOT_GAP = 250;
+  var OVERSHOOT_SET = 420;
+  var OVERSHOOT_CD = 2500;
+  var OVERSHOOT_SCORE = 100;
+  var BUST_GAP = 40;
+  var CRASH_SPEED = 120;
+  var CRASH_GAP_HIT = 120;
+  var CRASH_MS = 700;
+  var CRASH_CD = 800;
+  var NEAR_MISS_PX = 46;
+  var NEAR_MISS_SCORE = 50;
+  var PULL_AWAY_SPEED = 320;
+
+  // ---------- state ----------
+  var state = {
+    screen: "ready",
+    runDist: 0,
+    speed: CRUISE,
+    targetLane: 2,
+    heroX: 270,
+    timeLeft: START_TIME,
+    score: 0,
+    copGap: COP_START,
+    cop2Gap: COP2_START,
+    copX: 270,
+    cop2X: 462,
+    overshootCd: 0,
+    crashMs: 0,
+    crashCd: 0,
+    gasHeld: false,
+    brakeHeld: false,
+    traffic: [],
+    bandSeen: {},
+    nextCheckpoint: CHECKPOINT_DIST,
+    checkpoints: 0,
+    nearMisses: 0,
+    floats: [],
+    frame: 0,
+    bestScore: 0,
+    bestDist: 0,
+    result: null,
+    status: ""
+  };
+
+  // ---------- helpers ----------
+  function hash(i) {
+    var x = Math.sin(i * 127.1) * 43758.5453;
+    return x - Math.floor(x);
+  }
+  function laneCenter(i) {
+    return ROAD_L + LANE_W * i + LANE_W / 2;
+  }
+  function heat() {
+    return 1 + Math.floor(state.runDist / 4000);
+  }
+  function distM() {
+    return Math.floor(state.runDist / 10);
+  }
+
+  // ---------- storage ----------
+  function seedRecords() {
+    return { bestScore: 0, bestDist: 0 };
+  }
+  function loadRecords() {
+    try {
+      var raw = localStorage.getItem(GKEY);
+      if (!raw) return seedRecords();
+      var d = JSON.parse(raw);
+      if (typeof d.bestScore !== "number" || typeof d.bestDist !== "number") return seedRecords();
+      return d;
+    } catch (e) {
+      return seedRecords();
+    }
+  }
+  function saveRecords() {
+    try {
+      localStorage.setItem(GKEY, JSON.stringify({
+        bestScore: state.bestScore,
+        bestDist: state.bestDist
+      }));
+    } catch (e) { /* save failures never break play */ }
+  }
+
+  var toastTimer = null;
+  function toast(msg) {
+    var el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.remove("hidden");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      el.classList.add("hidden");
+    }, 1600);
+    state.status = msg.toLowerCase();
+  }
+
+  // ---------- game flow ----------
+  function startGame() {
+    state.screen = "running";
+    state.runDist = 0;
+    state.speed = CRUISE;
+    state.targetLane = 2;
+    state.heroX = laneCenter(2);
+    state.timeLeft = START_TIME;
+    state.score = 0;
+    state.copGap = COP_START;
+    state.cop2Gap = COP2_START;
+    state.copX = laneCenter(2);
+    state.cop2X = laneCenter(4);
+    state.overshootCd = 0;
+    state.crashMs = 0;
+    state.crashCd = 0;
+    state.gasHeld = false;
+    state.brakeHeld = false;
+    state.traffic = [];
+    state.bandSeen = {};
+    state.nextCheckpoint = CHECKPOINT_DIST;
+    state.checkpoints = 0;
+    state.nearMisses = 0;
+    state.floats = [];
+    state.result = null;
+    setPedalButtons();
+    ensureTraffic();
+    toast("GO GO GO!");
+    render();
+  }
+
+  function gameOver(reason) {
+    state.screen = "over";
+    state.gasHeld = false;
+    state.brakeHeld = false;
+    setPedalButtons();
+    var d = distM();
+    var newBest = state.score > state.bestScore || d > state.bestDist;
+    if (state.score > state.bestScore) state.bestScore = state.score;
+    if (d > state.bestDist) state.bestDist = d;
+    saveRecords();
+    state.result = {
+      score: state.score,
+      dist: d,
+      checkpoints: state.checkpoints,
+      nearMisses: state.nearMisses,
+      reason: reason,
+      newBest: newBest
+    };
+    if (newBest) toast("NEW BEST!");
+    render();
+  }
+
+  // ---------- controls ----------
+  function steer(dir) {
+    if (state.screen !== "running") return;
+    var t = state.targetLane + dir;
+    if (t < 0) t = 0;
+    if (t > LANES - 1) t = LANES - 1;
+    state.targetLane = t;
+    state.status = dir < 0 ? "cutting left..." : "cutting right...";
+    render();
+  }
+  function setGas(on) {
+    if (state.screen !== "running") { state.gasHeld = false; return; }
+    state.gasHeld = !!on;
+    if (on) state.brakeHeld = false;
+    setPedalButtons();
+  }
+  function setBrake(on) {
+    if (state.screen !== "running") { state.brakeHeld = false; return; }
+    state.brakeHeld = !!on;
+    if (on) state.gasHeld = false;
+    setPedalButtons();
+  }
+  function setPedalButtons() {
+    var g = document.getElementById("btn-gas");
+    var b = document.getElementById("btn-brake");
+    if (state.gasHeld) g.classList.add("on"); else g.classList.remove("on");
+    if (state.brakeHeld) b.classList.add("on"); else b.classList.remove("on");
+  }
+
+  // ---------- traffic ----------
+  function ensureTraffic() {
+    var k0 = Math.floor((state.runDist - 400) / BAND_GAP);
+    var k1 = Math.floor((state.runDist + 2200) / BAND_GAP);
+    for (var k = k0; k <= k1; k++) {
+      if (state.bandSeen[k]) continue;
+      state.bandSeen[k] = true;
+      var n = 1 + Math.floor(hash(k * 13 + 5) * 2.99);
+      var lanes = [0, 1, 2, 3, 4];
+      for (var j = 0; j < n; j++) {
+        var li = Math.floor(hash(k * 31 + j * 17 + 3) * (lanes.length - 0.001));
+        var lane = lanes.splice(li, 1)[0];
+        state.traffic.push({
+          y: k * BAND_GAP + 200 + j * 90,
+          lane: lane,
+          speed: 130 + Math.floor(hash(k * 41 + j * 11 + 7) * 100),
+          paint: Math.floor(hash(k * 53 + j * 7 + 9) * 3),
+          near: false
+        });
+      }
+    }
+    state.traffic = state.traffic.filter(function (c) {
+      return c.y > state.runDist - 300;
+    });
+  }
+
+  // ---------- pursuit ----------
+  function fireOvershoot(who) {
+    state.overshootCd = OVERSHOOT_CD;
+    state.score += OVERSHOOT_SCORE;
+    state.floats.push({
+      x: who === 1 ? laneCenter(1) : laneCenter(3),
+      y: HERO_Y + 120,
+      text: "+" + OVERSHOOT_SCORE + " OVERSHOOT!",
+      ms: 1200
+    });
+    toast("COP OVERSHOOT! +" + OVERSHOOT_SCORE);
+  }
+
+  function crashInto() {
+    state.speed = CRASH_SPEED;
+    state.copGap -= CRASH_GAP_HIT;
+    if (heat() >= 3) state.cop2Gap -= CRASH_GAP_HIT;
+    state.crashMs = CRASH_MS;
+    state.crashCd = CRASH_CD;
+    toast("CRASH! THE NET TIGHTENS!");
+  }
+
+  // ---------- clock tick ----------
+  function tick() {
+    if (state.screen !== "running") return;
+    state.frame++;
+
+    // speed control
+    if (state.gasHeld) {
+      state.speed += GAS_ACC;
+    } else if (state.brakeHeld) {
+      state.speed -= BRAKE_ACC;
+    } else {
+      if (state.speed < CRUISE) state.speed += DRAG;
+      else if (state.speed > CRUISE) state.speed -= DRAG;
+    }
+    if (state.speed < MIN_SPEED) state.speed = MIN_SPEED;
+    if (state.speed > MAX_SPEED) state.speed = MAX_SPEED;
+
+    state.runDist += state.speed * 0.1;
+
+    // steering ease
+    var tx = laneCenter(state.targetLane);
+    state.heroX += (tx - state.heroX) * 0.22;
+
+    // cops weave toward the player's lane
+    state.copX += (state.heroX - state.copX) * 0.06;
+    state.cop2X += (state.heroX - state.cop2X) * 0.04;
+
+    // timers
+    if (state.overshootCd > 0) state.overshootCd -= TICK_MS;
+    if (state.crashMs > 0) state.crashMs -= TICK_MS;
+    if (state.crashCd > 0) state.crashCd -= TICK_MS;
+
+    // arcade clock
+    state.timeLeft -= 0.1;
+
+    // checkpoints
+    if (state.runDist >= state.nextCheckpoint) {
+      state.nextCheckpoint += CHECKPOINT_DIST;
+      state.checkpoints++;
+      state.timeLeft += CHECKPOINT_BONUS;
+      toast("CHECKPOINT! +" + CHECKPOINT_BONUS + "s");
+    }
+
+    // traffic
+    ensureTraffic();
+    for (var i = 0; i < state.traffic.length; i++) {
+      var c = state.traffic[i];
+      c.y += c.speed * 0.1;
+      var dy = c.y - state.runDist;
+      var dx = Math.abs(state.heroX - laneCenter(c.lane));
+      if (Math.abs(dy) < 48 && dx < 44 && state.crashCd <= 0) {
+        crashInto();
+        c.near = true;
+      } else if (Math.abs(dy) < 48 && dx < 44 + NEAR_MISS_PX && !c.near) {
+        c.near = true;
+        state.nearMisses++;
+        state.score += NEAR_MISS_SCORE;
+        state.floats.push({
+          x: laneCenter(c.lane),
+          y: HERO_Y - 60,
+          text: "+" + NEAR_MISS_SCORE + " NEAR MISS!",
+          ms: 1000
+        });
+      }
+    }
+
+    // score from distance
+    state.score += Math.floor(state.speed * 0.02);
+
+    // pursuit: cops always gain a little; full throttle pulls away
+    var catchUp = COP_CATCH_BASE + COP_HEAT_CATCH * heat();
+    state.copGap -= catchUp;
+    if (state.speed > PULL_AWAY_SPEED) state.copGap += 2;
+    if (state.copGap > 620) state.copGap = 620;
+    if (heat() >= 3) {
+      state.cop2Gap -= catchUp;
+      if (state.speed > PULL_AWAY_SPEED) state.cop2Gap += 2;
+      if (state.cop2Gap > 720) state.cop2Gap = 720;
+    }
+
+    // hard brake near a cop -> overshoot
+    if (state.brakeHeld && state.overshootCd <= 0) {
+      if (state.copGap < OVERSHOOT_GAP) {
+        state.copGap = OVERSHOOT_SET;
+        fireOvershoot(1);
+      } else if (heat() >= 3 && state.cop2Gap < OVERSHOOT_GAP) {
+        state.cop2Gap = OVERSHOOT_SET;
+        fireOvershoot(2);
+      }
+    }
+
+    // floats fade
+    for (var f = state.floats.length - 1; f >= 0; f--) {
+      state.floats[f].ms -= TICK_MS;
+      state.floats[f].y -= 2;
+      if (state.floats[f].ms <= 0) state.floats.splice(f, 1);
+    }
+
+    // end conditions
+    if (state.timeLeft <= 0) {
+      state.timeLeft = 0;
+      gameOver("time");
+      return;
+    }
+    if (state.copGap <= BUST_GAP || (heat() >= 3 && state.cop2Gap <= BUST_GAP)) {
+      gameOver("busted");
+      return;
+    }
+
+    render();
+  }
+
+  // ---------- DOM render ----------
+  function render() {
+    document.getElementById("hud-score").textContent = String(state.score);
+    document.getElementById("hud-time").textContent =
+      (state.screen === "running" ? Math.ceil(state.timeLeft) : Math.ceil(state.timeLeft)) + "s";
+    document.getElementById("hud-speed").textContent =
+      Math.round(state.speed / 2) + " km/h";
+    var best = state.bestScore > 0 || state.bestDist > 0;
+    document.getElementById("hud-best").textContent = best
+      ? state.bestScore + " · " + state.bestDist + "m"
+      : "--";
+
+    var ready = document.getElementById("screen-ready");
+    var over = document.getElementById("screen-over");
+    if (state.screen === "ready") {
+      ready.classList.remove("hidden");
+      over.classList.add("hidden");
+    } else if (state.screen === "over") {
+      ready.classList.add("hidden");
+      over.classList.remove("hidden");
+      document.getElementById("over-title").textContent =
+        state.result && state.result.reason === "time" ? "OUT OF TIME!" : "BUSTED!";
+      document.getElementById("over-score").textContent = String(state.result ? state.result.score : 0);
+      document.getElementById("over-info").textContent =
+        (state.result ? state.result.dist : 0) + "m · " +
+        (state.result ? state.result.checkpoints : 0) + " CHECKPOINTS · " +
+        (state.result ? state.result.nearMisses : 0) +
+        (state.result && state.result.nearMisses === 1 ? " NEAR MISS" : " NEAR MISSES");
+      var nb = document.getElementById("over-newbest");
+      if (state.result && state.result.newBest) nb.classList.remove("hidden");
+      else nb.classList.add("hidden");
+    } else {
+      ready.classList.add("hidden");
+      over.classList.add("hidden");
+    }
+    document.getElementById("status").textContent =
+      state.status || "the neon highway is calling... gas!";
+  }
+
+  // ---------- canvas draw ----------
+  function draw() {
+    var canvas = document.getElementById("road");
+    var ctx = canvas.getContext("2d");
+
+    // night sky
+    var sky = ctx.createLinearGradient(0, 0, 0, 240);
+    sky.addColorStop(0, "#120a2e");
+    sky.addColorStop(1, "#4b1d8f");
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, 540, 240);
+
+    // pixel stars
+    for (var s = 0; s < 26; s++) {
+      var sx = Math.floor(hash(s * 3 + 1) * 540);
+      var sy = Math.floor(hash(s * 5 + 2) * 160);
+      var tw = (s + state.frame) % 7 === 0 ? 3 : 2;
+      ctx.fillStyle = s % 3 === 0 ? "#22e6ff" : "#f4eeff";
+      ctx.fillRect(sx, sy, tw, tw);
+    }
+
+    // neon moon
+    ctx.fillStyle = "#ffd23f";
+    ctx.beginPath();
+    ctx.arc(430, 86, 34, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#ff2e88";
+    ctx.beginPath();
+    ctx.arc(444, 78, 30, 0, Math.PI * 2);
+    ctx.fill();
+
+    // blocky skyline
+    for (var b = 0; b < 12; b++) {
+      var bw = 34 + Math.floor(hash(b * 9 + 4) * 30);
+      var bh = 50 + Math.floor(hash(b * 11 + 6) * 90);
+      var bx = b * 48 - 10;
+      ctx.fillStyle = b % 2 ? "#241652" : "#2e1b6b";
+      ctx.fillRect(bx, 220 - bh, bw, bh);
+      ctx.fillStyle = (b + Math.floor(state.frame / 4)) % 3 === 0 ? "#22e6ff" : "#ffd23f";
+      for (var w = 0; w < 4; w++) {
+        if (hash(b * 13 + w * 7 + 1) > 0.45) {
+          ctx.fillRect(bx + 6 + (w % 2) * 14, 230 - bh + 10 + Math.floor(w / 2) * 18, 8, 10);
+        }
+      }
+    }
+
+    // road bed
+    ctx.fillStyle = "#241652";
+    ctx.fillRect(0, 220, 540, 500);
+    ctx.fillStyle = "#1c1140";
+    ctx.fillRect(ROAD_L, 220, LANE_W * LANES, 500);
+
+    // scrolling shade bands
+    var bandOff = state.runDist % 160;
+    for (var y = 220 - bandOff; y < 720; y += 160) {
+      ctx.fillStyle = "rgba(34, 230, 255, 0.05)";
+      ctx.fillRect(ROAD_L, y, LANE_W * LANES, 80);
+    }
+
+    // glowing edges
+    ctx.fillStyle = "#22e6ff";
+    ctx.fillRect(ROAD_L - 6, 220, 6, 500);
+    ctx.fillRect(ROAD_L + LANE_W * LANES, 220, 6, 500);
+    ctx.fillStyle = "#ff2e88";
+    ctx.fillRect(ROAD_L - 12, 220, 4, 500);
+    ctx.fillRect(ROAD_L + LANE_W * LANES + 8, 220, 4, 500);
+
+    // gold dashes
+    var dashOff = state.runDist % 80;
+    for (var L = 1; L < LANES; L++) {
+      var lx = ROAD_L + LANE_W * L;
+      for (var dy = 220 - dashOff; dy < 720; dy += 80) {
+        ctx.fillStyle = "#ffd23f";
+        ctx.fillRect(lx - 3, dy, 6, 36);
+      }
+    }
+
+    // checkpoint arch
+    var cpDy = HERO_Y - (state.nextCheckpoint - state.runDist);
+    if (cpDy > -60 && cpDy < 760) {
+      ctx.fillStyle = "#ffd23f";
+      ctx.fillRect(ROAD_L - 10, cpDy - 8, 16, 60);
+      ctx.fillRect(ROAD_L + LANE_W * LANES - 6, cpDy - 8, 16, 60);
+      ctx.fillRect(ROAD_L - 10, cpDy - 26, LANE_W * LANES + 22, 20);
+      ctx.fillStyle = "#0b0620";
+      ctx.font = "900 18px 'Courier New', monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("CHECKPOINT", 270, cpDy - 10);
+    }
+
+    // traffic cars
+    for (var i = 0; i < state.traffic.length; i++) {
+      var c = state.traffic[i];
+      var cy = HERO_Y - (c.y - state.runDist);
+      if (cy < 160 || cy > 780) continue;
+      drawPixelCar(ctx, laneCenter(c.lane), cy, c.paint, false, false);
+    }
+
+    // hero
+    var heroPaint = 3;
+    drawPixelCar(ctx, state.heroX, HERO_Y, heroPaint, false, state.crashMs > 0);
+
+    // cop cars (compressed mapping keeps them visible at the bottom)
+    var copY = HERO_Y + 22 + Math.min(state.copGap, 420) * 0.24;
+    drawPixelCar(ctx, state.copX, copY, 4, true, false);
+    if (heat() >= 3) {
+      var cop2Y = HERO_Y + 22 + Math.min(state.cop2Gap, 420) * 0.24;
+      drawPixelCar(ctx, state.cop2X, cop2Y, 4, true, false);
+    }
+
+    // floating bonus text
+    ctx.textAlign = "center";
+    for (var f = 0; f < state.floats.length; f++) {
+      var fl = state.floats[f];
+      ctx.fillStyle = "#ffd23f";
+      ctx.font = "900 20px 'Courier New', monospace";
+      ctx.fillText(fl.text, fl.x, fl.y);
+    }
+
+    // CRT scanlines
+    for (var sl = 0; sl < 720; sl += 4) {
+      ctx.fillStyle = "rgba(0,0,0,0.16)";
+      ctx.fillRect(0, sl, 540, 2);
+    }
+  }
+
+  function drawPixelCar(ctx, x, y, paint, isCop, crashed) {
+    var body, stripe, light;
+    if (isCop) { body = "#e8e8ff"; stripe = "#241652"; light = null; }
+    else if (paint === 3) { body = "#ffd23f"; stripe = "#ff2e88"; light = null; } // hero
+    else if (paint === 0) { body = "#22e6ff"; stripe = "#0b0620"; light = null; }
+    else if (paint === 1) { body = "#ff2e88"; stripe = "#ffd23f"; light = null; }
+    else { body = "#3dffa0"; stripe = "#0b0620"; light = null; }
+
+    ctx.save();
+    ctx.translate(x, y);
+    if (crashed) ctx.rotate(Math.sin(state.frame * 0.9) * 0.12);
+
+    // wheels
+    ctx.fillStyle = "#0b0620";
+    ctx.fillRect(-32, -38, 12, 24);
+    ctx.fillRect(20, -38, 12, 24);
+    ctx.fillRect(-32, 16, 12, 24);
+    ctx.fillRect(20, 16, 12, 24);
+
+    // body
+    ctx.fillStyle = body;
+    ctx.fillRect(-28, -48, 56, 96);
+    // hood + trunk shading
+    ctx.fillStyle = "rgba(0,0,0,0.18)";
+    ctx.fillRect(-28, -48, 56, 14);
+    ctx.fillRect(-28, 34, 56, 14);
+    // stripes
+    ctx.fillStyle = stripe;
+    ctx.fillRect(-6, -48, 12, 96);
+    // cabin
+    ctx.fillStyle = "#1c1140";
+    ctx.fillRect(-20, -18, 40, 34);
+    ctx.fillStyle = "#22e6ff";
+    ctx.fillRect(-16, -14, 32, 12);
+    ctx.fillRect(-16, 2, 32, 10);
+
+    if (isCop) {
+      // light bar
+      var on = Math.floor(state.frame / 2) % 2 === 0;
+      ctx.fillStyle = on ? "#ff2e4d" : "#4b1d8f";
+      ctx.fillRect(-22, -40, 20, 12);
+      ctx.fillStyle = on ? "#4b1d8f" : "#22e6ff";
+      ctx.fillRect(2, -40, 20, 12);
+    }
+    ctx.restore();
+  }
+
+  // ---------- wiring ----------
+  document.addEventListener("keydown", function (e) {
+    var k = e.key;
+    if (k === "Enter") {
+      if (state.screen !== "running") startGame();
+      return;
+    }
+    if (k === "ArrowLeft" || k === "a" || k === "A") steer(-1);
+    else if (k === "ArrowRight" || k === "d" || k === "D") steer(1);
+    else if (k === "ArrowUp" || k === "w" || k === "W") setGas(true);
+    else if (k === "ArrowDown" || k === "s" || k === "S") setBrake(true);
+  });
+  document.addEventListener("keyup", function (e) {
+    var k = e.key;
+    if (k === "ArrowUp" || k === "w" || k === "W") setGas(false);
+    else if (k === "ArrowDown" || k === "s" || k === "S") setBrake(false);
+  });
+
+  document.getElementById("btn-start").addEventListener("click", startGame);
+  document.getElementById("btn-again").addEventListener("click", startGame);
+  document.getElementById("btn-left").addEventListener("click", function () { steer(-1); });
+  document.getElementById("btn-right").addEventListener("click", function () { steer(1); });
+  document.getElementById("btn-gas").addEventListener("click", function () {
+    setGas(!state.gasHeld);
+  });
+  document.getElementById("btn-brake").addEventListener("click", function () {
+    setBrake(!state.brakeHeld);
+  });
+  document.getElementById("btn-records").addEventListener("click", function () {
+    state.bestScore = 0;
+    state.bestDist = 0;
+    saveRecords();
+    toast("RECORDS CLEARED");
+    render();
+  });
+
+  // ---------- boot ----------
+  (function boot() {
+    var rec = loadRecords();
+    state.bestScore = rec.bestScore;
+    state.bestDist = rec.bestDist;
+    render();
+    setInterval(function () {
+      tick();
+      draw();
+    }, TICK_MS);
+  })();
+</script>
+</body>
+</html>
