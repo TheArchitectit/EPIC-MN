@@ -1,0 +1,1185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gridiron Rush — EPIC-MN</title>
+<style>
+  :root {
+    --turf:#2e7d44;
+    --turf2:#348a4c;
+    --chalk:#f4f1ea;
+    --ink:#131a16;
+    --cream:#ffe9c7;
+    --team:#2f6fed;
+    --rival:#e8482f;
+    --gold:#ffb13d;
+    --board:#1c2b22;
+    --bg:#0e1712;
+    --panel:#223229;
+    --line:#3c5244;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    background:var(--bg);
+    color:var(--cream);
+    font-family:"Courier New", Courier, monospace;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:16px 12px 28px;
+  }
+  header { text-align:center; margin-bottom:12px; }
+  header h1 {
+    font-size:clamp(22px, 5vw, 34px);
+    letter-spacing:2px;
+    color:var(--gold);
+    text-transform:uppercase;
+    text-shadow:3px 3px 0 var(--ink);
+  }
+  header p {
+    margin-top:4px;
+    font-size:clamp(11px, 2.6vw, 14px);
+    color:var(--chalk);
+    opacity:.85;
+    text-transform:uppercase;
+    letter-spacing:1px;
+  }
+  .boardwrap {
+    position:relative;
+    width:min(540px, 96vw);
+    border:4px solid var(--line);
+    border-radius:10px;
+    overflow:hidden;
+    background:var(--board);
+    box-shadow:0 10px 0 rgba(0,0,0,.35);
+  }
+  canvas {
+    display:block;
+    width:100%;
+    height:auto;
+    image-rendering:auto;
+  }
+  .toast {
+    position:absolute;
+    top:100px;
+    left:50%;
+    transform:translateX(-50%) translateY(-8px);
+    background:var(--gold);
+    color:var(--ink);
+    font-weight:bold;
+    font-size:14px;
+    letter-spacing:1px;
+    padding:8px 14px;
+    border-radius:8px;
+    border:3px solid var(--ink);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .18s, transform .18s;
+    z-index:6;
+    text-transform:uppercase;
+    white-space:nowrap;
+  }
+  .toast.show {
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+  }
+  .screen {
+    position:absolute;
+    inset:0;
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+    text-align:center;
+    padding:20px;
+    background:rgba(14, 23, 18, .82);
+    z-index:4;
+  }
+  .screen.show { display:flex; }
+  .screen h2 {
+    font-size:clamp(22px, 6vw, 34px);
+    letter-spacing:2px;
+    color:var(--gold);
+    text-transform:uppercase;
+    text-shadow:3px 3px 0 var(--ink);
+  }
+  .screen h3 {
+    font-size:clamp(18px, 5vw, 26px);
+    color:var(--chalk);
+    text-transform:uppercase;
+  }
+  .screen .big {
+    font-size:clamp(26px, 7vw, 40px);
+    color:var(--cream);
+    letter-spacing:2px;
+  }
+  .screen .sub {
+    font-size:clamp(12px, 3vw, 15px);
+    color:var(--chalk);
+    text-transform:uppercase;
+    letter-spacing:1px;
+    line-height:1.6;
+  }
+  .newbest {
+    display:none;
+    background:var(--gold);
+    color:var(--ink);
+    font-weight:bold;
+    font-size:clamp(15px, 4vw, 20px);
+    letter-spacing:2px;
+    padding:8px 18px;
+    border-radius:8px;
+    border:3px solid var(--ink);
+    text-transform:uppercase;
+  }
+  .newbest.show { display:inline-block; }
+  .screenbtns {
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    justify-content:center;
+    margin-top:6px;
+  }
+  button {
+    font-family:inherit;
+    font-weight:bold;
+    font-size:clamp(12px, 3vw, 15px);
+    letter-spacing:1px;
+    text-transform:uppercase;
+    color:var(--ink);
+    background:var(--cream);
+    border:3px solid var(--ink);
+    border-radius:8px;
+    padding:12px 16px;
+    cursor:pointer;
+    box-shadow:0 4px 0 rgba(0,0,0,.4);
+    touch-action:manipulation;
+    user-select:none;
+    -webkit-user-select:none;
+  }
+  button:active { transform:translateY(2px); box-shadow:0 2px 0 rgba(0,0,0,.4); }
+  button.alt { background:var(--gold); }
+  button.team { background:var(--team); color:#fff; }
+  button.rival { background:var(--rival); color:#fff; }
+  button.plain { background:var(--panel); color:var(--chalk); }
+  .strip {
+    width:min(540px, 96vw);
+    margin-top:12px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    align-items:center;
+  }
+  .pad {
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    flex-wrap:wrap;
+  }
+  .dpad {
+    display:grid;
+    grid-template-columns:repeat(3, 56px);
+    grid-template-rows:repeat(2, 48px);
+    gap:8px;
+  }
+  .dpad button { width:56px; height:48px; padding:0; font-size:18px; }
+  .dpad .sp { visibility:hidden; }
+  .rec {
+    font-size:12px;
+    letter-spacing:1px;
+    color:var(--chalk);
+    opacity:.85;
+    text-transform:uppercase;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Gridiron Rush</h1>
+  <p>Comets vs Stampede · classic arcade football</p>
+</header>
+
+<div class="boardwrap">
+  <div class="toast" id="toast"></div>
+  <canvas id="board" width="540" height="720"></canvas>
+
+  <div class="screen" id="screen-ready">
+    <h2>Gridiron Rush</h2>
+    <h3>Comets vs Stampede</h3>
+    <p class="sub" id="ready-records">No records yet</p>
+    <p class="sub">Arrows steer · 1/2/3 throw to your receivers<br>J juke · you call the plays and make the tackles</p>
+    <div class="screenbtns">
+      <button class="alt" id="btn-kickoff">Kick off!</button>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-pick">
+    <h2 id="pick-title">Call the play</h2>
+    <p class="sub" id="pick-sub">Pick your play — the ball is on the line</p>
+    <div class="screenbtns" id="pick-plays">
+      <button class="team" id="btn-run">Run</button>
+      <button class="team" id="btn-pass">Quick pass</button>
+      <button class="team" id="btn-deep">Deep bomb</button>
+    </div>
+    <div class="screenbtns" id="pick-defend">
+      <button class="rival" id="btn-defend">Take the field</button>
+    </div>
+    <p class="sub">1 = run · 2 = quick pass · 3 = deep bomb</p>
+  </div>
+
+  <div class="screen" id="screen-over">
+    <h2>Final whistle!</h2>
+    <h3 id="over-result">You win</h3>
+    <p class="big" id="over-score">21 — 14</p>
+    <p class="sub" id="over-stats">Margin +7 · Tds 3</p>
+    <div class="newbest" id="over-best">New best!</div>
+    <div class="screenbtns">
+      <button class="alt" id="btn-again">Play again</button>
+    </div>
+  </div>
+</div>
+
+<div class="strip">
+  <div class="dpad">
+    <button class="sp" aria-hidden="true"></button>
+    <button id="btn-up" aria-label="up">&#9650;</button>
+    <button class="sp" aria-hidden="true"></button>
+    <button id="btn-left" aria-label="left">&#9664;</button>
+    <button id="btn-down" aria-label="down">&#9660;</button>
+    <button id="btn-right" aria-label="right">&#9654;</button>
+  </div>
+  <div class="pad">
+    <button class="alt" id="btn-juke">Juke</button>
+    <button class="team" id="btn-t1">Throw 1</button>
+    <button class="team" id="btn-t2">Throw 2</button>
+    <button class="team" id="btn-t3">Throw 3</button>
+  </div>
+  <div class="pad">
+    <button class="plain" id="btn-clear">Clear records</button>
+  </div>
+  <div class="rec" id="strip-records">No records yet</div>
+</div>
+
+<script>
+"use strict";
+// ===== Gridiron Rush — classic arcade football (Comets vs Stampede) =====
+var GKEY = "gridiron-rush:v1";
+var TICK_MS = 100;
+var QUARTER_TICKS = 240;
+var PX_PER_YARD = 30;
+var FIELD_L = 60;
+var FIELD_R = 480;
+var PLAYER_SPEED = 7;
+var DEF_SPEED = 6.5;
+var ROUTE_SPEED = 6.4;
+var CPU_SPEED = 5.5;
+var TACKLE_R = 26;
+var JUKE_MULT = 1.5;
+var JUKE_TICKS = 8;
+var JUKE_CD = 20;
+var PASS_TICKS = 8;
+var PASS_LEAD = 3;
+var CATCH_R = 32;
+var CANVAS_W = 540;
+var CANVAS_H = 720;
+
+var board = document.getElementById("board");
+var ctx = board.getContext("2d");
+
+var rec = { bestMargin: 0, mostTDs: 0 };
+
+var state = {
+  situation: "ready",
+  possession: "you",
+  quarter: 1,
+  clockTicks: QUARTER_TICKS,
+  scoreYou: 0,
+  scoreRival: 0,
+  tdsYou: 0,
+  tdsRival: 0,
+  down: 1,
+  losY: 2700,
+  camY: 0,
+  entities: [],
+  wrs: [],
+  carrier: null,
+  flight: null,
+  holds: { l: false, r: false, u: false, d: false },
+  jukeLeft: 0,
+  jukeCd: 0,
+  playKind: "run",
+  floats: [],
+  tickN: 0,
+  newBest: false,
+  matchMargin: 0
+};
+
+// ----- house records machinery (save failures never break the game) -----
+function seedRec() {
+  try {
+    if (localStorage.getItem(GKEY) === null) {
+      localStorage.setItem(GKEY, JSON.stringify(rec));
+    }
+  } catch (e) { /* storage down — keep playing */ }
+}
+function loadRec() {
+  try {
+    var raw = localStorage.getItem(GKEY);
+    if (raw) {
+      var p = JSON.parse(raw);
+      rec = {
+        bestMargin: (p && typeof p.bestMargin === "number") ? p.bestMargin : 0,
+        mostTDs: (p && typeof p.mostTDs === "number") ? p.mostTDs : 0
+      };
+    }
+  } catch (e) { /* storage down — keep playing */ }
+}
+function saveRec() {
+  try {
+    localStorage.setItem(GKEY, JSON.stringify(rec));
+  } catch (e) { /* storage down — keep playing */ }
+}
+function clearRecords() {
+  rec = { bestMargin: 0, mostTDs: 0 };
+  saveRec();
+  render();
+  toast("Records cleared");
+}
+
+var toastTimer = null;
+function toast(msg) {
+  var el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () {
+    el.classList.remove("show");
+  }, 1800);
+}
+
+// ----- helpers -----
+function clamp(v, lo, hi) {
+  return v < lo ? lo : (v > hi ? hi : v);
+}
+function dist(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+function css(name) {
+  return getComputedStyle(document.documentElement)
+    .getPropertyValue("--" + name).trim() || "#888";
+}
+function ent(team, role, x, y, num, extra) {
+  var e = {
+    team: team,
+    role: role,
+    x: x,
+    y: y,
+    num: num,
+    star: false,
+    type: "streak",
+    side: -1,
+    t: 0,
+    vx: 0,
+    vy: -ROUTE_SPEED
+  };
+  if (extra) {
+    for (var k in extra) e[k] = extra[k];
+  }
+  return e;
+}
+
+// ----- formations & snaps -----
+function setupCometsPlay(kind) {
+  var losY = state.losY;
+  var qb = ent("you", "qb", 270, losY, 7);
+  var rb = ent("you", "rb", 215, losY + 34, 22);
+  var wr1 = ent("you", "wr", 105, losY + 12, 81, {
+    type: (kind === "deep") ? "streak" : (kind === "run" ? "stalk" : "out"),
+    side: -1
+  });
+  var wr2 = ent("you", "wr", 270, losY + 66, 84, {
+    type: (kind === "deep") ? "streak" : (kind === "run" ? "stalk" : "post"),
+    side: 0
+  });
+  var wr3 = ent("you", "wr", 435, losY + 12, 88, {
+    type: (kind === "deep") ? "streak" : (kind === "run" ? "stalk" : "out"),
+    side: 1
+  });
+  var defs = [];
+  var xs = [95, 180, 270, 360, 445];
+  for (var i = 0; i < 5; i++) {
+    defs.push(ent("rival", "def", xs[i], losY - 78, 50 + i * 3));
+  }
+  state.entities = [qb, rb, wr1, wr2, wr3].concat(defs);
+  state.wrs = [wr1, wr2, wr3];
+  state.playKind = kind;
+  state.carrier = (kind === "run") ? rb : qb;
+}
+
+function setupStampedePlay(kind) {
+  var losY = state.losY;
+  var qb = ent("rival", "qb", 270, losY, 9);
+  var rb2 = ent("rival", "rb", 215, losY - 34, 34);
+  var wr = ent("rival", "wr", 435, losY - 12, 87, { type: "out", side: 1 });
+  var defs = [];
+  var xs = [95, 180, 270, 360, 445];
+  for (var i = 0; i < 5; i++) {
+    var d = ent("you", "def", xs[i], losY + 78, 40 + i * 3);
+    if (i === 2) d.star = true;
+    defs.push(d);
+  }
+  state.entities = [qb, rb2, wr].concat(defs);
+  state.wrs = [];
+  state.playKind = kind;
+  state.carrier = qb;
+}
+
+function snapPlay(kind) {
+  if (state.possession !== "you") return;
+  setupCometsPlay(kind);
+  state.jukeLeft = 0;
+  state.jukeCd = 0;
+  state.flight = null;
+  state.situation = "live";
+  toast(kind === "run" ? "Hike! Run it" : (kind === "pass" ? "Hike! Quick pass" : "Hike! Deep bomb"));
+}
+
+function defendStart() {
+  if (state.possession !== "rival") return;
+  setupStampedePlay(Math.random() < 0.4 ? "run" : "pass");
+  state.flight = null;
+  state.situation = "live";
+  toast("Defend the line!");
+}
+
+function startGame() {
+  state.situation = "pick";
+  state.possession = "you";
+  state.quarter = 1;
+  state.clockTicks = QUARTER_TICKS;
+  state.scoreYou = 0;
+  state.scoreRival = 0;
+  state.tdsYou = 0;
+  state.tdsRival = 0;
+  state.down = 1;
+  state.losY = 2700;
+  state.camY = clamp(2700 - 360, 0, 2880);
+  state.carrier = null;
+  state.flight = null;
+  state.jukeLeft = 0;
+  state.jukeCd = 0;
+  state.floats = [];
+  state.newBest = false;
+  state.matchMargin = 0;
+  setupCometsPlay("pass");
+  toast("Kick off — call the play!");
+}
+
+// ----- movement & actions -----
+function setMove(dir, on) {
+  if (dir === "l") state.holds.l = on;
+  if (dir === "r") state.holds.r = on;
+  if (dir === "u") state.holds.u = on;
+  if (dir === "d") state.holds.d = on;
+}
+
+function hero() {
+  if (state.possession === "you") return state.carrier;
+  for (var i = 0; i < state.entities.length; i++) {
+    if (state.entities[i].star) return state.entities[i];
+  }
+  return null;
+}
+
+function juke() {
+  if (state.situation !== "live" || state.possession !== "you") return;
+  if (!state.carrier || state.jukeCd > 0) return;
+  state.jukeLeft = JUKE_TICKS;
+  state.jukeCd = JUKE_TICKS + JUKE_CD;
+  toast("Juke!");
+}
+
+function throwTo(idx) {
+  if (state.situation !== "live" || state.possession !== "you") return;
+  if (!state.carrier || state.flight) return;
+  var wr = state.wrs[idx];
+  if (!wr) return;
+  var tx = wr.x + wr.vx * PASS_LEAD;
+  var ty = wr.y + wr.vy * PASS_LEAD;
+  state.flight = {
+    x: state.carrier.x,
+    y: state.carrier.y,
+    x0: state.carrier.x,
+    y0: state.carrier.y,
+    tx: clamp(tx, FIELD_L + 10, FIELD_R - 10),
+    ty: clamp(ty, 60, 3540),
+    left: PASS_TICKS,
+    total: PASS_TICKS,
+    target: wr
+  };
+  state.carrier = null;
+  toast("Pass away!");
+}
+
+// ----- play endings -----
+function endPlay(spotY) {
+  if (state.situation !== "live") return;
+  var you = state.possession === "you";
+  var gainYards = you ? (state.losY - spotY) / PX_PER_YARD
+                      : (spotY - state.losY) / PX_PER_YARD;
+  gainYards = Math.round(gainYards * 10) / 10;
+  if (gainYards >= 10) state.down = 1;
+  else state.down++;
+  state.losY = clamp(spotY, 330, 3270);
+  state.carrier = null;
+  state.flight = null;
+  if (state.jukeLeft > 0) state.jukeLeft = 0;
+  if (state.down > 4) {
+    toast("Turnover on downs!");
+    turnover();
+    return;
+  }
+  var sign = gainYards > 0 ? "+" : "";
+  state.floats.push({ text: sign + gainYards + " YARDS", life: 22 });
+  toast(sign + gainYards + " yards · down " + state.down);
+  state.situation = you ? "pick" : "defend";
+  if (you) setupCometsPlay("pass");
+  else setupStampedePlay("run");
+}
+
+function turnover() {
+  state.possession = state.possession === "you" ? "rival" : "you";
+  state.down = 1;
+  state.carrier = null;
+  state.flight = null;
+  spotOwn20();
+  toast(state.possession === "you" ? "Your ball!" : "Stampede ball");
+}
+
+function spotOwn20() {
+  state.losY = state.possession === "you" ? 2700 : 900;
+  state.camY = clamp(state.losY - 360, 0, 2880);
+  state.down = 1;
+  state.carrier = null;
+  state.flight = null;
+  state.jukeLeft = 0;
+  state.situation = state.possession === "you" ? "pick" : "defend";
+  if (state.possession === "you") setupCometsPlay("pass");
+  else setupStampedePlay("run");
+}
+
+function scoreTD(team) {
+  if (team === "you") {
+    state.scoreYou += 7;
+    state.tdsYou++;
+  } else {
+    state.scoreRival += 7;
+    state.tdsRival++;
+  }
+  state.floats.push({ text: "TOUCHDOWN!", life: 26 });
+  toast("Touchdown! +7");
+  state.possession = team === "you" ? "rival" : "you";
+  spotOwn20();
+}
+
+function quarterEnd() {
+  if (state.quarter >= 4) {
+    endMatch();
+    return;
+  }
+  state.quarter++;
+  state.clockTicks = QUARTER_TICKS;
+  state.possession = state.possession === "you" ? "rival" : "you";
+  toast("Quarter " + state.quarter + "!");
+  spotOwn20();
+}
+
+function endMatch() {
+  var margin = state.scoreYou - state.scoreRival;
+  state.matchMargin = margin;
+  var improved = false;
+  if (margin > 0 && margin > rec.bestMargin) {
+    rec.bestMargin = margin;
+    improved = true;
+  }
+  if (state.tdsYou > rec.mostTDs) {
+    rec.mostTDs = state.tdsYou;
+    improved = true;
+  }
+  state.newBest = improved;
+  if (improved) saveRec();
+  state.floats = [];
+  state.flight = null;
+  state.carrier = null;
+  state.situation = "over";
+}
+
+// ----- per-tick simulation -----
+function routeStep(w) {
+  w.t++;
+  w.vx = 0;
+  w.vy = 0;
+  if (w.type === "streak") {
+    w.vy = -ROUTE_SPEED;
+  } else if (w.type === "out") {
+    if (w.t < 6) w.vy = -ROUTE_SPEED;
+    else w.vx = w.side * ROUTE_SPEED;
+  } else if (w.type === "post") {
+    if (w.t < 8) w.vy = -ROUTE_SPEED;
+    else {
+      w.vx = w.side * ROUTE_SPEED * 0.7;
+      w.vy = -ROUTE_SPEED * 0.7;
+    }
+  } else {
+    // stalk: block-ish drift upfield
+    w.vy = -ROUTE_SPEED * 0.35;
+    w.vx = w.side * ROUTE_SPEED * 0.15;
+  }
+  w.x = clamp(w.x + w.vx, FIELD_L + 12, FIELD_R - 12);
+  w.y = clamp(w.y + w.vy, 50, 3550);
+}
+
+function chase(d, t, speed) {
+  var dx = t.x - d.x;
+  var dy = t.y - d.y;
+  var len = Math.hypot(dx, dy) || 1;
+  d.x += (dx / len) * speed;
+  d.y += (dy / len) * speed;
+  d.x = clamp(d.x, FIELD_L + 8, FIELD_R - 8);
+  d.y = clamp(d.y, 50, 3550);
+}
+
+function stepLive() {
+  state.tickN++;
+  var you = state.possession === "you";
+
+  // hero steering (carrier on offense, star defender on defense)
+  var h = hero();
+  if (h) {
+    var vx = 0;
+    var vy = 0;
+    if (state.holds.l) vx -= 1;
+    if (state.holds.r) vx += 1;
+    if (state.holds.u) vy -= 1;
+    if (state.holds.d) vy += 1;
+    if (vx !== 0 || vy !== 0) {
+      var len = Math.hypot(vx, vy);
+      var sp = PLAYER_SPEED;
+      if (you && state.jukeLeft > 0) sp *= JUKE_MULT;
+      h.x += (vx / len) * sp;
+      h.y += (vy / len) * sp;
+      h.x = clamp(h.x, FIELD_L + 10, FIELD_R - 10);
+      h.y = clamp(h.y, 40, 3560);
+    }
+  }
+
+  // routes / CPU movement
+  for (var i = 0; i < state.entities.length; i++) {
+    var e = state.entities[i];
+    if (e === state.carrier || e === h) continue;
+    if (e.role === "wr" || e.role === "rb") {
+      if (you && e.team === "you") routeStep(e);
+      else if (!you && e.team === "rival") {
+        // stampede support: drift upfield
+        e.vx = 0;
+        e.vy = ROUTE_SPEED * 0.5;
+        e.y = clamp(e.y + e.vy, 50, 3550);
+        e.x = clamp(e.x + (e.side || 0) * 1.2, FIELD_L + 12, FIELD_R - 12);
+      }
+    }
+  }
+
+  // stampede ball carrier seek (CPU)
+  if (!you && state.carrier) {
+    var c = state.carrier;
+    var wander = Math.sin(state.tickN * 0.08) * 90;
+    chase(c, { x: 270 + wander, y: 3500 }, CPU_SPEED);
+  }
+
+  // defenders
+  for (var j = 0; j < state.entities.length; j++) {
+    var d = state.entities[j];
+    if (d.role !== "def") continue;
+    if (d === h) continue;
+    if (state.flight) {
+      // two nearest cover the arrival point
+      var toT = dist(d, { x: state.flight.tx, y: state.flight.ty });
+      if (toT < 220) chase(d, { x: state.flight.tx, y: state.flight.ty }, DEF_SPEED);
+      else chase(d, { x: state.flight.x0, y: state.flight.y0 }, DEF_SPEED * 0.6);
+    } else if (state.carrier) {
+      chase(d, state.carrier, DEF_SPEED);
+    }
+  }
+
+  // pass flight
+  if (state.flight) {
+    var f = state.flight;
+    f.left--;
+    var prog = 1 - f.left / f.total;
+    f.x = f.x0 + (f.tx - f.x0) * prog;
+    f.y = f.y0 + (f.ty - f.y0) * prog;
+    if (f.left <= 0) {
+      resolvePass(f);
+      if (state.situation !== "live") return;
+    }
+  }
+
+  // touchdown check
+  if (state.carrier) {
+    if (you && state.carrier.y <= 300) {
+      scoreTD("you");
+      return;
+    }
+    if (!you && state.carrier.y >= 3300) {
+      scoreTD("rival");
+      return;
+    }
+  }
+
+  // tackle check
+  if (state.carrier) {
+    var tackleR = (you && state.jukeLeft > 0) ? TACKLE_R / 2 : TACKLE_R;
+    for (var k = 0; k < state.entities.length; k++) {
+      var df = state.entities[k];
+      if (df.role !== "def") continue;
+      if (df.team === state.possession) continue;
+      if (dist(df, state.carrier) < tackleR) {
+        endPlay(state.carrier.y);
+        return;
+      }
+    }
+  }
+
+  // juke timers
+  if (state.jukeLeft > 0) state.jukeLeft--;
+  if (state.jukeCd > 0) state.jukeCd--;
+
+  // clock
+  state.clockTicks--;
+  if (state.clockTicks <= 0) {
+    quarterEnd();
+    return;
+  }
+
+  // floats
+  for (var fi = state.floats.length - 1; fi >= 0; fi--) {
+    state.floats[fi].life--;
+    if (state.floats[fi].life <= 0) state.floats.splice(fi, 1);
+  }
+}
+
+function resolvePass(f) {
+  state.flight = null;
+  // interception if a defender camps the arrival point
+  for (var i = 0; i < state.entities.length; i++) {
+    var d = state.entities[i];
+    if (d.role !== "def") continue;
+    if (d.team === state.possession) continue;
+    if (dist(d, { x: f.tx, y: f.ty }) < CATCH_R) {
+      toast("Intercepted!");
+      state.floats.push({ text: "PICKED OFF!", life: 22 });
+      turnover();
+      return;
+    }
+  }
+  // completion: hands control to the catch-maker
+  state.carrier = f.target;
+  state.floats.push({ text: "CAUGHT!", life: 18 });
+  toast("Caught — run!");
+}
+
+function tick() {
+  if (state.situation === "live") stepLive();
+  // camera eases toward the ball — carrier, flight, or the line of scrimmage
+  var focus = state.flight ? state.flight.y : (state.carrier ? state.carrier.y : state.losY);
+  var camTarget = clamp(focus - 360, 0, 2880);
+  state.camY += (camTarget - state.camY) * 0.25;
+  draw();
+  render();
+}
+
+// ----- canvas painting (all art in code, zero images) -----
+function draw() {
+  var i;
+  ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+
+  // turf
+  ctx.fillStyle = css("turf");
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+  // mowing stripes every 15 yards (450px)
+  for (i = 0; i < 8; i++) {
+    var sy = i * 450 - state.camY;
+    if (i % 2 === 0) {
+      ctx.fillStyle = css("turf2");
+      ctx.fillRect(0, sy, CANVAS_W, 450);
+    }
+  }
+
+  // end zones
+  drawEndZone(0, 300, css("rival"), "STAMPEDE");
+  drawEndZone(3300, 3600, css("team"), "COMETS");
+
+  // yard lines + hashes + numbers
+  ctx.strokeStyle = css("chalk");
+  ctx.lineWidth = 2;
+  for (i = 0; i <= 20; i++) {
+    var wy = 300 + i * 150; // every 5 yards
+    var ly = wy - state.camY;
+    if (ly < -20 || ly > CANVAS_H + 20) continue;
+    ctx.globalAlpha = (i % 2 === 0) ? 0.9 : 0.45;
+    ctx.beginPath();
+    ctx.moveTo(FIELD_L - 18, ly);
+    ctx.lineTo(FIELD_R + 18, ly);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    // hash marks
+    if (i % 2 === 1) {
+      ctx.fillStyle = css("chalk");
+      ctx.fillRect(212, ly - 2, 16, 4);
+      ctx.fillRect(312, ly - 2, 16, 4);
+    }
+  }
+  // sideline borders
+  ctx.fillStyle = css("chalk");
+  ctx.fillRect(FIELD_L - 20, -state.camY, 4, 3600);
+  ctx.fillRect(FIELD_R + 16, -state.camY, 4, 3600);
+
+  // yard numbers every 10 yards
+  ctx.fillStyle = "rgba(244,241,234,0.85)";
+  ctx.font = "bold 18px Courier New";
+  ctx.textAlign = "center";
+  for (i = 1; i < 10; i++) {
+    var yard = i * 10;
+    var ny = (3300 - yard * PX_PER_YARD) - state.camY;
+    if (ny < -24 || ny > CANVAS_H + 24) continue;
+    var label = (yard <= 50) ? String(yard) : String(100 - yard);
+    ctx.fillText(label, 140, ny + 6);
+    ctx.fillText(label, 400, ny + 6);
+  }
+
+  // goal posts (gold H shapes)
+  drawGoalPost(270, 240 - state.camY);
+  drawGoalPost(270, 3360 - state.camY);
+
+  // players
+  for (i = 0; i < state.entities.length; i++) drawPlayer(state.entities[i]);
+
+  // ball
+  drawBall();
+
+  // floats
+  ctx.font = "bold 20px Courier New";
+  for (i = 0; i < state.floats.length; i++) {
+    var fl = state.floats[i];
+    ctx.globalAlpha = Math.min(1, fl.life / 14);
+    ctx.fillStyle = css("gold");
+    ctx.fillText(fl.text, CANVAS_W / 2, 200 + (22 - fl.life) * 3);
+    ctx.globalAlpha = 1;
+  }
+
+  // classic scoreboard
+  drawScoreboard();
+}
+
+function drawEndZone(y0, y1, color, name) {
+  var sy = y0 - state.camY;
+  var h = y1 - y0;
+  if (sy > CANVAS_H || sy + h < 0) return;
+  ctx.fillStyle = color;
+  ctx.fillRect(FIELD_L - 20, sy, FIELD_R - FIELD_L + 40, h);
+  ctx.fillStyle = "rgba(0,0,0,0.22)";
+  ctx.fillRect(FIELD_L - 20, sy, FIELD_R - FIELD_L + 40, h);
+  ctx.save();
+  ctx.translate(CANVAS_W / 2, sy + h / 2);
+  ctx.fillStyle = "rgba(255,255,255,0.9)";
+  ctx.font = "bold 34px Courier New";
+  ctx.textAlign = "center";
+  ctx.fillText(name, 0, 12);
+  ctx.restore();
+}
+
+function drawGoalPost(x, y) {
+  if (y < -80 || y > CANVAS_H + 80) return;
+  ctx.strokeStyle = css("gold");
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x, y - 34);
+  ctx.moveTo(x - 26, y - 34);
+  ctx.lineTo(x + 26, y - 34);
+  ctx.moveTo(x - 26, y - 34);
+  ctx.lineTo(x - 26, y - 58);
+  ctx.moveTo(x + 26, y - 34);
+  ctx.lineTo(x + 26, y - 58);
+  ctx.stroke();
+}
+
+function drawPlayer(e) {
+  var x = e.x;
+  var y = e.y - state.camY;
+  if (y < -60 || y > CANVAS_H + 60) return;
+  var col = (e.team === "you") ? css("team") : css("rival");
+
+  // shadow
+  ctx.fillStyle = "rgba(0,0,0,0.28)";
+  ctx.beginPath();
+  ctx.ellipse(x, y + 12, 15, 6, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // star ring
+  if (e.star) {
+    ctx.strokeStyle = css("gold");
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(x, y, 21, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // jersey
+  ctx.fillStyle = col;
+  ctx.fillRect(x - 12, y - 2, 24, 18);
+  ctx.fillStyle = "rgba(255,255,255,0.18)";
+  ctx.fillRect(x - 12, y - 2, 24, 5);
+
+  // helmet
+  ctx.fillStyle = col;
+  ctx.beginPath();
+  ctx.arc(x, y - 8, 11, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = (e.team === "you") ? "#dfe7ff" : "#ffe2d9";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(x - 9, y - 12);
+  ctx.lineTo(x + 9, y - 12);
+  ctx.stroke();
+  // facemask
+  ctx.strokeStyle = "#1c2430";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(x, y - 4, 7, 0.15 * Math.PI, 0.85 * Math.PI);
+  ctx.stroke();
+
+  // number
+  ctx.fillStyle = "#fff";
+  ctx.font = "bold 11px Courier New";
+  ctx.textAlign = "center";
+  ctx.fillText(String(e.num), x, y + 11);
+}
+
+function drawBall() {
+  var bx, by;
+  if (state.flight) {
+    bx = state.flight.x;
+    by = state.flight.y - state.camY;
+  } else if (state.carrier) {
+    bx = state.carrier.x + 12;
+    by = state.carrier.y - state.camY - 4;
+  } else {
+    bx = 270;
+    by = state.losY - state.camY;
+  }
+  if (by < -30 || by > CANVAS_H + 30) return;
+  ctx.fillStyle = "#7a4a22";
+  ctx.beginPath();
+  ctx.ellipse(bx, by, 7, 4.5, -0.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "#f4e3c8";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(bx - 3, by - 1);
+  ctx.lineTo(bx + 3, by + 1);
+  ctx.stroke();
+}
+
+function drawScoreboard() {
+  var w = 500;
+  var x = (CANVAS_W - w) / 2;
+  var y = 10;
+  var h = 58;
+  ctx.fillStyle = "rgba(19,26,22,0.92)";
+  ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = css("gold");
+  ctx.lineWidth = 3;
+  ctx.strokeRect(x, y, w, h);
+
+  ctx.textAlign = "center";
+  ctx.fillStyle = css("team");
+  ctx.font = "bold 14px Courier New";
+  ctx.fillText("COMETS", x + 70, y + 20);
+  ctx.fillStyle = css("cream");
+  ctx.font = "bold 26px Courier New";
+  ctx.fillText(String(state.scoreYou), x + 70, y + 48);
+
+  ctx.fillStyle = css("rival");
+  ctx.font = "bold 14px Courier New";
+  ctx.fillText("STAMPEDE", x + w - 70, y + 20);
+  ctx.fillStyle = css("cream");
+  ctx.font = "bold 26px Courier New";
+  ctx.fillText(String(state.scoreRival), x + w - 70, y + 48);
+
+  var secs = Math.ceil(state.clockTicks / 10);
+  var m = Math.floor(secs / 60);
+  var s = secs % 60;
+  var clock = m + ":" + (s < 10 ? "0" : "") + s;
+  ctx.fillStyle = css("gold");
+  ctx.font = "bold 13px Courier New";
+  ctx.fillText("Q" + state.quarter, x + w / 2, y + 20);
+  ctx.fillStyle = css("cream");
+  ctx.font = "bold 24px Courier New";
+  ctx.fillText(clock, x + w / 2, y + 48);
+
+  // down & distance strip under the board
+  ctx.fillStyle = "rgba(19,26,22,0.8)";
+  ctx.fillRect(x, y + h + 4, w, 22);
+  ctx.fillStyle = css("chalk");
+  ctx.font = "bold 12px Courier New";
+  var drive = state.possession === "you" ? "COMETS BALL" : "STAMPEDE BALL";
+  var downNum = (state.down > 4 ? 4 : state.down);
+  var ordinals = ["1ST", "2ND", "3RD", "4TH"];
+  var toGo = Math.max(1, Math.round(10 - Math.abs(
+    (state.possession === "you" ? (state.losY - (state.carrier ? state.carrier.y : state.losY))
+                                : ((state.carrier ? state.carrier.y : state.losY) - state.losY)
+    ) / PX_PER_YARD)));
+  ctx.fillText(drive + " · " + ordinals[downNum - 1] + " & " + toGo, x + w / 2, y + h + 19);
+}
+
+// ----- DOM render -----
+function render() {
+  var sit = state.situation;
+  document.getElementById("screen-ready").classList.toggle("show", sit === "ready");
+  document.getElementById("screen-pick").classList.toggle("show", sit === "pick" || sit === "defend");
+  document.getElementById("screen-over").classList.toggle("show", sit === "over");
+
+  var recLine = (rec.bestMargin > 0 || rec.mostTDs > 0)
+    ? ("Best margin +" + rec.bestMargin + " · Tds " + rec.mostTDs)
+    : "No records yet";
+  document.getElementById("ready-records").textContent = recLine;
+  document.getElementById("strip-records").textContent = recLine;
+
+  if (sit === "pick" || sit === "defend") {
+    var isPick = sit === "pick";
+    document.getElementById("pick-title").textContent = isPick ? "Call the play" : "Defend!";
+    document.getElementById("pick-sub").textContent = isPick
+      ? ("Down " + state.down + " — pick your play")
+      : "Stampede have the ball — take the field";
+    document.getElementById("pick-plays").style.display = isPick ? "flex" : "none";
+    document.getElementById("pick-defend").style.display = isPick ? "none" : "flex";
+  }
+
+  if (sit === "over") {
+    var margin = state.matchMargin;
+    document.getElementById("over-result").textContent =
+      margin > 0 ? "You win!" : (margin < 0 ? "Rivals win" : "Tie");
+    document.getElementById("over-score").textContent =
+      state.scoreYou + " — " + state.scoreRival;
+    var sign = margin > 0 ? "+" : "";
+    document.getElementById("over-stats").textContent =
+      "Margin " + sign + margin + " · Tds " + state.tdsYou;
+    document.getElementById("over-best").classList.toggle("show", state.newBest);
+  }
+}
+
+// ----- input -----
+function pressAction() {
+  if (state.situation === "ready" || state.situation === "over") {
+    startGame();
+    return;
+  }
+  if (state.situation === "defend") {
+    defendStart();
+    return;
+  }
+  if (state.situation === "pick") {
+    snapPlay("run");
+    return;
+  }
+  if (state.situation === "live") juke();
+}
+
+function onKey(down, key) {
+  var k = String(key).toLowerCase();
+  if (k === "arrowleft" || k === "a") { setMove("l", down); return true; }
+  if (k === "arrowright" || k === "d") { setMove("r", down); return true; }
+  if (k === "arrowup" || k === "w") { setMove("u", down); return true; }
+  if (k === "arrowdown" || k === "s") { setMove("d", down); return true; }
+  if (!down) return false;
+  if (k === "j" || k === " ") {
+    if (state.situation === "live") juke();
+    return true;
+  }
+  if (k === "1") {
+    if (state.situation === "pick") snapPlay("run");
+    else if (state.situation === "live") throwTo(0);
+    return true;
+  }
+  if (k === "2") {
+    if (state.situation === "pick") snapPlay("pass");
+    else if (state.situation === "live") throwTo(1);
+    return true;
+  }
+  if (k === "3") {
+    if (state.situation === "pick") snapPlay("deep");
+    else if (state.situation === "live") throwTo(2);
+    return true;
+  }
+  if (k === "enter") {
+    pressAction();
+    return true;
+  }
+  return false;
+}
+
+document.addEventListener("keydown", function (ev) {
+  if (onKey(true, ev.key)) ev.preventDefault();
+});
+document.addEventListener("keyup", function (ev) {
+  if (onKey(false, ev.key)) ev.preventDefault();
+});
+
+function bindMove(id, dir) {
+  document.getElementById(id).addEventListener("click", function () {
+    setMove(dir, !state.holds[dir]);
+  });
+}
+bindMove("btn-left", "l");
+bindMove("btn-right", "r");
+bindMove("btn-up", "u");
+bindMove("btn-down", "d");
+
+document.getElementById("btn-juke").addEventListener("click", function () {
+  if (state.situation === "live") juke();
+  else pressAction();
+});
+document.getElementById("btn-t1").addEventListener("click", function () {
+  if (state.situation === "pick") snapPlay("run");
+  else throwTo(0);
+});
+document.getElementById("btn-t2").addEventListener("click", function () {
+  if (state.situation === "pick") snapPlay("pass");
+  else throwTo(1);
+});
+document.getElementById("btn-t3").addEventListener("click", function () {
+  if (state.situation === "pick") snapPlay("deep");
+  else throwTo(2);
+});
+document.getElementById("btn-kickoff").addEventListener("click", startGame);
+document.getElementById("btn-again").addEventListener("click", startGame);
+document.getElementById("btn-run").addEventListener("click", function () { snapPlay("run"); });
+document.getElementById("btn-pass").addEventListener("click", function () { snapPlay("pass"); });
+document.getElementById("btn-deep").addEventListener("click", function () { snapPlay("deep"); });
+document.getElementById("btn-defend").addEventListener("click", defendStart);
+document.getElementById("btn-clear").addEventListener("click", clearRecords);
+
+// ----- boot -----
+seedRec();
+loadRec();
+draw();
+render();
+setInterval(tick, TICK_MS);
+</script>
+</body>
+</html>

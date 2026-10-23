@@ -46,6 +46,7 @@ open snow.html         # Example #12, Powder Tricks (the cartoon snowboard trick
 open chase.html        # Example #13, Cop Chase (the neon-pixel getaway racer)
 open train.html        # Example #14, Harvest Haunt (the autumn ghost-train shooter)
 open hoops.html        # Example #15, Street Hoops (the blacktop streetball arcade)
+open football.html     # Example #16, Gridiron Rush (the retro football arcade)
 xdg-open index.html    # Linux same files
 
 # option B — serve everything
@@ -64,7 +65,8 @@ python3 -m http.server 8123
 #         http://localhost:8123/snow.html (cartoon snowboard tricks), and
 #         http://localhost:8123/chase.html (neon-pixel cop chase), and
 #         http://localhost:8123/train.html (autumn ghost-train shooter), and
-#         http://localhost:8123/hoops.html (blacktop streetball arcade)
+#         http://localhost:8123/hoops.html (blacktop streetball arcade), and
+#         http://localhost:8123/football.html (retro football arcade)
 ```
 
 Everything is local-only, invented data, no accounts, no installs.
@@ -88,6 +90,7 @@ Everything is local-only, invented data, no accounts, no installs.
 | `chase.html` | **Example #13 — Cop Chase**: the retro-neon arcade cop chase — gas and brake set your speed, weave through pixel traffic, hit checkpoint gates for more time, and brake hard to make the cops overshoot before they box you in |
 | `train.html` | **Example #14 — Harvest Haunt**: the autumn ghost-train rail shooter — the train rolls through golden corn rows while frights pop out to spook you, pan along the cars and splat them before they duck away, and chain hits into combo glory before the barn |
 | `hoops.html` | **Example #15 — Street Hoops**: the blacktop streetball arcade — drive the ball handler around the sunset court, shake the defender for the open look, fire from deep for three, and sink free-throw streaks before the buzzer |
+| `football.html` | **Example #16 — Gridiron Rush**: the retro football arcade — call the play and hike the ball, steer the run or fire to your streaking receivers, juke past tacklers, and make the tackle on defense before the final whistle |
 | `docs/reverse-prompt-guide.md` | **The playbook** — how students reverse-prompt with OpenSpec, with examples and drills |
 | `docs/runbook.md` | The 10-minute demo session script for the teacher/host (with troubleshooting) |
 | `docs/event-card.md` | A printable one-page journey card for the booth |
@@ -129,6 +132,7 @@ archived into its spec:
 - `openspec/specs/cop-chase/spec.md` — the neon-pixel getaway racer (Example #13)
 - `openspec/specs/ghost-train/spec.md` — the autumn ghost-train rail shooter (Example #14)
 - `openspec/specs/street-hoops/spec.md` — the blacktop streetball arcade (Example #15)
+- `openspec/specs/gridiron-rush/spec.md` — the retro football arcade (Example #16)
 
 `openspec/changes/archive/` holds the complete history of every change.
 
