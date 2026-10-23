@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Art Arcade — EPIC-MN</title>
+<meta name="description" content="A retro pixel-art studio: paint chunky pixels, save a gallery wall, export PNGs. Example #4 of EPIC-MN.">
+<style>
+/* ============================================================
+   ART ARCADE · retro pixel studio · hand-built
+   ============================================================ */
+:root{
+  --ink:#12062b; --ink2:#1d0b3f; --txt:#fff6e9; --dim:rgba(255,246,233,.66);
+  --card:rgba(255,255,255,.07); --line:rgba(255,255,255,.16);
+  --pink:#ff2d95; --cyan:#2de2e6; --yellow:#ffd166; --mint:#6ff2c5; --purple:#8b5cf6;
+  --hard:6px 6px 0 rgba(0,0,0,.45);
+  --mono:ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --sans:"Trebuchet MS","Gill Sans",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;min-height:100%}
+body{
+  font-family:var(--sans);color:var(--txt);
+  background:
+    radial-gradient(1200px 600px at 50% -10%, #2a1060 0%, transparent 60%),
+    repeating-linear-gradient(0deg, transparent 0 38px, rgba(255,255,255,.03) 38px 39px),
+    repeating-linear-gradient(90deg, transparent 0 38px, rgba(255,255,255,.03) 38px 39px),
+    var(--ink);
+  user-select:none;-webkit-user-select:none;touch-action:manipulation;
+}
+
+/* ---------- chrome ---------- */
+#top{max-width:980px;margin:0 auto;padding:22px 18px 8px;display:flex;
+  justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap}
+#brand h1{margin:0;font-family:var(--mono);font-size:clamp(26px,6vw,44px);
+  font-weight:900;letter-spacing:.08em;line-height:1;
+  color:var(--cyan);text-shadow:3px 3px 0 var(--pink), 6px 6px 0 rgba(0,0,0,.45)}
+#brand p{margin:8px 0 0;font-family:var(--mono);font-size:11px;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--dim)}
+
+/* ---------- buttons ---------- */
+.btn{font:inherit;font-family:var(--mono);font-weight:900;font-size:13px;
+  letter-spacing:.12em;text-transform:uppercase;cursor:pointer;
+  border:3px solid var(--txt);border-radius:6px;padding:12px 18px;
+  background:var(--ink2);color:var(--txt);box-shadow:var(--hard);
+  transition:transform .08s, box-shadow .08s}
+.btn:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 rgba(0,0,0,.45)}
+.btn:active{transform:translate(3px,3px);box-shadow:2px 2px 0 rgba(0,0,0,.45)}
+.btn.primary{background:var(--pink);color:#fff}
+.btn.cyan{background:var(--cyan);color:#08222a}
+.btn.yellow{background:var(--yellow);color:#3a2400}
+.btn.mint{background:var(--mint);color:#06331f}
+.btn.ghost{background:transparent;border-color:var(--line);color:var(--dim);box-shadow:none}
+.btn.ghost:hover{color:var(--txt);border-color:var(--txt)}
+.btn.tool.on{background:var(--yellow);color:#3a2400;border-color:var(--yellow)}
+
+/* ---------- studio layout ---------- */
+main{max-width:980px;margin:0 auto;padding:10px 18px 40px}
+.lede{font-size:15px;color:var(--dim);max-width:560px;margin:6px 0 18px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 14px}
+.palette{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px;align-items:center}
+.swatch{width:44px;height:44px;border-radius:8px;border:3px solid var(--line);
+  cursor:pointer;box-shadow:var(--hard);transition:transform .08s}
+.swatch:hover{transform:translate(-2px,-2px)}
+.swatch.on{border-color:var(--txt);transform:translate(-2px,-2px) scale(1.06);
+  outline:3px solid var(--yellow);outline-offset:2px}
+
+/* ---------- canvas ---------- */
+.stage{display:flex;justify-content:center;margin:6px 0 18px}
+#pix{width:min(100%,512px);height:auto;image-rendering:pixelated;
+  border:4px solid var(--txt);border-radius:10px;box-shadow:var(--hard);
+  cursor:crosshair;touch-action:none;display:block}
+
+/* ---------- save row ---------- */
+.saverow{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:0 0 8px}
+#art-name{font:inherit;font-family:var(--mono);font-size:14px;letter-spacing:.08em;
+  background:var(--ink2);border:3px solid var(--line);border-radius:6px;
+  color:var(--txt);padding:12px 14px;min-width:200px;box-shadow:var(--hard)}
+#art-name:focus{outline:none;border-color:var(--cyan)}
+
+/* ---------- gallery ---------- */
+.galhead{display:flex;justify-content:space-between;align-items:center;
+  gap:12px;flex-wrap:wrap;margin:30px 0 14px}
+.galhead h2{font-family:var(--mono);font-size:20px;letter-spacing:.14em;
+  text-transform:uppercase;margin:0;color:var(--yellow)}
+.galgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px}
+.gitem{background:var(--card);border:3px solid var(--line);border-radius:10px;
+  padding:12px;box-shadow:var(--hard);text-align:center}
+.gitem canvas{width:96px;height:96px;image-rendering:pixelated;border:2px solid var(--line);
+  border-radius:6px;background:var(--ink2)}
+.gitem .gname{font-family:var(--mono);font-size:12px;letter-spacing:.1em;
+  margin:8px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gitem .grow{display:flex;gap:8px;justify-content:center}
+.gitem .btn{padding:8px 10px;font-size:11px}
+.gempty{font-family:var(--mono);font-size:13px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--dim);padding:18px;text-align:center;
+  border:3px dashed var(--line);border-radius:10px}
+
+/* ---------- flourishes / toast ---------- */
+.fl{position:fixed;z-index:40;pointer-events:none;font-family:var(--mono);
+  font-weight:900;font-size:22px;letter-spacing:.08em;text-transform:uppercase;
+  text-shadow:2px 2px 0 rgba(0,0,0,.5);animation:fl .85s ease-out forwards}
+@keyframes fl{to{transform:translateY(-72px);opacity:0}}
+.fl.got{color:var(--mint)}
+.fl.miss{color:var(--pink)}
+.spark{position:absolute;font-size:22px;pointer-events:none;animation:spark 1.4s ease-out forwards}
+@keyframes spark{to{transform:translateY(-70px) rotate(220deg);opacity:0}}
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);
+  opacity:0;background:var(--ink2);border:3px solid var(--cyan);color:var(--txt);
+  font-family:var(--mono);font-size:13px;letter-spacing:.12em;text-transform:uppercase;
+  padding:12px 20px;border-radius:8px;box-shadow:var(--hard);z-index:50;
+  transition:.25s;pointer-events:none;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ---------- foot ---------- */
+.foot{max-width:980px;margin:10px auto 30px;padding:0 18px;font-family:var(--mono);
+  font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);text-align:center}
+.foot b{color:var(--cyan)}
+
+@media (max-width:520px){
+  .swatch{width:38px;height:38px}
+  .btn{padding:11px 13px;font-size:11px}
+}
+</style>
+</head>
+<body>
+
+<header id="top">
+  <div id="brand">
+    <h1>ART ARCADE</h1>
+    <p>paint pixels · save art · export png</p>
+  </div>
+  <button class="btn ghost" id="btn-reset">↺ reset</button>
+</header>
+
+<main>
+  <p class="lede">Pick a color, pick a tool, and paint on the chunky grid.
+    Save your art to the gallery wall — or export a <b>PNG</b> and take it home.</p>
+
+  <div class="toolbar" id="toolbar">
+    <button class="btn tool on" data-tool="brush">🖌 paint</button>
+    <button class="btn tool" data-tool="erase">▦ erase</button>
+    <button class="btn tool" data-tool="fill">🪣 fill</button>
+    <button class="btn" id="btn-undo">↩ undo</button>
+  </div>
+
+  <div class="palette" id="palette"></div>
+
+  <div class="stage">
+    <canvas id="pix" width="512" height="512" aria-label="pixel art canvas"></canvas>
+  </div>
+
+  <div class="saverow">
+    <input id="art-name" type="text" maxlength="24" placeholder="name your art…" aria-label="art name">
+    <button class="btn yellow" id="btn-save">★ save to gallery</button>
+    <button class="btn cyan" id="btn-export">⬇ save as PNG</button>
+  </div>
+
+  <div class="galhead">
+    <h2>🖼 gallery wall</h2>
+    <button class="btn ghost" id="btn-clear">clear canvas</button>
+  </div>
+  <div class="galgrid" id="galgrid"></div>
+</main>
+
+<div class="foot"><b>EPIC-MN</b> · example #4 · all data invented · local-only</div>
+<div id="toast" role="status"></div>
+
+<script>
+"use strict";
+/* ============================================================
+   ART ARCADE · pixel studio · localStorage · zero deps
+   ============================================================ */
+
+const GRID = 32;
+const SCALE = 16;
+const EMPTY = "#1d0b3f";
+const PALETTE = [
+  "#ff2d95", "#ffd166", "#2de2e6", "#6ff2c5",
+  "#8b5cf6", "#ff7b00", "#ff4d4d", "#3b82f6",
+  "#22c55e", "#a16207", "#f4f1de", "#1b0a2e",
+];
+const MAX_UNDO = 30;
+const MAX_ITEMS = 24;
+
+/* ---------- app state ---------- */
+const state = {
+  cells: new Array(GRID * GRID).fill(null),
+  color: PALETTE[0],
+  tool: "brush",
+  undoStack: [],
+};
+
+/* ---------- persistence (gallery) ---------- */
+const GKEY = "art-studio-gallery:v1";
+
+function seed(){ return { items: [] }; }
+
+function loadGallery(){
+  try{
+    const raw = localStorage.getItem(GKEY);
+    if(!raw) return seed();
+    const g = JSON.parse(raw);
+    return { items: (g && Array.isArray(g.items)) ? g.items : [] };
+  }catch(e){ return seed(); }
+}
+
+function saveGallery(){
+  try{ localStorage.setItem(GKEY, JSON.stringify(gallery)); }catch(e){}
+}
+
+let gallery = loadGallery();
+
+/* ---------- toast & flourishes ---------- */
+const toastEl = document.getElementById("toast");
+let toastT;
+function toast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add("show");
+  clearTimeout(toastT);
+  toastT = setTimeout(() => toastEl.classList.remove("show"), 2600);
+}
+
+function flourish(text, kind, x, y){
+  const el = document.createElement("div");
+  el.className = "fl " + (kind || "got");
+  el.textContent = text;
+  el.style.left = (x != null ? x : innerWidth / 2 - 60) + "px";
+  el.style.top = (y != null ? y : innerHeight / 2 - 40) + "px";
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 900);
+}
+
+function sparkBurst(host){
+  const glyphs = ["✦","★","◆","✧","★"];
+  for(let i = 0; i < 8; i++){
+    const s = document.createElement("div");
+    s.className = "spark";
+    s.textContent = glyphs[i % glyphs.length];
+    s.style.left = (10 + Math.random() * 80) + "%";
+    s.style.top = (30 + Math.random() * 50) + "%";
+    s.style.color = ["var(--yellow)","var(--pink)","var(--cyan)","var(--mint)"][i % 4];
+    s.style.animationDelay = (Math.random() * .5) + "s";
+    host.appendChild(s);
+    setTimeout(() => s.remove(), 2200);
+  }
+}
+
+/* ---------- canvas rendering ---------- */
+const cv = document.getElementById("pix");
+const ctx = cv.getContext("2d");
+
+function drawEditor(){
+  ctx.fillStyle = EMPTY;
+  ctx.fillRect(0, 0, GRID * SCALE, GRID * SCALE);
+  for(let y = 0; y < GRID; y++){
+    for(let x = 0; x < GRID; x++){
+      const c = state.cells[y * GRID + x];
+      if(c){
+        ctx.fillStyle = c;
+        /* 1px gap shows the cabinet color through = readable grid */
+        ctx.fillRect(x * SCALE, y * SCALE, SCALE - 1, SCALE - 1);
+      }
+    }
+  }
+}
+
+function renderTo(context, scale){
+  /* export renderer: transparent empties, full-bleed pixels */
+  context.clearRect(0, 0, GRID * scale, GRID * scale);
+  for(let y = 0; y < GRID; y++){
+    for(let x = 0; x < GRID; x++){
+      const c = state.cells[y * GRID + x];
+      if(c){
+        context.fillStyle = c;
+        context.fillRect(x * scale, y * scale, scale, scale);
+      }
+    }
+  }
+}
+
+/* ---------- painting ---------- */
+function cellFromEvent(e){
+  const r = cv.getBoundingClientRect();
+  const x = Math.floor((e.clientX - r.left) / r.width * GRID);
+  const y = Math.floor((e.clientY - r.top) / r.height * GRID);
+  if(x < 0 || y < 0 || x >= GRID || y >= GRID) return null;
+  return y * GRID + x;
+}
+
+function pushUndo(){
+  state.undoStack.push(state.cells.slice());
+  if(state.undoStack.length > MAX_UNDO) state.undoStack.shift();
+}
+
+function undo(){
+  if(!state.undoStack.length){ toast("nothing to undo"); return; }
+  state.cells = state.undoStack.pop();
+  drawEditor();
+  flourish("undone!", "got");
+}
+
+function applyTool(idx){
+  if(state.tool === "brush") state.cells[idx] = state.color;
+  else if(state.tool === "erase") state.cells[idx] = null;
+}
+
+function strokeTo(idx, lastIdx){
+  if(lastIdx == null || lastIdx === idx){ applyTool(idx); return; }
+  const x0 = lastIdx % GRID, y0 = (lastIdx / GRID) | 0;
+  const x1 = idx % GRID, y1 = (idx / GRID) | 0;
+  const steps = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
+  for(let i = 0; i <= steps; i++){
+    const x = Math.round(x0 + (x1 - x0) * i / steps);
+    const y = Math.round(y0 + (y1 - y0) * i / steps);
+    applyTool(y * GRID + x);
+  }
+}
+
+function floodFill(idx){
+  const target = state.cells[idx];
+  const repl = state.color;
+  if(target === repl) return;
+  const q = [idx];
+  state.cells[idx] = repl;
+  while(q.length){
+    const i = q.pop();
+    const x = i % GRID, y = (i / GRID) | 0;
+    const neigh = [];
+    if(x > 0) neigh.push(i - 1);
+    if(x < GRID - 1) neigh.push(i + 1);
+    if(y > 0) neigh.push(i - GRID);
+    if(y < GRID - 1) neigh.push(i + GRID);
+    for(const n of neigh){
+      if(state.cells[n] === target){ state.cells[n] = repl; q.push(n); }
+    }
+  }
+}
+
+let drawing = false;
+let lastIdx = null;
+
+cv.addEventListener("pointerdown", (e) => {
+  e.preventDefault();
+  const idx = cellFromEvent(e);
+  if(idx == null) return;
+  pushUndo();
+  if(state.tool === "fill"){
+    floodFill(idx);
+    drawEditor();
+    return;
+  }
+  drawing = true;
+  lastIdx = idx;
+  applyTool(idx);
+  drawEditor();
+  if(cv.setPointerCapture) { try{ cv.setPointerCapture(e.pointerId); }catch(err){} }
+});
+
+cv.addEventListener("pointermove", (e) => {
+  if(!drawing) return;
+  const idx = cellFromEvent(e);
+  if(idx == null || idx === lastIdx) return;
+  strokeTo(idx, lastIdx);
+  lastIdx = idx;
+  drawEditor();
+});
+
+function endStroke(){ drawing = false; lastIdx = null; }
+cv.addEventListener("pointerup", endStroke);
+cv.addEventListener("pointercancel", endStroke);
+
+/* ---------- tools & palette UI ---------- */
+const toolbar = document.getElementById("toolbar");
+toolbar.addEventListener("click", (e) => {
+  const b = e.target.closest ? e.target.closest("[data-tool]") : null;
+  if(!b) return;
+  state.tool = b.getAttribute("data-tool");
+  document.querySelectorAll(".btn.tool").forEach(el =>
+    el.classList.toggle("on", el === b));
+});
+
+document.getElementById("btn-undo").addEventListener("click", undo);
+
+const paletteEl = document.getElementById("palette");
+function renderPalette(){
+  paletteEl.textContent = "";
+  PALETTE.forEach(hex => {
+    const b = document.createElement("button");
+    b.className = "swatch" + (hex === state.color ? " on" : "");
+    b.style.background = hex;
+    b.setAttribute("aria-label", "color " + hex);
+    b.addEventListener("click", () => {
+      state.color = hex;
+      /* picking a color switches back to the brush */
+      state.tool = "brush";
+      document.querySelectorAll(".btn.tool").forEach(el =>
+        el.classList.toggle("on", el.getAttribute("data-tool") === "brush"));
+      renderPalette();
+    });
+    paletteEl.appendChild(b);
+  });
+}
+
+/* ---------- gallery ---------- */
+const galgrid = document.getElementById("galgrid");
+
+function renderGallery(){
+  galgrid.textContent = "";
+  if(!gallery.items.length){
+    const d = document.createElement("div");
+    d.className = "gempty";
+    d.textContent = "nothing saved yet — make something!";
+    galgrid.appendChild(d);
+    return;
+  }
+  gallery.items.forEach(item => {
+    const card = document.createElement("div");
+    card.className = "gitem";
+    const thumb = document.createElement("canvas");
+    thumb.width = 96; thumb.height = 96;
+    const tc = thumb.getContext("2d");
+    const s = 96 / GRID;
+    tc.fillStyle = EMPTY;
+    tc.fillRect(0, 0, 96, 96);
+    for(let i = 0; i < item.cells.length; i++){
+      const c = item.cells[i];
+      if(!c) continue;
+      tc.fillStyle = c;
+      tc.fillRect((i % GRID) * s, ((i / GRID) | 0) * s, s, s);
+    }
+    const name = document.createElement("div");
+    name.className = "gname";
+    name.textContent = item.name;
+    const row = document.createElement("div");
+    row.className = "grow";
+    const open = document.createElement("button");
+    open.className = "btn mint";
+    open.textContent = "open";
+    open.addEventListener("click", () => openItem(item.id));
+    const del = document.createElement("button");
+    del.className = "btn primary";
+    del.textContent = "delete";
+    del.addEventListener("click", () => deleteItem(item.id));
+    row.appendChild(open);
+    row.appendChild(del);
+    card.appendChild(thumb);
+    card.appendChild(name);
+    card.appendChild(row);
+    galgrid.appendChild(card);
+  });
+}
+
+function currentName(){
+  const v = document.getElementById("art-name").value.trim();
+  return v || "My Art";
+}
+
+function saveToGallery(){
+  if(gallery.items.length >= MAX_ITEMS){
+    toast("gallery is full — delete one first");
+    return;
+  }
+  const item = {
+    id: "art-" + Date.now(),
+    name: currentName(),
+    cells: state.cells.slice(),
+    created: Date.now(),
+  };
+  gallery.items.unshift(item);
+  saveGallery();
+  renderGallery();
+  flourish("saved!", "got");
+  sparkBurst(document.querySelector("main"));
+  toast("★ “" + item.name + "” on the gallery wall");
+}
+
+function openItem(id){
+  const item = gallery.items.find(i => i.id === id);
+  if(!item) return;
+  state.cells = item.cells.slice();
+  state.undoStack = [];
+  document.getElementById("art-name").value = item.name;
+  drawEditor();
+  toast("opened “" + item.name + "”");
+  cv.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function deleteItem(id){
+  gallery.items = gallery.items.filter(i => i.id !== id);
+  saveGallery();
+  renderGallery();
+  toast("artwork deleted");
+}
+
+/* ---------- export PNG ---------- */
+function exportPNG(){
+  const out = document.createElement("canvas");
+  out.width = GRID * SCALE;
+  out.height = GRID * SCALE;
+  renderTo(out.getContext("2d"), SCALE);
+  const url = out.toDataURL("image/png");
+  const slug = currentName().toLowerCase().replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "pixel-art";
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = slug + ".png";
+  a.click();
+  flourish("PNG saved!", "got");
+  sparkBurst(document.querySelector("main"));
+  toast("⬇ " + slug + ".png — check your downloads");
+}
+
+/* ---------- clear & reset ---------- */
+function clearCanvas(){
+  pushUndo();
+  state.cells = new Array(GRID * GRID).fill(null);
+  drawEditor();
+  toast("canvas cleared (undo can bring it back)");
+}
+
+function resetAll(){
+  state.cells = new Array(GRID * GRID).fill(null);
+  state.undoStack = [];
+  gallery = seed();
+  saveGallery();
+  document.getElementById("art-name").value = "";
+  drawEditor();
+  renderGallery();
+  toast("↺ fresh art data restored");
+}
+
+/* ---------- events ---------- */
+document.getElementById("btn-save").addEventListener("click", saveToGallery);
+document.getElementById("btn-export").addEventListener("click", exportPNG);
+document.getElementById("btn-clear").addEventListener("click", clearCanvas);
+document.getElementById("btn-reset").addEventListener("click", resetAll);
+document.addEventListener("keydown", (e) => {
+  if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z"){
+    e.preventDefault();
+    undo();
+  }
+});
+
+/* ---------- boot: studio ready immediately ---------- */
+renderPalette();
+drawEditor();
+renderGallery();
+</script>
+</body>
+</html>
