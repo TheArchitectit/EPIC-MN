@@ -40,6 +40,7 @@ open chalk.html        # Example #10, Chalk Rush (the chalkboard RTS)
 open neon.html         # Example #11, Neon Delivery (the retro-neon runner)
 open snow.html         # Example #12, Powder Tricks (the cartoon snowboard trick game)
 open chase.html        # Example #13, Cop Chase (the neon-pixel getaway racer)
+open train.html        # Example #14, Harvest Haunt (the autumn ghost-train shooter)
 xdg-open index.html    # Linux same files
 
 # option B — serve everything
@@ -56,7 +57,8 @@ python3 -m http.server 8123
 #         http://localhost:8123/chalk.html (chalkboard RTS), and
 #         http://localhost:8123/neon.html (retro-neon runner), and
 #         http://localhost:8123/snow.html (cartoon snowboard tricks), and
-#         http://localhost:8123/chase.html (neon-pixel cop chase)
+#         http://localhost:8123/chase.html (neon-pixel cop chase), and
+#         http://localhost:8123/train.html (autumn ghost-train shooter)
 ```
 
 Everything is local-only, invented data, no accounts, no installs.
@@ -78,6 +80,7 @@ Everything is local-only, invented data, no accounts, no installs.
 | `neon.html` | **Example #11 — Neon Delivery**: the retro-neon delivery runner — auto-run up a synthwave highway, steer through glowing traffic, and keep the wobbly pizza on the box until the customer |
 | `snow.html` | **Example #12 — Powder Tricks**: the cartoon snowboard trick game — carve between the lanes, pop off candy ramps, stack grabs and flips in the air, and stick clean landings before three tumbles end the run |
 | `chase.html` | **Example #13 — Cop Chase**: the retro-neon arcade cop chase — gas and brake set your speed, weave through pixel traffic, hit checkpoint gates for more time, and brake hard to make the cops overshoot before they box you in |
+| `train.html` | **Example #14 — Harvest Haunt**: the autumn ghost-train rail shooter — the train rolls through golden corn rows while frights pop out to spook you, pan along the cars and splat them before they duck away, and chain hits into combo glory before the barn |
 | `docs/reverse-prompt-guide.md` | **The playbook** — how students reverse-prompt with OpenSpec, with examples and drills |
 | `docs/runbook.md` | The 10-minute demo session script for the teacher/host (with troubleshooting) |
 | `docs/event-card.md` | A printable one-page journey card for the booth |
@@ -117,6 +120,7 @@ archived into its spec:
 - `openspec/specs/neon-delivery/spec.md` — the retro-neon delivery runner (Example #11)
 - `openspec/specs/powder-tricks/spec.md` — the cartoon snowboard trick game (Example #12)
 - `openspec/specs/cop-chase/spec.md` — the neon-pixel getaway racer (Example #13)
+- `openspec/specs/ghost-train/spec.md` — the autumn ghost-train rail shooter (Example #14)
 
 `openspec/changes/archive/` holds the complete history of every change.
 

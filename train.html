@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Harvest Haunt — EPIC-MN</title>
+<style>
+  :root {
+    --bg: #2b1636;
+    --bg2: #3d2049;
+    --gold: #ffb13d;
+    --orange: #ff7a2f;
+    --leaf: #e8542f;
+    --ink: #2a1408;
+    --cream: #ffe9c7;
+    --green: #5a7d2a;
+    --shadow: 5px 5px 0 var(--ink);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+      radial-gradient(1200px 700px at 50% -10%, #4a2458 0%, var(--bg) 60%);
+    color: var(--cream);
+    font-family: "Trebuchet MS", "Verdana", sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 14px 10px 26px;
+  }
+  .top {
+    width: 100%;
+    max-width: 620px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(22px, 5vw, 34px);
+    letter-spacing: 3px;
+    color: var(--gold);
+    text-shadow: 3px 3px 0 var(--leaf), 6px 6px 0 rgba(0,0,0,0.4);
+    font-weight: 900;
+  }
+  .btn {
+    font-family: inherit;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    color: var(--ink);
+    background: var(--gold);
+    border: 3px solid var(--ink);
+    border-radius: 12px;
+    padding: 10px 14px;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    touch-action: manipulation;
+  }
+  .btn:hover { transform: translate(-1px, -1px); box-shadow: 6px 6px 0 var(--ink); }
+  .btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink); }
+  .btn.ghost { background: var(--bg2); color: var(--cream); border-color: var(--orange); }
+  .btn.big { font-size: 18px; padding: 14px 26px; background: var(--orange); color: var(--cream); }
+  .btn.steer { font-size: 22px; min-width: 78px; background: var(--cream); }
+  .btn.fire { background: var(--leaf); color: var(--cream); min-width: 96px; }
+  main {
+    width: 100%;
+    max-width: 620px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .boardwrap {
+    position: relative;
+    margin: 0 auto;
+    border-radius: 14px;
+    border: 4px solid var(--ink);
+    box-shadow: 8px 8px 0 rgba(0,0,0,0.45);
+    overflow: hidden;
+    background: var(--bg2);
+    width: 100%;
+    max-width: 560px;
+    align-self: center;
+  }
+  canvas {
+    width: 100%;
+    height: auto;
+    display: block;
+    cursor: crosshair;
+  }
+  .screen {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    text-align: center;
+    padding: 18px;
+    background: rgba(43, 22, 54, 0.84);
+  }
+  .screen.hidden { display: none; }
+  .screen h2 {
+    margin: 0;
+    font-size: clamp(26px, 7vw, 40px);
+    letter-spacing: 3px;
+    color: var(--gold);
+    text-shadow: 3px 3px 0 var(--leaf);
+    font-weight: 900;
+  }
+  .rules {
+    font-size: 13px;
+    line-height: 1.9;
+    letter-spacing: 1px;
+    color: var(--cream);
+  }
+  .big-score {
+    font-size: clamp(40px, 10vw, 62px);
+    font-weight: 900;
+    color: var(--gold);
+    text-shadow: 4px 4px 0 var(--leaf);
+  }
+  .banner {
+    background: var(--gold);
+    color: var(--ink);
+    font-weight: 900;
+    letter-spacing: 2px;
+    padding: 8px 14px;
+    border-radius: 12px;
+    border: 3px solid var(--ink);
+    box-shadow: var(--shadow);
+    margin: 6px;
+    animation: bounce 0.7s ease-in-out infinite alternate;
+  }
+  .banner.hidden { display: none; }
+  @keyframes bounce {
+    from { transform: translateY(0) rotate(-2deg); }
+    to { transform: translateY(-5px) rotate(2deg); }
+  }
+  .status {
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: var(--gold);
+    text-align: center;
+    min-height: 16px;
+  }
+  .hud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 12px 0 6px;
+    justify-content: space-between;
+  }
+  .stat {
+    flex: 1 1 100px;
+    background: var(--bg2);
+    border: 3px solid var(--ink);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 6px 10px;
+    text-align: center;
+  }
+  .stat .lbl {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--orange);
+    font-weight: 900;
+  }
+  .stat .val {
+    display: block;
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--gold);
+  }
+  .levers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+  }
+  .toast {
+    position: absolute;
+    left: 50%;
+    top: 14px;
+    transform: translateX(-50%);
+    background: var(--gold);
+    color: var(--ink);
+    font-weight: 900;
+    letter-spacing: 1px;
+    padding: 12px 22px;
+    border-radius: 999px;
+    border: 3px solid var(--ink);
+    box-shadow: var(--shadow);
+    z-index: 60;
+  }
+  .toast.hidden { display: none; }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>HARVEST HAUNT</h1>
+  <button id="btn-records" class="btn ghost">CLEAR RECORDS</button>
+</header>
+<main>
+  <div class="boardwrap">
+    <canvas id="road" width="540" height="720"></canvas>
+    <div id="screen-ready" class="screen">
+      <h2>ALL ABOARD!</h2>
+      <div class="rules">
+        🚂 THE GHOST TRAIN ROLLS THROUGH THE HARVEST NIGHT<br>
+        ◀ ▶ PAN ALONG THE TRAIN TO FIND THE FRIGHTS<br>
+        🎯 CLICK OR TAP TO SHOOT — SCARECROWS TAKE TWO SHOTS!<br>
+        🌽 CHAIN YOUR HITS — A MISS DROPS THE COMBO
+      </div>
+      <button id="btn-start" class="btn big">START THE RIDE</button>
+      <div class="status">← → or A / D to pan · click the scene to fire · Enter to start</div>
+    </div>
+    <div id="screen-over" class="screen hidden">
+      <h2>RIDE COMPLETE!</h2>
+      <div id="over-newbest" class="banner hidden">NEW BEST!</div>
+      <div id="over-score" class="big-score">0</div>
+      <div id="over-info" class="rules">0 POPS · BEST COMBO ×1</div>
+      <button id="btn-again" class="btn big">RIDE AGAIN</button>
+    </div>
+    <div id="toast" class="toast hidden"></div>
+  </div>
+
+  <section class="hud">
+    <div class="stat"><span class="lbl">SCORE</span><span id="hud-score" class="val">0</span></div>
+    <div class="stat"><span class="lbl">COMBO</span><span id="hud-combo" class="val">×1</span></div>
+    <div class="stat"><span class="lbl">RIDE</span><span id="hud-ride" class="val">0%</span></div>
+    <div class="stat"><span class="lbl">BEST</span><span id="hud-best" class="val">--</span></div>
+  </section>
+
+  <div class="levers">
+    <button id="btn-left" class="btn steer">◀</button>
+    <button id="btn-fire" class="btn fire">🎃 FIRE!</button>
+    <button id="btn-right" class="btn steer">▶</button>
+  </div>
+  <div id="status" class="status">the train is chugging to the platform... all aboard!</div>
+</main>
+
+<script>
+  "use strict";
+
+  // ---------- constants ----------
+  var GKEY = "ghost-train:v1";
+  var TICK_MS = 100;
+  var RIDE_SPEED = 240;
+  var RIDE_END = 21600;
+  var PAN_MAX = 260;
+  var PAN_STEP = 90;
+  var BAND_GAP = 700;
+  var UP_MS = 2200;
+  var DUCK_MS = 400;
+  var HIT_PTS = 100;
+  var COMBO_CAP = 8;
+  var SHOOT_CD = 250;
+  var HIT_RX = 52;
+  var HIT_RY = 66;
+
+  // ---------- state ----------
+  var state = {
+    screen: "ready",
+    rideDist: 0,
+    panX: 0,
+    panTarget: 0,
+    crossX: 270,
+    crossY: 400,
+    shootCd: 0,
+    muzzleMs: 0,
+    score: 0,
+    comboMult: 1,
+    comboMax: 0,
+    hits: 0,
+    frights: [],
+    bandSeen: {},
+    floats: [],
+    frame: 0,
+    bestScore: 0,
+    bestCombo: 0,
+    result: null,
+    status: ""
+  };
+
+  // ---------- helpers ----------
+  function hash(i) {
+    var x = Math.sin(i * 127.1) * 43758.5453;
+    return x - Math.floor(x);
+  }
+  function screenX(objX) {
+    return objX - state.rideDist + 270 + state.panX;
+  }
+
+  // ---------- storage ----------
+  function seedRecords() {
+    return { bestScore: 0, bestCombo: 0 };
+  }
+  function loadRecords() {
+    try {
+      var raw = localStorage.getItem(GKEY);
+      if (!raw) return seedRecords();
+      var d = JSON.parse(raw);
+      if (typeof d.bestScore !== "number" || typeof d.bestCombo !== "number") return seedRecords();
+      return d;
+    } catch (e) {
+      return seedRecords();
+    }
+  }
+  function saveRecords() {
+    try {
+      localStorage.setItem(GKEY, JSON.stringify({
+        bestScore: state.bestScore,
+        bestCombo: state.bestCombo
+      }));
+    } catch (e) { /* save failures never break play */ }
+  }
+
+  var toastTimer = null;
+  function toast(msg) {
+    var el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.remove("hidden");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      el.classList.add("hidden");
+    }, 1600);
+    state.status = msg.toLowerCase();
+  }
+
+  // ---------- game flow ----------
+  function startGame() {
+    state.screen = "running";
+    state.rideDist = 0;
+    state.panX = 0;
+    state.panTarget = 0;
+    state.shootCd = 0;
+    state.muzzleMs = 0;
+    state.score = 0;
+    state.comboMult = 1;
+    state.comboMax = 0;
+    state.hits = 0;
+    state.frights = [];
+    state.bandSeen = {};
+    state.floats = [];
+    state.result = null;
+    ensureFrights();
+    toast("ALL ABOARD!");
+    render();
+  }
+
+  function rideComplete() {
+    state.screen = "over";
+    var newBest = state.score > state.bestScore || state.comboMax > state.bestCombo;
+    if (state.score > state.bestScore) state.bestScore = state.score;
+    if (state.comboMax > state.bestCombo) state.bestCombo = state.comboMax;
+    saveRecords();
+    state.result = {
+      score: state.score,
+      hits: state.hits,
+      combo: state.comboMax,
+      newBest: newBest
+    };
+    state.floats = [];
+    render();
+  }
+
+  // ---------- controls ----------
+  function pan(dir) {
+    if (state.screen !== "running") return;
+    var t = state.panTarget + dir * PAN_STEP;
+    if (t < -PAN_MAX) t = -PAN_MAX;
+    if (t > PAN_MAX) t = PAN_MAX;
+    state.panTarget = t;
+    state.status = dir < 0 ? "looking left along the train..." : "looking right along the train...";
+    render();
+  }
+  function setCrosshair(x, y) {
+    state.crossX = x;
+    state.crossY = y;
+  }
+  function shoot(x, y) {
+    if (state.screen !== "running") return;
+    if (state.shootCd > 0) return;
+    state.shootCd = SHOOT_CD;
+    state.muzzleMs = 120;
+    state.crossX = x;
+    state.crossY = y;
+    for (var i = 0; i < state.frights.length; i++) {
+      var f = state.frights[i];
+      if (f.state !== 1) continue;
+      var sx = screenX(f.x);
+      if (Math.abs(sx - x) < HIT_RX && Math.abs(f.y - y) < HIT_RY) {
+        f.hp--;
+        f.hitFlash = 200;
+        if (f.hp <= 0) {
+          f.state = 3;
+          f.popped = true;
+          var used = state.comboMult;
+          state.score += HIT_PTS * used;
+          state.comboMult = Math.min(state.comboMult + 1, COMBO_CAP);
+          if (used > state.comboMax) state.comboMax = used;
+          state.hits++;
+          state.floats.push({
+            x: sx, y: f.y - 40,
+            text: "+" + (HIT_PTS * used) + " ×" + used + "!",
+            ms: 1100
+          });
+          toast("SPLAT! +" + (HIT_PTS * used));
+          render();
+        } else {
+          // tough fright: stays up damaged, fresh window for the second shot
+          f.upMs = UP_MS;
+          toast("HIT! ONE MORE!");
+          render();
+        }
+        return;
+      }
+    }
+    // nothing up in the open at that point — the chain drops
+    state.comboMult = 1;
+    state.floats.push({ x: x, y: y - 20, text: "MISS!", ms: 700 });
+    state.status = "missed! the combo chain drops...";
+    render();
+  }
+
+  // ---------- frights ----------
+  function ensureFrights() {
+    var k0 = Math.floor((state.rideDist - 600) / BAND_GAP);
+    var k1 = Math.floor((state.rideDist + 2200) / BAND_GAP);
+    for (var k = k0; k <= k1; k++) {
+      if (state.bandSeen[k]) continue;
+      state.bandSeen[k] = true;
+      var n = Math.floor(hash(k * 17 + 3) * 2.99); // 0..2
+      for (var j = 0; j < n; j++) {
+        var type = Math.floor(hash(k * 31 + j * 13 + 5) * 3.99);
+        var high = hash(k * 41 + j * 7 + 9) > 0.55;
+        state.frights.push({
+          x: k * BAND_GAP + 120 + j * 320 + Math.floor(hash(k * 53 + j * 11 + 1) * 160),
+          y: high ? 330 : 470,
+          type: type,
+          hp: type === 3 ? 2 : 1,
+          state: 0,
+          upMs: 0,
+          duckMs: 0,
+          hitFlash: 0,
+          popped: false
+        });
+      }
+    }
+  }
+
+  // ---------- clock tick ----------
+  function tick() {
+    if (state.screen !== "running") return;
+    state.frame++;
+
+    // the train rolls on
+    state.rideDist += RIDE_SPEED * 0.1;
+
+    // pan easing
+    state.panX += (state.panTarget - state.panX) * 0.18;
+
+    // timers
+    if (state.shootCd > 0) state.shootCd -= TICK_MS;
+    if (state.muzzleMs > 0) state.muzzleMs -= TICK_MS;
+
+    // fright lifecycle
+    ensureFrights();
+    for (var i = 0; i < state.frights.length; i++) {
+      var f = state.frights[i];
+      if (f.hitFlash > 0) f.hitFlash -= TICK_MS;
+      var sx = screenX(f.x);
+      if (f.state === 0 && Math.abs(sx - 270) < 300) {
+        f.state = 1;
+        f.upMs = UP_MS;
+      } else if (f.state === 1) {
+        f.upMs -= TICK_MS;
+        if (f.upMs <= 0) {
+          f.state = 2;
+          f.duckMs = DUCK_MS;
+        }
+      } else if (f.state === 2) {
+        f.duckMs -= TICK_MS;
+        if (f.duckMs <= 0) f.state = 3;
+      }
+    }
+    // prune far-behind frights
+    state.frights = state.frights.filter(function (f) {
+      return screenX(f.x) > -260 && !(f.state === 3 && f.popped && screenX(f.x) < -60);
+    });
+
+    // floats fade
+    for (var fl = state.floats.length - 1; fl >= 0; fl--) {
+      state.floats[fl].ms -= TICK_MS;
+      state.floats[fl].y -= 1.6;
+      if (state.floats[fl].ms <= 0) state.floats.splice(fl, 1);
+    }
+
+    // the barn ends the ride
+    if (state.rideDist >= RIDE_END) {
+      rideComplete();
+      return;
+    }
+
+    render();
+  }
+
+  // ---------- DOM render ----------
+  function render() {
+    document.getElementById("hud-score").textContent = String(state.score);
+    document.getElementById("hud-combo").textContent = "×" + state.comboMult;
+    document.getElementById("hud-ride").textContent =
+      Math.min(100, Math.floor(state.rideDist / RIDE_END * 100)) + "%";
+    var best = state.bestScore > 0 || state.bestCombo > 0;
+    document.getElementById("hud-best").textContent = best
+      ? state.bestScore + " · ×" + state.bestCombo
+      : "--";
+
+    var ready = document.getElementById("screen-ready");
+    var over = document.getElementById("screen-over");
+    if (state.screen === "ready") {
+      ready.classList.remove("hidden");
+      over.classList.add("hidden");
+    } else if (state.screen === "over") {
+      ready.classList.add("hidden");
+      over.classList.remove("hidden");
+      document.getElementById("over-score").textContent = String(state.result ? state.result.score : 0);
+      document.getElementById("over-info").textContent =
+        (state.result ? state.result.hits : 0) + " POPS · BEST COMBO ×" +
+        (state.result ? state.result.combo : 1);
+      var nb = document.getElementById("over-newbest");
+      if (state.result && state.result.newBest) nb.classList.remove("hidden");
+      else nb.classList.add("hidden");
+    } else {
+      ready.classList.add("hidden");
+      over.classList.add("hidden");
+    }
+    document.getElementById("status").textContent =
+      state.status || "the train is chugging to the platform... all aboard!";
+  }
+
+  // ---------- canvas draw ----------
+  function draw() {
+    var canvas = document.getElementById("road");
+    var ctx = canvas.getContext("2d");
+
+    // dusk sky
+    var sky = ctx.createLinearGradient(0, 0, 0, 320);
+    sky.addColorStop(0, "#2b1636");
+    sky.addColorStop(0.55, "#7a2d5c");
+    sky.addColorStop(1, "#ffb13d");
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, 540, 320);
+
+    // pale moon
+    ctx.fillStyle = "#ffe9c7";
+    ctx.beginPath();
+    ctx.arc(120, 96, 40, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "rgba(43, 22, 54, 0.35)";
+    ctx.beginPath();
+    ctx.arc(136, 88, 34, 0, Math.PI * 2);
+    ctx.fill();
+
+    // blocky crows on the wind
+    for (var c = 0; c < 4; c++) {
+      var cx = (hash(c * 7 + 1) * 640 + state.frame * (0.7 + c * 0.2)) % 640 - 50;
+      var cy = 70 + hash(c * 9 + 2) * 90 + Math.sin((state.frame + c * 20) * 0.08) * 8;
+      var flap = Math.sin((state.frame + c * 15) * 0.3) * 6;
+      ctx.fillStyle = "#1c0d10";
+      ctx.fillRect(cx, cy, 14, 6);
+      ctx.fillRect(cx - 8, cy - 4 - flap, 10, 4);
+      ctx.fillRect(cx + 6, cy - 4 + flap, 10, 4);
+    }
+
+    // distant hills (slow parallax)
+    var hillOff = state.rideDist * 0.15;
+    for (var h = 0; h < 7; h++) {
+      var hx = ((h * 160 - hillOff) % 1120) - 80;
+      ctx.fillStyle = h % 2 ? "#4a2458" : "#5c2d52";
+      ctx.beginPath();
+      ctx.arc(hx, 300, 90 + (h % 3) * 24, Math.PI, 0);
+      ctx.fill();
+    }
+
+    // harvest field base
+    ctx.fillStyle = "#8a4a1c";
+    ctx.fillRect(0, 300, 540, 420);
+    ctx.fillStyle = "#a05a22";
+    ctx.fillRect(0, 300, 540, 60);
+
+    // mid parallax layer: corn rows, hay bales, pumpkins, trees, fence
+    var mid = state.rideDist * 0.55;
+    for (var w = -1; w < 8; w++) {
+      var wx = ((w * 150 - mid) % 1200 + 1200) % 1200 - 120;
+      // corn stalk cluster
+      for (var s = 0; s < 3; s++) {
+        var stx = wx + s * 16;
+        ctx.fillStyle = "#5a7d2a";
+        ctx.fillRect(stx, 330 + (s % 2) * 12, 7, 74);
+        ctx.fillRect(stx - 6, 344 + (s % 2) * 12, 8, 5);
+        ctx.fillRect(stx + 5, 356 + (s % 2) * 12, 8, 5);
+        ctx.fillStyle = "#e8a33d";
+        ctx.fillRect(stx + 1, 352 + (s % 2) * 12, 5, 16);
+      }
+      // fence post
+      ctx.fillStyle = "#3d2049";
+      ctx.fillRect(wx + 70, 360, 8, 56);
+      ctx.fillRect(wx + 20, 376, 120, 6);
+      // hay bale
+      if (w % 2 === 0) {
+        ctx.fillStyle = "#d98e2b";
+        ctx.beginPath();
+        ctx.arc(wx + 100, 420, 26, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#8a4a1c";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(wx + 100, 420, 14, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      // pumpkin
+      if (w % 3 === 1) {
+        ctx.fillStyle = "#ff7a2f";
+        ctx.beginPath();
+        ctx.arc(wx + 40, 448, 18, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#5a7d2a";
+        ctx.fillRect(wx + 36, 428, 8, 8);
+      }
+    }
+    // orange-canopy trees
+    for (var t = 0; t < 3; t++) {
+      var tx = ((t * 420 - mid * 1.1) % 1400 + 1400) % 1400 - 160;
+      ctx.fillStyle = "#3d2049";
+      ctx.fillRect(tx, 300, 14, 110);
+      ctx.fillStyle = t % 2 ? "#e8542f" : "#ff7a2f";
+      ctx.beginPath();
+      ctx.arc(tx + 7, 290, 52, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // drifting leaves
+    for (var l = 0; l < 12; l++) {
+      var lx = (hash(l * 11 + 3) * 620 + state.frame * (1.2 + hash(l) * 0.8)) % 620 - 40;
+      var ly = 200 + ((hash(l * 5 + 7) * 380 + state.frame * (1.5 + hash(l * 3) * 1.2)) % 420);
+      ctx.fillStyle = l % 3 === 0 ? "#e8542f" : (l % 3 === 1 ? "#ffb13d" : "#c96a1e");
+      ctx.fillRect(lx, ly, 8, 5);
+    }
+
+    // the barn at the end of the ride
+    var barnSx = RIDE_END - state.rideDist + 270 + state.panX;
+    if (barnSx > -260 && barnSx < 800) {
+      ctx.fillStyle = "#8a2b2b";
+      ctx.fillRect(barnSx - 110, 250, 220, 170);
+      ctx.fillStyle = "#5c1d1d";
+      ctx.beginPath();
+      ctx.moveTo(barnSx - 130, 250);
+      ctx.lineTo(barnSx, 170);
+      ctx.lineTo(barnSx + 130, 250);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#ffe9c7";
+      ctx.fillRect(barnSx - 26, 330, 52, 90);
+      ctx.fillStyle = "#2a1408";
+      ctx.font = "900 22px 'Trebuchet MS', sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("THE BARN!", barnSx, 240);
+    }
+
+    // frights (world-locked — the aim is honest)
+    for (var i = 0; i < state.frights.length; i++) {
+      var f = state.frights[i];
+      if (f.state === 3 && !f.popped) continue;
+      var sx = screenX(f.x);
+      if (sx < -120 || sx > 660) continue;
+      if (f.popped && f.state === 3) {
+        // splat starburst
+        drawSplat(ctx, sx, f.y, f.hitFlash > 0 ? 1 : 0.6);
+        continue;
+      }
+      var slide = 0;
+      if (f.state === 2) slide = (1 - f.duckMs / DUCK_MS) * 150;
+      drawFright(ctx, sx, f.y + slide, f.type, f.hp, f.hitFlash > 0);
+    }
+
+    // the wooden train (near-static, gentle pan parallax)
+    var trainOff = state.panX * 0.25;
+    ctx.fillStyle = "#4a2410";
+    ctx.fillRect(0, 560, 540, 160);
+    ctx.fillStyle = "#6b3a18";
+    ctx.fillRect(0, 560, 540, 26);
+    ctx.fillStyle = "#ffb13d";
+    ctx.fillRect(0, 586, 540, 6);
+    for (var car = -1; car < 4; car++) {
+      var cxp = car * 190 - (trainOff % 190);
+      ctx.fillStyle = "#5c2d12";
+      ctx.fillRect(cxp + 10, 600, 160, 110);
+      ctx.fillStyle = "#2a1408";
+      ctx.fillRect(cxp + 30, 618, 120, 64);
+      ctx.fillStyle = "#7a4a22";
+      ctx.fillRect(cxp + 34, 622, 112, 56);
+      // window glints
+      ctx.fillStyle = "rgba(255, 177, 61, 0.28)";
+      ctx.fillRect(cxp + 34, 622, 112, 18);
+      // plank lines
+      ctx.fillStyle = "#4a2410";
+      ctx.fillRect(cxp + 10, 650, 160, 4);
+    }
+
+    // crosshair + muzzle flash
+    if (state.screen === "running") {
+      ctx.strokeStyle = "#ffb13d";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(state.crossX, state.crossY, 20, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(state.crossX - 30, state.crossY);
+      ctx.lineTo(state.crossX - 8, state.crossY);
+      ctx.moveTo(state.crossX + 8, state.crossY);
+      ctx.lineTo(state.crossX + 30, state.crossY);
+      ctx.moveTo(state.crossX, state.crossY - 30);
+      ctx.lineTo(state.crossX, state.crossY - 8);
+      ctx.moveTo(state.crossX, state.crossY + 8);
+      ctx.lineTo(state.crossX, state.crossY + 30);
+      ctx.stroke();
+      if (state.muzzleMs > 0) {
+        ctx.strokeStyle = "#ffe9c7";
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.arc(state.crossX, state.crossY, 30 + (120 - state.muzzleMs) * 0.25, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+
+    // floating bonus text
+    ctx.textAlign = "center";
+    for (var fl = 0; fl < state.floats.length; fl++) {
+      var ft = state.floats[fl];
+      ctx.fillStyle = ft.text === "MISS!" ? "#e8542f" : "#ffe9c7";
+      ctx.font = "900 20px 'Trebuchet MS', sans-serif";
+      ctx.fillText(ft.text, ft.x, ft.y);
+    }
+  }
+
+  function drawFright(ctx, x, y, type, hp, flash) {
+    ctx.save();
+    ctx.translate(x, y);
+    if (flash) {
+      ctx.fillStyle = "#ffe9c7";
+      ctx.beginPath();
+      ctx.arc(0, 0, 54, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    if (type === 0) {
+      // crow
+      ctx.fillStyle = "#1c0d10";
+      ctx.fillRect(-26, -12, 52, 26);
+      ctx.fillRect(-14, -30, 26, 22);
+      var flap = Math.sin(state.frame * 0.4) * 8;
+      ctx.fillRect(-44, -18 - flap, 22, 10);
+      ctx.fillRect(22, -18 + flap, 22, 10);
+      ctx.fillStyle = "#ffb13d";
+      ctx.fillRect(12, -24, 12, 8);
+      ctx.fillStyle = "#ffe9c7";
+      ctx.fillRect(-4, -24, 6, 6);
+    } else if (type === 1) {
+      // pumpkin-head
+      ctx.fillStyle = "#5c2d12";
+      ctx.fillRect(-8, 26, 16, 40);
+      ctx.fillStyle = "#ff7a2f";
+      ctx.beginPath();
+      ctx.arc(0, -6, 38, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#c96a1e";
+      ctx.fillRect(-6, -48, 12, 14);
+      // grin
+      ctx.fillStyle = "#2a1408";
+      ctx.fillRect(-18, 2, 36, 10);
+      ctx.fillRect(-12, -18, 10, 12);
+      ctx.fillRect(4, -18, 10, 12);
+    } else if (type === 2) {
+      // sheet ghost
+      ctx.fillStyle = "#f4eeff";
+      ctx.beginPath();
+      ctx.arc(0, -16, 34, Math.PI, 0);
+      ctx.lineTo(34, 42);
+      ctx.lineTo(20, 30);
+      ctx.lineTo(6, 44);
+      ctx.lineTo(-8, 30);
+      ctx.lineTo(-22, 44);
+      ctx.lineTo(-34, 30);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#2a1408";
+      ctx.fillRect(-14, -22, 10, 14);
+      ctx.fillRect(6, -22, 10, 14);
+      ctx.beginPath();
+      ctx.arc(0, 4, 8, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      // scarecrow (tough)
+      ctx.fillStyle = "#5c2d12";
+      ctx.fillRect(-6, 10, 12, 60);
+      ctx.fillStyle = hp > 1 ? "#c96a1e" : "#a05a22";
+      ctx.fillRect(-30, -8, 60, 34);
+      // patches
+      ctx.fillStyle = "#5a7d2a";
+      ctx.fillRect(-22, 0, 14, 12);
+      ctx.fillStyle = "#e8542f";
+      ctx.fillRect(8, 4, 12, 10);
+      // arms
+      ctx.fillStyle = "#5c2d12";
+      ctx.fillRect(-52, -2, 24, 10);
+      ctx.fillRect(28, -2, 24, 10);
+      // head + hat
+      ctx.fillStyle = "#d9a05b";
+      ctx.beginPath();
+      ctx.arc(0, -30, 22, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#3d2049";
+      ctx.fillRect(-30, -52, 60, 10);
+      ctx.fillRect(-16, -72, 32, 22);
+      // face
+      ctx.fillStyle = "#2a1408";
+      if (hp > 1) {
+        ctx.fillRect(-12, -36, 8, 8);
+        ctx.fillRect(4, -36, 8, 8);
+      } else {
+        // damaged: X eye + droop
+        ctx.fillRect(-14, -38, 12, 4);
+        ctx.fillRect(-10, -42, 4, 12);
+        ctx.fillRect(4, -36, 8, 8);
+      }
+      ctx.fillRect(-10, -22, 20, 6);
+    }
+    ctx.restore();
+  }
+
+  function drawSplat(ctx, x, y, k) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.fillStyle = "rgba(255, 177, 61, " + (0.9 * k) + ")";
+    for (var a = 0; a < 8; a++) {
+      var ang = a * Math.PI / 4 + state.frame * 0.05;
+      ctx.fillRect(Math.cos(ang) * 30 - 4, Math.sin(ang) * 30 - 4, 12, 12);
+    }
+    ctx.beginPath();
+    ctx.arc(0, 0, 18 * k + 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // ---------- wiring ----------
+  function canvasPoint(el, e) {
+    var r = el.getBoundingClientRect();
+    return {
+      x: (e.clientX - r.left) * (540 / r.width),
+      y: (e.clientY - r.top) * (720 / r.height)
+    };
+  }
+
+  document.addEventListener("keydown", function (e) {
+    var k = e.key;
+    if (k === "Enter") {
+      if (state.screen !== "running") startGame();
+      return;
+    }
+    if (k === "ArrowLeft" || k === "a" || k === "A") pan(-1);
+    else if (k === "ArrowRight" || k === "d" || k === "D") pan(1);
+    else if (k === " " || k === "Spacebar") shoot(state.crossX, state.crossY);
+  });
+
+  document.getElementById("btn-start").addEventListener("click", startGame);
+  document.getElementById("btn-again").addEventListener("click", startGame);
+  document.getElementById("btn-left").addEventListener("click", function () { pan(-1); });
+  document.getElementById("btn-right").addEventListener("click", function () { pan(1); });
+  document.getElementById("btn-fire").addEventListener("click", function () {
+    shoot(state.crossX, state.crossY);
+  });
+  document.getElementById("btn-records").addEventListener("click", function () {
+    state.bestScore = 0;
+    state.bestCombo = 0;
+    saveRecords();
+    toast("RECORDS CLEARED");
+    render();
+  });
+
+  var cv = document.getElementById("road");
+  cv.addEventListener("click", function (e) {
+    var p = canvasPoint(cv, e);
+    shoot(p.x, p.y);
+  });
+  cv.addEventListener("mousemove", function (e) {
+    var p = canvasPoint(cv, e);
+    setCrosshair(p.x, p.y);
+  });
+
+  // ---------- boot ----------
+  (function boot() {
+    var rec = loadRecords();
+    state.bestScore = rec.bestScore;
+    state.bestCombo = rec.bestCombo;
+    render();
+    setInterval(function () {
+      tick();
+      draw();
+    }, TICK_MS);
+  })();
+</script>
+</body>
+</html>
