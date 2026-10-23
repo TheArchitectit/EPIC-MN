@@ -29,12 +29,14 @@ They leave having **made something real**, not just watched a demo.
 # option A — just open them
 open index.html        # macOS — Example #1, the Clubhouse
 open bubblegum.html    # Example #2, Bubblegum Zap (the game)
+open study.html        # Example #3, Study Quest (the study arcade)
 xdg-open index.html    # Linux same files
 
 # option B — serve everything
 python3 -m http.server 8123
-# then visit http://localhost:8123/ (clubhouse) and
-#         http://localhost:8123/bubblegum.html (game)
+# then visit http://localhost:8123/ (clubhouse),
+#         http://localhost:8123/bubblegum.html (game), and
+#         http://localhost:8123/study.html (study arcade)
 ```
 
 Everything is local-only, invented data, no accounts, no installs.
@@ -45,6 +47,7 @@ Everything is local-only, invented data, no accounts, no installs.
 |---|---|
 | `index.html` | **Example #1 — the Clubhouse**: a hand-built app with living canvas, live console, events, members, board, bookings |
 | `bubblegum.html` | **Example #2 — Bubblegum Zap**: the arcade game — retro chiptune, aim-assist laser/missiles, random gum objects, escalating 1-minute rounds |
+| `study.html` | **Example #3 — Study Quest**: the retro study arcade — flashcard decks by subject (Math, Vocab, History), flip/mark drilling, missed cards come back until the deck is clear |
 | `docs/reverse-prompt-guide.md` | **The playbook** — how students reverse-prompt with OpenSpec, with examples and drills |
 | `docs/runbook.md` | The 10-minute demo session script for the teacher/host (with troubleshooting) |
 | `docs/event-card.md` | A printable one-page journey card for the booth |
@@ -73,6 +76,7 @@ archived into its spec:
 - `openspec/specs/clubhouse/spec.md` — the clubhouse (Example #1)
 - `openspec/specs/bubblegum-zap/spec.md` — the game, including the tuning,
   weapons, and retro-music changes (Example #2)
+- `openspec/specs/study-app/spec.md` — the study arcade (Example #3)
 
 `openspec/changes/archive/` holds the complete history of every change.
 

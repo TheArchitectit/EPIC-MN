@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Study Quest — EPIC-MN</title>
+<meta name="description" content="A retro flashcard study arcade: drill decks by subject until the deck is clear. Example #3 of EPIC-MN.">
+<style>
+/* ============================================================
+   STUDY QUEST · retro study arcade · hand-built
+   ============================================================ */
+:root{
+  --ink:#12062b; --ink2:#1d0b3f; --txt:#fff6e9; --dim:rgba(255,246,233,.66);
+  --card:rgba(255,255,255,.07); --line:rgba(255,255,255,.16);
+  --pink:#ff2d95; --cyan:#2de2e6; --yellow:#ffd166; --mint:#6ff2c5; --purple:#8b5cf6;
+  --hard:6px 6px 0 rgba(0,0,0,.45);
+  --mono:ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --sans:"Trebuchet MS","Gill Sans",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;min-height:100%}
+body{
+  font-family:var(--sans);color:var(--txt);
+  background:
+    radial-gradient(1200px 600px at 50% -10%, #2a1060 0%, transparent 60%),
+    repeating-linear-gradient(0deg, transparent 0 38px, rgba(255,255,255,.03) 38px 39px),
+    repeating-linear-gradient(90deg, transparent 0 38px, rgba(255,255,255,.03) 38px 39px),
+    var(--ink);
+  user-select:none;-webkit-user-select:none;touch-action:manipulation;
+}
+
+/* ---------- chrome ---------- */
+#top{max-width:980px;margin:0 auto;padding:22px 18px 8px;display:flex;
+  justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap}
+#brand h1{margin:0;font-family:var(--mono);font-size:clamp(26px,6vw,44px);
+  font-weight:900;letter-spacing:.08em;line-height:1;
+  color:var(--yellow);text-shadow:3px 3px 0 var(--pink), 6px 6px 0 rgba(0,0,0,.45)}
+#brand p{margin:8px 0 0;font-family:var(--mono);font-size:11px;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--dim)}
+.topbtns{display:flex;gap:10px;flex-wrap:wrap}
+
+/* ---------- buttons ---------- */
+.btn{font:inherit;font-family:var(--mono);font-weight:900;font-size:13px;
+  letter-spacing:.12em;text-transform:uppercase;cursor:pointer;
+  border:3px solid var(--txt);border-radius:6px;padding:12px 18px;
+  background:var(--ink2);color:var(--txt);box-shadow:var(--hard);
+  transition:transform .08s, box-shadow .08s}
+.btn:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 rgba(0,0,0,.45)}
+.btn:active{transform:translate(3px,3px);box-shadow:2px 2px 0 rgba(0,0,0,.45)}
+.btn.primary{background:var(--pink);color:#fff}
+.btn.cyan{background:var(--cyan);color:#08222a}
+.btn.yellow{background:var(--yellow);color:#3a2400}
+.btn.mint{background:var(--mint);color:#06331f}
+.btn.ghost{background:transparent;border-color:var(--line);color:var(--dim);box-shadow:none}
+.btn.ghost:hover{color:var(--txt);border-color:var(--txt)}
+
+/* ---------- screens ---------- */
+.screen{display:none;max-width:980px;margin:0 auto;padding:10px 18px 40px}
+.screen.on{display:block}
+
+/* ---------- decks home ---------- */
+.lede{font-size:15px;color:var(--dim);max-width:560px;margin:6px 0 22px}
+.deckgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px}
+.deck{background:var(--card);border:3px solid var(--line);border-radius:10px;
+  padding:20px 18px;box-shadow:var(--hard);cursor:pointer;position:relative;overflow:hidden;
+  transition:transform .12s, border-color .12s}
+.deck:hover{transform:translate(-3px,-3px);border-color:var(--cyan)}
+.deck .tag{font-family:var(--mono);font-size:10px;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--cyan)}
+.deck h2{margin:6px 0 8px;font-family:var(--mono);font-size:22px;letter-spacing:.04em}
+.deck .blurb{font-size:13px;color:var(--dim);margin:0 0 14px;min-height:38px}
+.deck .stats{display:flex;gap:8px;flex-wrap:wrap}
+.chip{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  border:2px solid var(--line);border-radius:999px;padding:5px 10px;color:var(--dim)}
+.chip.hot{border-color:var(--pink);color:var(--pink)}
+.chip.good{border-color:var(--mint);color:var(--mint)}
+.deck .play{margin-top:14px;width:100%}
+.deck .stripe{position:absolute;top:0;left:0;right:0;height:6px;
+  background:repeating-linear-gradient(90deg,var(--pink) 0 14px,var(--yellow) 14px 28px,var(--cyan) 28px 42px)}
+
+/* ---------- study screen ---------- */
+.hud{display:flex;justify-content:space-between;align-items:center;gap:12px;
+  flex-wrap:wrap;margin:4px 0 18px}
+.hud .round{font-family:var(--mono);font-size:13px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--yellow)}
+.hud .count{font-family:var(--mono);font-size:13px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--dim)}
+.stage{perspective:1200px;max-width:560px;margin:0 auto}
+.flipper{position:relative;width:100%;min-height:290px;cursor:pointer;
+  transform-style:preserve-3d;transition:transform .45s cubic-bezier(.2,.8,.25,1)}
+.flipper.flipped{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  border:4px solid var(--txt);border-radius:14px;box-shadow:var(--hard);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:28px 24px;gap:12px}
+.face.front{background:linear-gradient(165deg,#2a1060,#5b1e8a)}
+.face.back{background:linear-gradient(165deg,#0b4a4f,#12818a);transform:rotateY(180deg)}
+.face .kind{font-family:var(--mono);font-size:10px;letter-spacing:.26em;
+  text-transform:uppercase;color:var(--dim)}
+.face .text{font-family:var(--mono);font-size:clamp(20px,5vw,30px);
+  font-weight:900;line-height:1.3;letter-spacing:.02em}
+.face .hint{font-family:var(--mono);font-size:11px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--dim);animation:blink 1.4s steps(2) infinite}
+@keyframes blink{50%{opacity:.25}}
+.face.back .text{font-size:clamp(18px,4.4vw,26px)}
+.marks{display:none;gap:14px;justify-content:center;margin:22px auto 0;max-width:560px}
+.marks.on{display:flex}
+.marks .btn{flex:1;font-size:15px;padding:16px 10px}
+.stageflash{animation:stageflash .5s}
+@keyframes stageflash{30%{filter:brightness(1.6)}}
+
+/* ---------- celebration ---------- */
+#screen-win .card{max-width:520px;margin:20px auto 0;text-align:center;
+  background:var(--card);border:4px solid var(--yellow);border-radius:16px;
+  padding:36px 26px;box-shadow:var(--hard);position:relative;overflow:hidden}
+#screen-win h2{font-family:var(--mono);font-size:clamp(26px,7vw,42px);margin:0 0 6px;
+  letter-spacing:.06em;color:var(--yellow);text-shadow:3px 3px 0 var(--pink)}
+#screen-win .big{font-family:var(--mono);font-size:clamp(40px,10vw,64px);
+  font-weight:900;line-height:1;background:linear-gradient(120deg,var(--cyan),var(--pink));
+  -webkit-background-clip:text;background-clip:text;color:transparent;margin:12px 0}
+#screen-win .sub{color:var(--dim);font-family:var(--mono);letter-spacing:.12em;
+  text-transform:uppercase;font-size:12px}
+#screen-win .row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:22px}
+.spark{position:absolute;font-size:22px;pointer-events:none;animation:spark 1.6s ease-out forwards}
+@keyframes spark{to{transform:translateY(-90px) rotate(220deg);opacity:0}}
+
+/* ---------- floating flourishes ---------- */
+.fl{position:fixed;z-index:40;pointer-events:none;font-family:var(--mono);
+  font-weight:900;font-size:22px;letter-spacing:.08em;text-transform:uppercase;
+  text-shadow:2px 2px 0 rgba(0,0,0,.5);animation:fl .85s ease-out forwards}
+@keyframes fl{to{transform:translateY(-72px);opacity:0}}
+.fl.got{color:var(--mint)}
+.fl.miss{color:var(--pink)}
+
+/* ---------- toast ---------- */
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);
+  opacity:0;background:var(--ink2);border:3px solid var(--cyan);color:var(--txt);
+  font-family:var(--mono);font-size:13px;letter-spacing:.12em;text-transform:uppercase;
+  padding:12px 20px;border-radius:8px;box-shadow:var(--hard);z-index:50;
+  transition:.25s;pointer-events:none;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ---------- foot ---------- */
+.foot{max-width:980px;margin:10px auto 30px;padding:0 18px;font-family:var(--mono);
+  font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);text-align:center}
+.foot b{color:var(--cyan)}
+
+@media (max-width:520px){
+  .flipper{min-height:240px}
+  .marks .btn{font-size:13px}
+  #top{align-items:flex-start}
+}
+</style>
+</head>
+<body>
+
+<header id="top">
+  <div id="brand">
+    <h1>STUDY QUEST</h1>
+    <p>drill decks · get smart · look cool</p>
+  </div>
+  <div class="topbtns">
+    <button class="btn ghost" id="btn-home">◀ decks</button>
+    <button class="btn ghost" id="btn-reset">↺ reset</button>
+  </div>
+</header>
+
+<main>
+  <!-- ===== decks home ===== -->
+  <section class="screen on" id="screen-decks">
+    <p class="lede">Pick a subject, flip cards, and mark what you know.
+      Missed cards come back again and again — until the deck is <b>clear</b>.</p>
+    <div class="deckgrid" id="deckgrid"></div>
+  </section>
+
+  <!-- ===== study session ===== -->
+  <section class="screen" id="screen-study">
+    <div class="hud">
+      <div class="round" id="hud-round">ROUND 1</div>
+      <div class="count" id="hud-count">CARD 1 OF 6</div>
+    </div>
+    <div class="stage">
+      <div class="flipper" id="flipper" role="button" tabindex="0" aria-label="Flip card">
+        <div class="face front">
+          <div class="kind">question</div>
+          <div class="text" id="front-text">…</div>
+          <div class="hint">tap to flip</div>
+        </div>
+        <div class="face back">
+          <div class="kind">answer</div>
+          <div class="text" id="back-text">…</div>
+          <div class="hint">now mark it below</div>
+        </div>
+      </div>
+    </div>
+    <div class="marks" id="marks">
+      <button class="btn mint" id="btn-got">✓ got it</button>
+      <button class="btn primary" id="btn-miss">✗ missed it</button>
+    </div>
+  </section>
+
+  <!-- ===== clear-deck celebration ===== -->
+  <section class="screen" id="screen-win">
+    <div class="card" id="win-card">
+      <h2>DECK CLEAR!</h2>
+      <div class="big" id="win-rounds">2 ROUNDS</div>
+      <div class="sub" id="win-sub">every card marked “got it”</div>
+      <div class="row">
+        <button class="btn primary" id="btn-again">↻ study again</button>
+        <button class="btn cyan" id="btn-win-home">◀ decks</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="foot"><b>EPIC-MN</b> · example #3 · all data invented · local-only</div>
+<div id="toast" role="status"></div>
+
+<script>
+"use strict";
+/* ============================================================
+   STUDY QUEST · state machine · localStorage · zero deps
+   screens: decks → study → celebrate
+   ============================================================ */
+
+/* ---------- decks (all invented, local-only) ---------- */
+const DECKS = [
+  {
+    id:"math", subject:"Math Facts", blurb:"Multiplication, squares, roots, and sneaky percentages.",
+    cards:[
+      { id:"math-01", front:"7 × 8 = ?", back:"56" },
+      { id:"math-02", front:"12² = ?", back:"144" },
+      { id:"math-03", front:"√81 = ?", back:"9" },
+      { id:"math-04", front:"2⁵ = ?", back:"32" },
+      { id:"math-05", front:"15% of 200 = ?", back:"30" },
+      { id:"math-06", front:"π to 4 decimal places?", back:"3.1416" },
+    ],
+  },
+  {
+    id:"vocab", subject:"Vocab", blurb:"Words that make essays sound expensive.",
+    cards:[
+      { id:"vocab-01", front:"ephemeral", back:"Lasting a very short time" },
+      { id:"vocab-02", front:"ubiquitous", back:"Found everywhere at once" },
+      { id:"vocab-03", front:"gregarious", back:"Fond of company; sociable" },
+      { id:"vocab-04", front:"pristine", back:"Spotlessly new or original" },
+      { id:"vocab-05", front:"candid", back:"Truthful and straightforward" },
+      { id:"vocab-06", front:"tenacious", back:"Holding on stubbornly; persistent" },
+    ],
+  },
+  {
+    id:"history", subject:"History", blurb:"Dates and deeds worth drilling before the quiz.",
+    cards:[
+      { id:"history-01", front:"1066 — which battle?", back:"The Battle of Hastings" },
+      { id:"history-02", front:"1215 — which document?", back:"The Magna Carta" },
+      { id:"history-03", front:"1492 — who reached the Americas for Spain?", back:"Christopher Columbus" },
+      { id:"history-04", front:"1776 — which declaration?", back:"The US Declaration of Independence" },
+      { id:"history-05", front:"1969 — what did humans first do on the Moon?", back:"Walked on it (Apollo 11)" },
+      { id:"history-06", front:"1989 — what fell in Berlin?", back:"The Berlin Wall" },
+    ],
+  },
+];
+
+const deckById = (id) => DECKS.find(d => d.id === id);
+const cardById = (deck, id) => deck.cards.find(c => c.id === id);
+
+/* ---------- persistence ---------- */
+const KEY = "study-app-progress:v1";
+
+function seed(){ return { tally:{}, best:{} }; }
+
+function load(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(!raw) return seed();
+    const p = JSON.parse(raw);
+    return { tally: (p && p.tally) || {}, best: (p && p.best) || {} };
+  }catch(e){ return seed(); }
+}
+
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(progress)); }catch(e){} }
+
+/* ---------- app state ---------- */
+let progress = load();
+let state = {
+  screen:"decks",     // decks | study | win
+  deckId:null,
+  queue:[],           // card ids left this round; front = current card
+  round:1,
+  roundTotal:0,       // cards in the current round (for the counter)
+  flipped:false,
+  missedRound:[],     // ids marked "missed it" this round — they come back
+  lastRounds:null,    // rounds taken when the deck was cleared
+};
+
+/* ---------- toast ---------- */
+const toastEl = document.getElementById("toast");
+let toastT;
+function toast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add("show");
+  clearTimeout(toastT);
+  toastT = setTimeout(() => toastEl.classList.remove("show"), 2600);
+}
+
+/* ---------- flourishes ---------- */
+function flourish(text, kind, x, y){
+  const el = document.createElement("div");
+  el.className = "fl " + (kind || "got");
+  el.textContent = text;
+  el.style.left = (x != null ? x : innerWidth/2 - 60) + "px";
+  el.style.top = (y != null ? y : innerHeight/2 - 40) + "px";
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 900);
+}
+
+function sparkBurst(host){
+  const glyphs = ["✦","★","◆","✧","★"];
+  for(let i = 0; i < 8; i++){
+    const s = document.createElement("div");
+    s.className = "spark";
+    s.textContent = glyphs[i % glyphs.length];
+    s.style.left = (10 + Math.random()*80) + "%";
+    s.style.top = (30 + Math.random()*50) + "%";
+    s.style.color = ["var(--yellow)","var(--pink)","var(--cyan)","var(--mint)"][i % 4];
+    s.style.animationDelay = (Math.random()*.5) + "s";
+    host.appendChild(s);
+    setTimeout(() => s.remove(), 2200);
+  }
+}
+
+/* ---------- helpers ---------- */
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function tallyFor(cardId){ return progress.tally[cardId] || 0; }
+
+function deckMissCount(deck){
+  return deck.cards.filter(c => tallyFor(c.id) > 0).length;
+}
+
+function bestFor(deckId){ return progress.best[deckId] || null; }
+
+/* ---------- screens / render ---------- */
+const screens = {
+  decks: document.getElementById("screen-decks"),
+  study: document.getElementById("screen-study"),
+  win: document.getElementById("screen-win"),
+};
+
+function render(){
+  for(const k in screens) screens[k].classList.toggle("on", state.screen === k);
+  if(state.screen === "decks") renderDecks();
+  if(state.screen === "study") renderStage();
+  if(state.screen === "win") renderWin();
+}
+
+function renderDecks(){
+  const grid = document.getElementById("deckgrid");
+  grid.textContent = "";
+  DECKS.forEach(deck => {
+    const miss = deckMissCount(deck);
+    const best = bestFor(deck.id);
+    const el = document.createElement("div");
+    el.className = "deck";
+    el.innerHTML =
+      '<div class="stripe"></div>' +
+      '<div class="tag">' + deck.cards.length + ' cards</div>' +
+      "<h2>" + deck.subject + "</h2>" +
+      '<p class="blurb">' + deck.blurb + "</p>" +
+      '<div class="stats">' +
+        '<span class="chip ' + (miss ? "hot" : "") + '">⚠ trouble: ' + miss + "</span>" +
+        '<span class="chip ' + (best ? "good" : "") + '">★ best: ' + (best ? best + " rnd" : "—") + "</span>" +
+      "</div>" +
+      '<button class="btn yellow play">▶ study</button>';
+    el.addEventListener("click", () => startSession(deck.id));
+    grid.appendChild(el);
+  });
+}
+
+function renderStage(){
+  const deck = deckById(state.deckId);
+  const card = cardById(deck, state.queue[0]);
+  document.getElementById("hud-round").textContent = "ROUND " + state.round;
+  document.getElementById("hud-count").textContent =
+    "CARD " + (state.roundTotal - state.queue.length + 1) + " OF " + state.roundTotal;
+  document.getElementById("front-text").textContent = card ? card.front : "…";
+  document.getElementById("back-text").textContent = card ? card.back : "…";
+  const flipper = document.getElementById("flipper");
+  flipper.classList.toggle("flipped", state.flipped);
+  document.getElementById("marks").classList.toggle("on", state.flipped);
+}
+
+function renderWin(){
+  const deck = deckById(state.deckId);
+  const rounds = state.lastRounds;
+  document.getElementById("win-rounds").textContent =
+    rounds + (rounds === 1 ? " ROUND" : " ROUNDS");
+  const best = bestFor(deck.id);
+  document.getElementById("win-sub").textContent =
+    "every card marked “got it” · best: " + best + (best === 1 ? " round" : " rounds");
+  sparkBurst(document.getElementById("win-card"));
+}
+
+/* ---------- session flow ---------- */
+function startSession(deckId){
+  const deck = deckById(deckId);
+  state.screen = "study";
+  state.deckId = deckId;
+  state.queue = shuffle(deck.cards.map(c => c.id));
+  state.round = 1;
+  state.roundTotal = state.queue.length;
+  state.flipped = false;
+  state.missedRound = [];
+  state.lastRounds = null;
+  render();
+}
+
+function flip(){
+  if(state.screen !== "study" || state.flipped) return;
+  state.flipped = true;
+  renderStage();
+  const stage = document.querySelector(".stage");
+  stage.classList.remove("stageflash");
+  void stage.offsetWidth;
+  stage.classList.add("stageflash");
+}
+
+function mark(gotIt){
+  if(state.screen !== "study" || !state.flipped) return;
+  const id = state.queue[0];
+  const deck = deckById(state.deckId);
+  if(gotIt){
+    flourish("got it!", "got");
+  }else{
+    progress.tally[id] = tallyFor(id) + 1;
+    save();
+    state.missedRound.push(id);
+    flourish("comes back!", "miss");
+  }
+  state.queue.shift();
+  state.flipped = false;
+
+  if(state.queue.length === 0){
+    if(state.missedRound.length > 0){
+      state.round += 1;
+      state.queue = shuffle(state.missedRound);
+      state.roundTotal = state.queue.length;
+      state.missedRound = [];
+      renderStage();
+      toast("round " + state.round + " — the missed return!");
+    }else{
+      /* deck clear */
+      const prev = bestFor(state.deckId);
+      if(!prev || state.round < prev){ progress.best[state.deckId] = state.round; save(); }
+      state.lastRounds = state.round;
+      state.screen = "win";
+      render();
+    }
+    return;
+  }
+  renderStage();
+}
+
+function goHome(){
+  state.screen = "decks";
+  render();
+}
+
+function resetProgress(){
+  progress = seed();
+  save();
+  toast("↺ fresh study data restored");
+  render();
+}
+
+/* ---------- events ---------- */
+document.getElementById("flipper").addEventListener("click", flip);
+document.getElementById("btn-got").addEventListener("click", (e) => {
+  e.stopPropagation();
+  mark(true);
+});
+document.getElementById("btn-miss").addEventListener("click", (e) => {
+  e.stopPropagation();
+  mark(false);
+});
+document.getElementById("btn-home").addEventListener("click", goHome);
+document.getElementById("btn-win-home").addEventListener("click", goHome);
+document.getElementById("btn-again").addEventListener("click", () => startSession(state.deckId));
+document.getElementById("btn-reset").addEventListener("click", resetProgress);
+
+/* ---------- boot: decks are ready immediately ---------- */
+render();
+</script>
+</body>
+</html>
