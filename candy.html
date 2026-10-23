@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Candy Beat — the candy-80s rhythm auto-runner</title>
+<style>
+  :root {
+    --pink:#ff2e88; --blue:#2e8bff; --yellow:#ffe94a; --mint:#4affc8;
+    --grape:#7a3cff; --cabinet:#241040; --road:#3c1d6e; --ink:#fff6ff;
+    --dim:#8a6ab8; --danger:#ff4a4a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--cabinet);
+    color: var(--ink);
+    font-family: "Courier New", monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 8px 24px;
+    min-height: 100vh;
+    touch-action: manipulation;
+  }
+  h1 {
+    font-size: 36px;
+    letter-spacing: 6px;
+    color: var(--yellow);
+    text-shadow: 3px 3px 0 var(--pink), 6px 6px 0 var(--blue), 0 0 22px var(--pink);
+    text-align: center;
+  }
+  .tag {
+    color: var(--mint);
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-align: center;
+  }
+  .boardwrap {
+    position: relative;
+    width: 540px;
+    max-width: 100%;
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    background: var(--cabinet);
+    border: 6px solid var(--pink);
+    border-radius: 12px;
+    box-shadow: 0 0 0 4px var(--blue), 0 0 30px rgba(255, 46, 136, 0.55), 0 0 70px rgba(46, 139, 255, 0.3);
+  }
+  .toast {
+    position: absolute;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--cabinet);
+    color: var(--yellow);
+    border: 2px solid var(--yellow);
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s;
+    white-space: nowrap;
+    z-index: 5;
+  }
+  .toast.show { opacity: 1; }
+  .screen {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    background: rgba(36, 16, 64, 0.85);
+    border-radius: 12px;
+    text-align: center;
+    padding: 16px;
+  }
+  .screen.show { display: flex; }
+  .screen h2 {
+    font-size: 28px;
+    letter-spacing: 3px;
+    color: var(--yellow);
+    text-shadow: 2px 2px 0 var(--pink), 0 0 16px var(--pink);
+  }
+  .screen .sub {
+    color: var(--mint);
+    letter-spacing: 2px;
+    font-size: 13px;
+    font-weight: bold;
+  }
+  .screen .how {
+    color: var(--ink);
+    font-size: 12px;
+    max-width: 400px;
+    line-height: 1.6;
+  }
+  .screen .big {
+    font-size: 22px;
+    color: var(--yellow);
+    text-shadow: 0 0 10px var(--yellow);
+    font-weight: bold;
+  }
+  button {
+    font-family: inherit;
+    font-weight: bold;
+    letter-spacing: 2px;
+    border-radius: 10px;
+    cursor: pointer;
+    border: 3px solid var(--mint);
+    background: var(--road);
+    color: var(--mint);
+    padding: 12px 20px;
+    font-size: 14px;
+  }
+  button:hover { background: var(--mint); color: var(--cabinet); }
+  .screen button {
+    border-color: var(--pink);
+    background: var(--pink);
+    color: var(--ink);
+    font-size: 16px;
+    padding: 12px 28px;
+    box-shadow: 0 0 18px rgba(255, 46, 136, 0.6);
+  }
+  .screen button:hover { background: var(--yellow); border-color: var(--yellow); color: var(--cabinet); }
+  #over-best {
+    display: none;
+    background: var(--yellow);
+    color: var(--cabinet);
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-weight: bold;
+    letter-spacing: 3px;
+    box-shadow: 0 0 18px var(--yellow);
+  }
+  #over-best.show { display: block; }
+  .strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    width: 540px;
+    max-width: 100%;
+  }
+  #btn-jump {
+    width: 220px;
+    height: 64px;
+    font-size: 20px;
+    background: var(--pink);
+    color: var(--ink);
+    border-color: var(--yellow);
+    box-shadow: 0 0 18px rgba(255, 46, 136, 0.5);
+  }
+  #btn-jump:hover { background: var(--yellow); color: var(--cabinet); }
+  #btn-clear { border-color: var(--dim); color: var(--dim); }
+  #btn-clear:hover { background: var(--dim); color: var(--cabinet); }
+  #strip-records {
+    color: var(--dim);
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+  <h1>CANDY BEAT</h1>
+  <p class="tag">THE CANDY-80S RHYTHM AUTO-RUNNER &middot; ONE TAP &middot; ONE BEAT &middot; ONE CABINET</p>
+
+  <div class="boardwrap">
+    <div class="toast" id="toast"></div>
+    <canvas id="board" width="540" height="720"></canvas>
+
+    <div class="screen" id="screen-ready">
+      <h2>CANDY BEAT</h2>
+      <p class="sub">ONE TAP &middot; ONE BEAT &middot; ONE CABINET</p>
+      <p class="how">Your hero runs to the music! <b>TAP</b> (space,
+        up-arrow, or the JUMP button) to leap gaps, spikes, and pipes
+        &mdash; land your taps <b>on the beat</b> and the dance floor
+        lights up. Grab the candy beat-orbs!</p>
+      <p class="big" id="ready-records">NO RECORDS YET</p>
+      <button id="btn-start">PRESS START!</button>
+    </div>
+
+    <div class="screen" id="screen-over">
+      <h2 id="over-result">Cabinet cleared!</h2>
+      <p class="big" id="over-score">&nbsp;</p>
+      <p class="how" id="over-stats">&nbsp;</p>
+      <div id="over-best">NEW BEST!</div>
+      <button id="btn-again">PLAY AGAIN</button>
+    </div>
+  </div>
+
+  <div class="strip">
+    <button id="btn-jump">JUMP!</button>
+    <button id="btn-clear">CLEAR RECORDS</button>
+  </div>
+  <div id="strip-records">NO RECORDS YET</div>
+
+<script>
+// ---------- constants ----------
+var GKEY = "candy-beat:v1";
+var TICK_MS = 50;
+var BEAT_MS = 500;
+var BARS = 32;
+var BEATS = 128;
+var SPEED = 0.24;          // px per ms — 120 px per beat
+var HERO_X = 140;
+var GROUND_Y = 560;
+var JUMP_V = -700;         // px/s
+var GRAVITY = 2200;        // px/s^2
+var ONBEAT_MS = 90;
+var CLOSE_MS = 180;
+var CANVAS_W = 540;
+var CANVAS_H = 720;
+
+// ---------- house records ----------
+var rec = { bestScore: 0, bestStreak: 0 };
+var toastTimer = null;
+
+function loadRec() {
+  try {
+    var raw = localStorage.getItem(GKEY);
+    if (raw) {
+      var d = JSON.parse(raw);
+      if (typeof d.bestScore === "number") rec.bestScore = d.bestScore;
+      if (typeof d.bestStreak === "number") rec.bestStreak = d.bestStreak;
+    }
+  } catch (e) { /* storage down — play on */ }
+}
+function saveRec() {
+  try { localStorage.setItem(GKEY, JSON.stringify(rec)); } catch (e) {}
+}
+function clearRecords() {
+  rec = { bestScore: 0, bestStreak: 0 };
+  saveRec();
+  toast("Records cleared");
+  render();
+}
+function toast(msg) {
+  var t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () { t.classList.remove("show"); }, 1800);
+}
+
+// ---------- state ----------
+var state = {
+  phase: "ready",
+  songStart: 0,
+  songT: 0,
+  score: 0,
+  streak: 0,
+  bestStreakRun: 0,
+  crowd: 60,
+  hero: { y: GROUND_Y, vy: 0, onGround: true },
+  invuln: 0,
+  objs: [],
+  orbs: [],
+  bursts: [],
+  audioBeat: -1,
+  judge: null,
+  beatPulse: 0,
+  newBest: false,
+  endReason: ""
+};
+
+// ---------- helpers ----------
+function css(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue("--" + name).trim();
+}
+function clamp(v, lo, hi) { return v < lo ? lo : (v > hi ? hi : v); }
+function multOf(streak) { return Math.min(4, 1 + Math.floor(streak / 6)); }
+function glowAmt() { return 10 + 16 * (state.crowd / 100); }
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+function drawStar(x, y, r, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  for (var i = 0; i < 10; i++) {
+    var ang = -Math.PI / 2 + i * Math.PI / 5;
+    var rad = (i % 2 === 0) ? r : r * 0.45;
+    var px = x + Math.cos(ang) * rad;
+    var py = y + Math.sin(ang) * rad;
+    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  ctx.fill();
+}
+function objX(objMs) { return HERO_X + (objMs - state.songT) * SPEED; }
+function orbVisible(o) {
+  return !o.got && Math.abs(o.beat * BEAT_MS - state.songT) < 700;
+}
+
+// hard-coded candy star field
+var STARS = [
+  [40, 60, 2], [120, 110, 1], [210, 40, 2], [300, 90, 1], [390, 50, 2],
+  [470, 120, 1], [60, 170, 1], [180, 200, 2], [340, 160, 1], [500, 190, 2],
+  [90, 250, 1], [250, 230, 2], [420, 260, 1], [20, 300, 2], [160, 320, 1],
+  [320, 290, 2], [480, 330, 1], [70, 380, 2], [230, 400, 1], [400, 370, 2],
+  [520, 420, 1], [130, 450, 2], [290, 440, 1], [30, 200, 1], [360, 210, 2]
+];
+
+// ---------- the route: invented "Candy Circuit" ----------
+function buildRoute() {
+  var objs = [];
+  var orbs = [];
+  for (var bar = 0; bar < BARS; bar++) {
+    var b0 = bar * 4;
+    // gaps: 1 beat of missing ground from bar 2, every 4th bar
+    if (bar >= 2 && bar % 4 === 2) objs.push({ type: "gap", beat: b0 + 2, len: 1 });
+    // spikes from bar 3; a second spike in later busy bars
+    if (bar >= 3 && bar % 4 === 3) objs.push({ type: "spike", beat: b0 + 1 });
+    if (bar >= 12 && bar % 8 === 5) objs.push({ type: "spike", beat: b0 + 3 });
+    // pipes from bar 5
+    if (bar >= 5 && bar % 4 === 1) objs.push({ type: "pipe", beat: b0 + 3 });
+    // beat-orbs: one every bar from bar 1, high extras later
+    if (bar >= 1) orbs.push({ beat: b0, hi: 0, got: 0 });
+    if (bar >= 6 && bar % 2 === 0) orbs.push({ beat: b0 + 2, hi: 1, got: 0 });
+  }
+  return { objs: objs, orbs: orbs };
+}
+
+// ---------- synthesized beat (optional Web Audio) ----------
+var actx = null;
+try {
+  if (typeof AudioContext !== "undefined") actx = new AudioContext();
+} catch (e) { actx = null; }
+
+function blip(freq, dur, type, gain, slideTo) {
+  if (!actx) return;
+  try {
+    var o = actx.createOscillator();
+    var g = actx.createGain();
+    o.type = type;
+    if (o.frequency.setValueAtTime) o.frequency.setValueAtTime(freq, actx.currentTime);
+    else o.frequency.value = freq;
+    if (slideTo && o.frequency.exponentialRampToValueAtTime) {
+      o.frequency.exponentialRampToValueAtTime(slideTo, actx.currentTime + dur);
+    }
+    if (g.gain.setValueAtTime) g.gain.setValueAtTime(gain, actx.currentTime);
+    else g.gain.value = gain;
+    if (g.gain.exponentialRampToValueAtTime) {
+      g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + dur);
+    }
+    o.connect(g);
+    g.connect(actx.destination);
+    o.start();
+    o.stop(actx.currentTime + dur);
+  } catch (e) { /* audio hiccup — never break the game */ }
+}
+function kickSnd() { blip(150, 0.18, "sine", 0.5, 40); }
+function snareSnd() { blip(220, 0.12, "square", 0.18, 120); }
+function hatSnd() { blip(6000, 0.05, "square", 0.07); }
+function bassSnd(f) { blip(f, 0.22, "triangle", 0.28); }
+function jumpSnd() { blip(420, 0.1, "square", 0.12, 780); }
+function sparkleSnd() { blip(1200, 0.12, "triangle", 0.14, 1800); }
+function stumbleSnd() { blip(220, 0.18, "sawtooth", 0.12, 90); }
+
+function playBeat(beat) {
+  var b = beat % 4;
+  if (b === 0 || b === 2) kickSnd();
+  if (b === 1 || b === 3) snareSnd();
+  hatSnd();
+  if (b === 3) bassSnd([110, 98, 123, 110][Math.floor(beat / 4) % 4]);
+}
+
+// ---------- the run ----------
+function startRun() {
+  state.phase = "playing";
+  state.songStart = Date.now();
+  state.songT = 0;
+  state.score = 0;
+  state.streak = 0;
+  state.bestStreakRun = 0;
+  state.crowd = 60;
+  state.hero = { y: GROUND_Y, vy: 0, onGround: true };
+  state.invuln = 0;
+  state.bursts = [];
+  state.judge = null;
+  state.audioBeat = -1;
+  state.newBest = false;
+  state.endReason = "";
+  var route = buildRoute();
+  state.objs = route.objs;
+  state.orbs = route.orbs;
+  render();
+}
+
+function endRun(reason) {
+  state.phase = "over";
+  state.endReason = reason;
+  var improved = false;
+  if (state.score > rec.bestScore) { rec.bestScore = state.score; improved = true; }
+  if (state.bestStreakRun > rec.bestStreak) { rec.bestStreak = state.bestStreakRun; improved = true; }
+  state.newBest = improved;
+  if (improved) saveRec();
+  render();
+}
+
+function spawnBurst(x, y) {
+  state.bursts.push({ x: x, y: y, life: 12 });
+}
+
+function stumble() {
+  if (state.invuln > 0) return;
+  state.invuln = 20;              // 1 s of mercy
+  state.crowd = clamp(state.crowd - 12, 0, 100);
+  state.streak = 0;
+  state.judge = { text: "STUMBLE!", life: 12, bad: 1 };
+  stumbleSnd();
+  if (state.crowd <= 0) endRun("lights");
+}
+
+function tap() {
+  if (state.phase !== "playing") return;
+  state.songT = Date.now() - state.songStart;
+  if (state.hero.onGround) {
+    state.hero.vy = JUMP_V;
+    state.hero.onGround = false;
+    jumpSnd();
+  }
+  // grade the tap against the nearest beat
+  var nearest = Math.round(state.songT / BEAT_MS) * BEAT_MS;
+  var d = Math.abs(state.songT - nearest);
+  if (d <= ONBEAT_MS) {
+    state.streak += 1;
+    if (state.streak > state.bestStreakRun) state.bestStreakRun = state.streak;
+    state.score += 50 * multOf(state.streak);
+    state.crowd = clamp(state.crowd + 3, 0, 100);
+    state.judge = { text: "ON BEAT!", life: 12, good: 1 };
+    spawnBurst(HERO_X, state.hero.y - 50);
+  } else if (d <= CLOSE_MS) {
+    state.crowd = clamp(state.crowd + 1, 0, 100);
+    state.judge = { text: "CLOSE", life: 12, good: 0 };
+  } else {
+    state.streak = 0;
+    state.crowd = clamp(state.crowd - 2, 0, 100);
+    state.judge = { text: "OFF BEAT", life: 12, bad: 1 };
+    if (state.crowd <= 0) { endRun("lights"); return; }
+  }
+}
+
+function checkHazards() {
+  var t = state.songT;
+  for (var i = 0; i < state.objs.length; i++) {
+    var o = state.objs[i];
+    if (o.type === "gap") {
+      var gs = o.beat * BEAT_MS - 70;
+      var ge = (o.beat + o.len) * BEAT_MS + 70;
+      if (t > gs && t < ge && state.hero.onGround) { stumble(); return; }
+    } else {
+      var om = o.beat * BEAT_MS;
+      if (Math.abs(om - t) < 90) {
+        var need = (o.type === "spike") ? 30 : 58;
+        if (state.hero.y > GROUND_Y - need) { stumble(); return; }
+      }
+    }
+  }
+}
+
+function checkOrbs() {
+  var t = state.songT;
+  for (var i = 0; i < state.orbs.length; i++) {
+    var o = state.orbs[i];
+    if (o.got) continue;
+    var om = o.beat * BEAT_MS;
+    if (Math.abs(om - t) < 110) {
+      var oy = o.hi ? GROUND_Y - 130 : GROUND_Y - 100;
+      var hy = state.hero.y - 44;
+      if (Math.abs(hy - oy) < 50) {
+        o.got = 1;
+        state.score += 200 * multOf(state.streak);
+        state.crowd = clamp(state.crowd + 3, 0, 100);
+        spawnBurst(HERO_X, oy);
+        sparkleSnd();
+      }
+    }
+  }
+}
+
+function stepRun() {
+  if (state.phase !== "playing") return;
+  state.songT = Date.now() - state.songStart;
+  // beats: pulse, backing track, survival pay
+  var beat = Math.floor(state.songT / BEAT_MS);
+  while (state.audioBeat < beat) {
+    state.audioBeat += 1;
+    playBeat(state.audioBeat);
+    state.beatPulse = 5;
+    state.score += 10;
+  }
+  // hero physics
+  if (!state.hero.onGround) {
+    state.hero.vy += GRAVITY * (TICK_MS / 1000);
+    state.hero.y += state.hero.vy * (TICK_MS / 1000);
+    if (state.hero.y >= GROUND_Y) {
+      state.hero.y = GROUND_Y;
+      state.hero.vy = 0;
+      state.hero.onGround = true;
+    }
+  }
+  if (state.invuln > 0) state.invuln -= 1;
+  checkHazards();
+  if (state.phase !== "playing") return;
+  checkOrbs();
+  if (state.songT > BEATS * BEAT_MS + 1000) endRun("cleared");
+}
+
+// ---------- canvas ----------
+var canvas = document.getElementById("board");
+var ctx = canvas.getContext("2d");
+
+function drawHUD() {
+  ctx.fillStyle = "rgba(36, 16, 64, 0.92)";
+  ctx.fillRect(0, 0, CANVAS_W, 54);
+  ctx.strokeStyle = css("pink");
+  ctx.lineWidth = 3;
+  ctx.strokeRect(0, 0, CANVAS_W, 54);
+
+  ctx.textAlign = "left";
+  ctx.fillStyle = css("yellow");
+  ctx.font = "bold 14px Courier New";
+  ctx.fillText("SCORE " + state.score, 14, 22);
+  ctx.fillStyle = css("mint");
+  ctx.font = "bold 12px Courier New";
+  ctx.fillText("STREAK " + state.streak + "  x" + multOf(state.streak), 14, 42);
+
+  ctx.textAlign = "center";
+  ctx.fillStyle = css("dim");
+  ctx.font = "bold 11px Courier New";
+  ctx.fillText("CROWD", 300, 16);
+  ctx.fillStyle = "rgba(255,255,255,0.12)";
+  ctx.fillRect(220, 24, 160, 14);
+  ctx.fillStyle = state.crowd > 30 ? css("mint") : css("danger");
+  ctx.fillRect(220, 24, 160 * (state.crowd / 100), 14);
+  ctx.strokeStyle = css("ink");
+  ctx.lineWidth = 1;
+  ctx.strokeRect(220, 24, 160, 14);
+
+  ctx.textAlign = "right";
+  ctx.fillStyle = css("ink");
+  ctx.font = "bold 13px Courier New";
+  var barNow = 1;
+  if (state.phase === "playing" || state.phase === "over") {
+    // truthful on the result screen too: a cleared run lands on 32/32,
+    // a lights-out shows the stage the crowd walked out on
+    barNow = Math.min(BARS, Math.floor(state.songT / (BEAT_MS * 4)) + 1);
+  }
+  ctx.fillText("STAGE " + barNow + "/" + BARS, 526, 22);
+  ctx.fillStyle = css("pink");
+  ctx.font = "bold 11px Courier New";
+  ctx.fillText("CANDY CIRCUIT", 526, 42);
+}
+
+function drawHero() {
+  var x = HERO_X, y = state.hero.y;
+  if (state.invuln > 0 && Math.floor(state.invuln / 2) % 2 === 0) ctx.globalAlpha = 0.45;
+  // legs
+  ctx.fillStyle = css("blue");
+  var legPhase = state.hero.onGround ? (Math.floor(state.songT / 120) % 2) : 0;
+  if (state.hero.onGround && legPhase === 0) {
+    ctx.fillRect(x - 14, y - 22, 10, 22);
+    ctx.fillRect(x + 4, y - 18, 10, 18);
+  } else {
+    ctx.fillRect(x - 12, y - 20, 10, 20);
+    ctx.fillRect(x + 2, y - 20, 10, 20);
+  }
+  // body
+  ctx.fillStyle = css("pink");
+  roundRect(x - 16, y - 52, 32, 32, 6);
+  ctx.fill();
+  // head
+  ctx.fillStyle = css("yellow");
+  roundRect(x - 12, y - 78, 24, 26, 6);
+  ctx.fill();
+  // cap
+  ctx.fillStyle = css("blue");
+  ctx.fillRect(x - 15, y - 84, 30, 10);
+  ctx.fillRect(x + 8, y - 78, 12, 5);
+  // eye
+  ctx.fillStyle = css("cabinet");
+  ctx.fillRect(x + 2, y - 70, 5, 5);
+  ctx.globalAlpha = 1;
+}
+
+function draw() {
+  // candy sky
+  var sky = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
+  sky.addColorStop(0, "#241040");
+  sky.addColorStop(0.55, "#7a3cff");
+  sky.addColorStop(1, "#ff2e88");
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+  // star field (slow parallax)
+  for (var s = 0; s < STARS.length; s++) {
+    var sx = ((STARS[s][0] - state.songT * 0.02) % CANVAS_W + CANVAS_W) % CANVAS_W;
+    var tw = 0.5 + 0.5 * Math.abs(Math.sin(state.songT / 400 + s));
+    ctx.fillStyle = "rgba(255, 233, 74, " + (0.35 + 0.55 * tw) + ")";
+    ctx.fillRect(sx, STARS[s][1], STARS[s][2] * 2, STARS[s][2] * 2);
+  }
+
+  // pixel mountains (0.25x parallax)
+  for (var m = 0; m < 7; m++) {
+    var mx = (((m * 150 - state.songT * 0.06) % 1050) + 1050) % 1050 - 160;
+    ctx.fillStyle = (m % 2 === 0) ? "#5b2a86" : "#4a2272";
+    ctx.beginPath();
+    ctx.moveTo(mx, GROUND_Y);
+    ctx.lineTo(mx + 80, GROUND_Y - 130 - (m % 3) * 30);
+    ctx.lineTo(mx + 160, GROUND_Y);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // candy road
+  ctx.fillStyle = css("road");
+  ctx.fillRect(0, GROUND_Y, CANVAS_W, CANVAS_H - GROUND_Y);
+  var tileW = 60;
+  var off = (state.songT * SPEED) % (tileW * 2);
+  for (var tx = -tileW * 2; tx < CANVAS_W + tileW; tx += tileW) {
+    var px = tx - off;
+    ctx.fillStyle = ((Math.round((tx + off) / tileW)) % 2 === 0) ? "#54299c" : "#3c1d6e";
+    ctx.fillRect(px, GROUND_Y, tileW, 36);
+    ctx.fillStyle = ((Math.round((tx + off) / tileW)) % 2 === 0) ? "#3c1d6e" : "#54299c";
+    ctx.fillRect(px, GROUND_Y + 36, tileW, 36);
+    ctx.fillRect(px, GROUND_Y + 72, tileW, 36);
+  }
+
+  // gaps (void windows in the road)
+  for (var g = 0; g < state.objs.length; g++) {
+    var go = state.objs[g];
+    if (go.type !== "gap") continue;
+    var gx = objX(go.beat * BEAT_MS);
+    var gw = go.len * BEAT_MS * SPEED;
+    ctx.fillStyle = "#140522";
+    ctx.fillRect(gx, GROUND_Y, gw, CANVAS_H - GROUND_Y);
+    // falling candy stars in the void
+    ctx.fillStyle = "rgba(255, 46, 136, 0.5)";
+    ctx.fillRect(gx + gw * 0.3, GROUND_Y + 30, 4, 4);
+    ctx.fillRect(gx + gw * 0.6, GROUND_Y + 60, 4, 4);
+    ctx.fillStyle = "rgba(255, 233, 74, 0.5)";
+    ctx.fillRect(gx + gw * 0.5, GROUND_Y + 90, 4, 4);
+  }
+
+  // hazards
+  for (var h = 0; h < state.objs.length; h++) {
+    var ho = state.objs[h];
+    var hx = objX(ho.beat * BEAT_MS);
+    if (hx < -80 || hx > CANVAS_W + 80) continue;
+    if (ho.type === "spike") {
+      ctx.fillStyle = css("pink");
+      for (var t = 0; t < 3; t++) {
+        ctx.beginPath();
+        ctx.moveTo(hx - 18 + t * 13, GROUND_Y);
+        ctx.lineTo(hx - 12 + t * 13, GROUND_Y - 36);
+        ctx.lineTo(hx - 6 + t * 13, GROUND_Y);
+        ctx.closePath();
+        ctx.fill();
+      }
+    } else if (ho.type === "pipe") {
+      ctx.fillStyle = css("mint");
+      roundRect(hx - 22, GROUND_Y - 70, 44, 70, 6);
+      ctx.fill();
+      ctx.fillStyle = css("yellow");
+      roundRect(hx - 28, GROUND_Y - 82, 56, 16, 6);
+      ctx.fill();
+    }
+  }
+
+  // beat-orbs
+  for (var o = 0; o < state.orbs.length; o++) {
+    var ob = state.orbs[o];
+    if (!orbVisible(ob)) continue;
+    var ox = objX(ob.beat * BEAT_MS);
+    if (ox < -40 || ox > CANVAS_W + 40) continue;
+    var oy = ob.hi ? GROUND_Y - 130 : GROUND_Y - 100;
+    ctx.shadowBlur = glowAmt();
+    ctx.shadowColor = css("yellow");
+    drawStar(ox, oy, 18, css("yellow"));
+    ctx.shadowBlur = 0;
+    drawStar(ox, oy, 9, css("pink"));
+  }
+
+  // hero
+  drawHero();
+
+  // star bursts
+  for (var b = 0; b < state.bursts.length; b++) {
+    var bu = state.bursts[b];
+    var br = (12 - bu.life) * 5 + 12;
+    drawStar(bu.x, bu.y, br, bu.life > 6 ? css("yellow") : css("pink"));
+  }
+
+  // judge float at the hero
+  if (state.judge) {
+    var jf = state.judge;
+    ctx.fillStyle = jf.bad ? css("danger") : (jf.good ? css("yellow") : css("mint"));
+    ctx.font = "bold 22px Courier New";
+    ctx.textAlign = "center";
+    ctx.fillText(jf.text, HERO_X, state.hero.y - 110 - (12 - jf.life) * 2);
+  }
+
+  drawHUD();
+
+  // downbeat pulse
+  if (state.beatPulse > 0) {
+    ctx.fillStyle = "rgba(255, 46, 136, " + (0.07 * state.beatPulse) + ")";
+    ctx.fillRect(0, 54, CANVAS_W, CANVAS_H - 54);
+  }
+
+  // vignette
+  var vg = ctx.createRadialGradient(270, 360, 200, 270, 360, 470);
+  vg.addColorStop(0, "rgba(0,0,0,0)");
+  vg.addColorStop(1, "rgba(20, 5, 34, 0.5)");
+  ctx.fillStyle = vg;
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+}
+
+// ---------- DOM render ----------
+function render() {
+  var ph = state.phase;
+  document.getElementById("screen-ready").classList.toggle("show", ph === "ready");
+  document.getElementById("screen-over").classList.toggle("show", ph === "over");
+
+  var recLine = (rec.bestScore > 0 || rec.bestStreak > 0)
+    ? ("BEST " + rec.bestScore + " · STREAK " + rec.bestStreak)
+    : "NO RECORDS YET";
+  document.getElementById("ready-records").textContent = recLine;
+  document.getElementById("strip-records").textContent = recLine;
+
+  if (ph === "over") {
+    document.getElementById("over-result").textContent =
+      state.endReason === "lights" ? "The lights went out!" : "Cabinet cleared!";
+    document.getElementById("over-score").textContent =
+      "Score " + state.score + " · streak " + state.bestStreakRun;
+    document.getElementById("over-stats").textContent =
+      "Best " + rec.bestScore + " · longest streak " + rec.bestStreak;
+    document.getElementById("over-best").classList.toggle("show", state.newBest);
+  }
+}
+
+// ---------- controls ----------
+document.getElementById("btn-start").addEventListener("click", function () { startRun(); });
+document.getElementById("btn-again").addEventListener("click", function () { startRun(); });
+document.getElementById("btn-clear").addEventListener("click", function () { clearRecords(); });
+document.getElementById("btn-jump").addEventListener("click", function () { tap(); });
+canvas.addEventListener("click", function () { tap(); });
+
+document.addEventListener("keydown", function (e) {
+  if (e.repeat) { if (e.preventDefault) e.preventDefault(); return; }
+  var k = (e.key && e.key.length === 1) ? e.key.toLowerCase() : e.key;
+  if (k === " " || k === "ArrowUp" || k === "w") {
+    if (e.preventDefault) e.preventDefault();
+    tap();
+  } else if (k === "Enter") {
+    if (e.preventDefault) e.preventDefault();
+    if (state.phase !== "playing") startRun();
+  }
+});
+
+// ---------- clock ----------
+loadRec();
+render();
+draw();
+setInterval(function () {
+  stepRun();
+  for (var i = state.bursts.length - 1; i >= 0; i--) {
+    state.bursts[i].life -= 1;
+    if (state.bursts[i].life <= 0) state.bursts.splice(i, 1);
+  }
+  if (state.judge) {
+    state.judge.life -= 1;
+    if (state.judge.life <= 0) state.judge = null;
+  }
+  if (state.beatPulse > 0) state.beatPulse -= 1;
+  draw();
+  render();
+}, TICK_MS);
+</script>
+</body>
+</html>
