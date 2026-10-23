@@ -1,0 +1,1160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pet Hatchery</title>
+<style>
+  :root {
+    --ink: #3b2f2f;
+    --paper: #f7ecd9;
+    --berry: #d9556c;
+    --sage: #7a9e7e;
+    --sky: #6b8fbd;
+    --gold: #d9a441;
+    --mono: Georgia, "Palatino Linotype", "Times New Roman", serif;
+    --hard: 5px 5px 0 rgba(59, 47, 47, 0.25);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--mono);
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-image:
+      radial-gradient(rgba(59, 47, 47, 0.05) 1px, transparent 1px);
+    background-size: 14px 14px;
+  }
+  .top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 18px 22px 8px;
+  }
+  h1 {
+    font-size: clamp(22px, 4.5vw, 38px);
+    letter-spacing: 3px;
+    color: var(--ink);
+    text-shadow: 3px 3px 0 rgba(217, 164, 65, 0.5);
+  }
+  main {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 4px 16px 40px;
+    position: relative;
+  }
+  .btn {
+    font-family: var(--mono);
+    font-size: 14px;
+    letter-spacing: 2px;
+    border-radius: 12px;
+    padding: 11px 18px;
+    cursor: pointer;
+    border: 3px solid var(--ink);
+    background: var(--gold);
+    color: var(--ink);
+    font-weight: bold;
+    box-shadow: var(--hard);
+  }
+  .btn:hover { filter: brightness(1.06); }
+  .btn.big { font-size: 17px; padding: 14px 28px; }
+  .btn.wood {
+    background: #c98a5b;
+    color: var(--paper);
+  }
+  .btn.berry { background: var(--berry); color: var(--paper); }
+  .btn.sage { background: var(--sage); color: var(--paper); }
+  .btn.sky { background: var(--sky); color: var(--paper); }
+  .btn.ghost {
+    background: var(--paper);
+    color: var(--ink);
+  }
+  .btn.picked {
+    outline: 4px solid var(--berry);
+    outline-offset: 3px;
+    transform: translateY(-2px);
+  }
+  .btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .boardwrap {
+    position: relative;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  canvas {
+    width: 100%;
+    height: auto;
+    display: block;
+    border: 4px solid var(--ink);
+    border-radius: 14px;
+    box-shadow: var(--hard);
+    background: var(--paper);
+  }
+  .hud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 14px 0 6px;
+    justify-content: space-between;
+  }
+  .stat {
+    background: var(--paper);
+    border: 3px solid var(--ink);
+    border-radius: 10px;
+    padding: 8px 14px;
+    min-width: 120px;
+    box-shadow: var(--hard);
+    flex: 1 1 auto;
+    text-align: center;
+  }
+  .stat .lbl {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--berry);
+  }
+  .stat .val {
+    display: block;
+    font-size: clamp(16px, 2.6vw, 24px);
+    font-weight: bold;
+    color: var(--ink);
+    margin-top: 2px;
+  }
+  .status {
+    text-align: center;
+    letter-spacing: 2px;
+    font-size: 13px;
+    color: var(--sage);
+    min-height: 20px;
+    margin: 6px 0 2px;
+    font-style: italic;
+  }
+  .screen {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    top: 24px;
+    background: rgba(247, 236, 217, 0.96);
+    border: 4px solid var(--ink);
+    border-radius: 14px;
+    box-shadow: var(--hard);
+    padding: 24px 18px;
+    text-align: center;
+    z-index: 10;
+    max-height: calc(100% - 30px);
+    overflow-y: auto;
+  }
+  .screen.hidden { display: none; }
+  .screen h2 {
+    color: var(--ink);
+    letter-spacing: 3px;
+    text-shadow: 2px 2px 0 rgba(217, 164, 65, 0.55);
+    margin-bottom: 12px;
+    font-size: clamp(18px, 3vw, 26px);
+  }
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin: 10px 0;
+    align-items: center;
+  }
+  .eggs { display: flex; gap: 14px; justify-content: center; margin: 12px 0; flex-wrap: wrap; }
+  .egg-btn {
+    width: 108px;
+    height: 132px;
+    border-radius: 16px;
+    border: 3px solid var(--ink);
+    background: var(--paper);
+    cursor: pointer;
+    box-shadow: var(--hard);
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: var(--ink);
+  }
+  .egg-btn .dot {
+    display: block;
+    width: 54px;
+    height: 68px;
+    margin: 8px auto 6px;
+    border-radius: 50% 50% 48% 48% / 60% 60% 44% 44%;
+    border: 3px solid var(--ink);
+  }
+  .egg-btn.picked { outline: 4px solid var(--berry); outline-offset: 3px; }
+  .warm-meter {
+    letter-spacing: 3px;
+    font-size: 15px;
+    margin: 8px 0;
+    color: var(--berry);
+  }
+  input[type="text"] {
+    font-family: var(--mono);
+    font-size: 17px;
+    padding: 10px 14px;
+    border: 3px solid var(--ink);
+    border-radius: 10px;
+    background: #fffaf0;
+    color: var(--ink);
+    text-align: center;
+    width: 200px;
+    box-shadow: var(--hard);
+  }
+  .verdict {
+    font-size: clamp(20px, 3.6vw, 30px);
+    letter-spacing: 4px;
+    margin: 8px 0;
+    min-height: 36px;
+    color: var(--berry);
+    text-shadow: 2px 2px 0 rgba(217, 164, 65, 0.5);
+    font-weight: bold;
+  }
+  .timing-bar {
+    position: relative;
+    height: 34px;
+    max-width: 420px;
+    margin: 12px auto;
+    border: 3px solid var(--ink);
+    border-radius: 10px;
+    background: #fffaf0;
+    box-shadow: var(--hard);
+    overflow: hidden;
+  }
+  .timing-sweet {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 35%;
+    width: 30%;
+    background: rgba(217, 164, 65, 0.35);
+    border-left: 2px dashed var(--gold);
+    border-right: 2px dashed var(--gold);
+  }
+  .timing-perfect {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 44%;
+    width: 12%;
+    background: rgba(217, 164, 65, 0.75);
+  }
+  .timing-marker {
+    position: absolute;
+    top: -2px;
+    bottom: -2px;
+    width: 8px;
+    left: 50%;
+    margin-left: -4px;
+    background: var(--berry);
+    border: 2px solid var(--ink);
+    border-radius: 4px;
+  }
+  .grades {
+    letter-spacing: 2px;
+    font-size: 14px;
+    color: var(--sage);
+    margin: 6px 0;
+    min-height: 20px;
+  }
+  .move-btns { display: flex; gap: 12px; justify-content: center; margin: 12px 0; flex-wrap: wrap; }
+  .big-stars {
+    font-size: clamp(22px, 4vw, 34px);
+    letter-spacing: 4px;
+    color: var(--gold);
+    text-shadow: 2px 2px 0 rgba(59, 47, 47, 0.25);
+    margin: 8px 0;
+  }
+  .banner {
+    display: inline-block;
+    background: var(--berry);
+    color: var(--paper);
+    font-size: 18px;
+    letter-spacing: 4px;
+    padding: 10px 18px;
+    border-radius: 12px;
+    border: 3px solid var(--ink);
+    box-shadow: var(--hard);
+    margin: 6px;
+    animation: bounce 0.8s ease-in-out infinite alternate;
+  }
+  .banner.hidden { display: none; }
+  .banner.encore { background: var(--sage); }
+  @keyframes bounce {
+    from { transform: scale(1) rotate(-1deg); }
+    to { transform: scale(1.06) rotate(1.5deg); }
+  }
+  .result-lines {
+    font-size: 16px;
+    letter-spacing: 2px;
+    line-height: 2;
+    margin: 8px 0;
+  }
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 26px;
+    transform: translateX(-50%);
+    background: var(--sage);
+    color: var(--paper);
+    font-weight: bold;
+    letter-spacing: 2px;
+    padding: 12px 22px;
+    border-radius: 999px;
+    border: 3px solid var(--ink);
+    box-shadow: var(--hard);
+    z-index: 60;
+  }
+  .toast.hidden { display: none; }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>PET HATCHERY</h1>
+  <button id="btn-new-pet" class="btn ghost">NEW PET</button>
+</header>
+<main>
+  <div class="boardwrap">
+    <canvas id="stage" width="640" height="480"></canvas>
+
+    <div id="screen-hatch" class="screen">
+      <h2>CHOOSE YOUR EGG</h2>
+      <div class="eggs">
+        <button id="btn-egg-speckle" class="egg-btn"><span class="dot" style="background:#e8c9a0"></span>SPECKLE</button>
+        <button id="btn-egg-stripe" class="egg-btn"><span class="dot" style="background:#d7e3c2"></span>STRIPE</button>
+        <button id="btn-egg-starry" class="egg-btn"><span class="dot" style="background:#c4d4ea"></span>STARRY</button>
+      </div>
+      <div id="warm-meter" class="warm-meter">* THE EGG IS COOL... *</div>
+      <button id="btn-warm" class="btn big wood">WARM THE EGG</button>
+    </div>
+
+    <div id="screen-home" class="screen hidden">
+      <h2 id="home-title">HELLO, FRIEND!</h2>
+      <div class="row">
+        <input id="name-input" type="text" maxlength="12" placeholder="pet name">
+        <button id="btn-name" class="btn sage">RENAME</button>
+      </div>
+      <div class="row">
+        <button id="btn-train" class="btn big berry">TRAIN TODAY</button>
+        <button id="btn-show" class="btn big sky">TALENT SHOW</button>
+      </div>
+      <div id="home-best" class="grades">BEST SHOW: --</div>
+    </div>
+
+    <div id="screen-timing" class="screen hidden">
+      <h2 id="timing-name">DANCE</h2>
+      <div id="timing-hint" class="grades">TAP WHEN THE MARKER HITS THE SWEET SPOT!</div>
+      <div class="timing-bar">
+        <div class="timing-sweet"></div>
+        <div class="timing-perfect"></div>
+        <div id="timing-marker" class="timing-marker"></div>
+      </div>
+      <div id="timing-verdict" class="verdict"></div>
+      <div id="timing-taps" class="grades">TAPS 0/5</div>
+      <div id="timing-grades" class="grades"></div>
+      <button id="btn-tap" class="btn big berry">TAP!</button>
+      <div class="grades">( SPACE OR CLICK — 1 2 3 ON THE MEMORY ROUND )</div>
+    </div>
+
+    <div id="screen-memory" class="screen hidden">
+      <h2 id="memory-name">TRICKS</h2>
+      <div id="memory-round" class="grades">ROUND 1/3</div>
+      <div id="memory-phase" class="verdict">WATCH...</div>
+      <div id="memory-seq" class="grades"></div>
+      <div class="move-btns">
+        <button id="btn-spin" class="btn big sage">SPIN</button>
+        <button id="btn-jump" class="btn big berry">JUMP</button>
+        <button id="btn-clap" class="btn big sky">CLAP</button>
+      </div>
+    </div>
+
+    <div id="screen-result" class="screen hidden">
+      <h2 id="result-title">TRAINING DAY DONE!</h2>
+      <div id="result-encore" class="banner encore hidden">ENCORE! ENCORE!</div>
+      <div id="result-newbest" class="banner hidden">NEW BEST!</div>
+      <div id="result-lines" class="result-lines"></div>
+      <div id="result-stars" class="big-stars"></div>
+      <div id="result-score" class="grades"></div>
+      <button id="btn-again" class="btn big berry">GO AGAIN</button>
+      <button id="btn-home" class="btn ghost">HOME</button>
+    </div>
+  </div>
+
+  <section class="hud">
+    <div class="stat"><span class="lbl">STARS</span><span id="hud-stars" class="val">0</span></div>
+    <div class="stat"><span class="lbl">SCORE</span><span id="hud-score" class="val">0</span></div>
+    <div class="stat"><span class="lbl">BEST</span><span id="hud-best" class="val">--</span></div>
+  </section>
+  <div id="status" class="status">once upon a pet...</div>
+</main>
+<div id="toast" class="toast hidden"></div>
+
+<script>
+  "use strict";
+
+  // ---------- constants ----------
+  var GKEY = "pet-hatchery:v1";
+  var TICK_MS = 100;
+  var MOVES = ["spin", "jump", "clap"];
+  var EGGS = {
+    speckle: { name: "Pip", body: "#d98b6c", belly: "#f2c9a8", eggBody: "#e8c9a0", eggMark: "#b5744f" },
+    stripe: { name: "Moss", body: "#7a9e7e", belly: "#cfe3c4", eggBody: "#d7e3c2", eggMark: "#5f7f5a" },
+    starry: { name: "Luna", body: "#6b8fbd", belly: "#c9d8ee", eggBody: "#c4d4ea", eggMark: "#4a6f9e" }
+  };
+  var WARM_WORDS = ["* THE EGG IS COOL... *", "* TOASTY... *", "* WARMER... *", "* IT'S WOBBLING! *"];
+  var TRAIN_PLAN = [
+    { kind: "timing", name: "DANCE", need: 5 },
+    { kind: "memory", name: "TRICKS", roundsNeed: 3, lens: [2, 3, 4] },
+    { kind: "timing", name: "JUMP ROPE", need: 5 }
+  ];
+  var SHOW_PLAN = [
+    { kind: "timing", name: "DANCE ACT", need: 3 },
+    { kind: "memory", name: "TRICKS ACT", roundsNeed: 1, lens: [3] },
+    { kind: "timing", name: "JUMP ROPE ACT", need: 3 }
+  ];
+  var PET_MAP = [
+    "..11....11..",
+    ".1111..1111.",
+    ".1111111111.",
+    "111111111111",
+    "113111111311",
+    "111111111111",
+    "111222222111",
+    "112222222211",
+    ".1122222211.",
+    ".1122222211.",
+    "..11....11..",
+    "..22....22.."
+  ];
+
+  // ---------- state ----------
+  var state = {
+    screen: "hatch", // hatch | home | timing | memory | result
+    egg: null,
+    pet: null, // { name, egg }
+    warmth: 0,
+    trained: false,
+    act: "train", // train | show
+    plan: [],
+    planIdx: 0,
+    dayStars: [],
+    perfectTaps: 0,
+    timingName: "",
+    timing: { pos: 0.5, dir: 1, speed: 0.9, taps: 0, need: 5, points: 0, grades: [], verdict: "", done: false },
+    memoryName: "",
+    memory: { seq: [], input: [], phase: "demo", showIdx: 0, showTimer: 8, roundsDone: 0, roundsNeed: 1, lens: [3], failTimer: 0 },
+    best: null, // { score, stars }
+    result: null,
+    status: "",
+    reaction: null,
+    reactionTimer: 0
+  };
+
+  var frame = 0;
+  var sparks = [];
+
+  // ---------- persistence (house machinery) ----------
+  function seed() {
+    return { pet: null, best: null, trained: false };
+  }
+  function load() {
+    try {
+      var raw = localStorage.getItem(GKEY);
+      if (!raw) return seed();
+      var d = JSON.parse(raw);
+      if (!d || typeof d !== "object") return seed();
+      var s = seed();
+      if (d.pet && typeof d.pet.name === "string" && d.pet.name && EGGS[d.pet.egg]) {
+        s.pet = { name: d.pet.name, egg: d.pet.egg };
+      }
+      if (d.best && typeof d.best.score === "number" && isFinite(d.best.score) &&
+          typeof d.best.stars === "number" && isFinite(d.best.stars)) {
+        s.best = { score: d.best.score, stars: d.best.stars };
+      }
+      s.trained = !!d.trained;
+      return s;
+    } catch (err) {
+      return seed();
+    }
+  }
+  function save() {
+    try {
+      localStorage.setItem(GKEY, JSON.stringify({
+        pet: state.pet ? { name: state.pet.name, egg: state.pet.egg } : null,
+        best: state.best,
+        trained: state.trained
+      }));
+    } catch (err) { /* storage blocked: keep playing */ }
+  }
+  var toastTimer = null;
+  function toast(msg) {
+    var el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.remove("hidden");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      el.classList.add("hidden");
+    }, 2200);
+  }
+
+  // ---------- juice ----------
+  function react(kind) {
+    state.reaction = kind;
+    state.reactionTimer = 8;
+  }
+  function sparkBurst() {
+    for (var i = 0; i < 14; i++) {
+      var a = Math.random() * Math.PI * 2;
+      var sp = 1.2 + Math.random() * 2.6;
+      sparks.push({
+        x: 320, y: 270,
+        vx: Math.cos(a) * sp,
+        vy: Math.sin(a) * sp - 1,
+        life: 28,
+        max: 28,
+        c: i % 2 ? "#d9a441" : "#d9556c"
+      });
+    }
+    if (sparks.length > 260) sparks.splice(0, sparks.length - 260);
+  }
+  function flourish() {
+    sparkBurst();
+    sparkBurst();
+  }
+
+  // ---------- hatch flow ----------
+  function pickEgg(id) {
+    if (!EGGS[id]) return;
+    state.egg = id;
+    state.status = "";
+    render();
+  }
+  function warmEgg() {
+    if (!state.egg) {
+      toast("PICK AN EGG FIRST!");
+      return;
+    }
+    if (state.warmth >= 3) return;
+    state.warmth++;
+    react("clap");
+    if (state.warmth >= 3) {
+      hatchPet();
+      return;
+    }
+    render();
+  }
+  function hatchPet() {
+    var e = EGGS[state.egg];
+    state.pet = { name: e.name, egg: state.egg };
+    state.warmth = 3;
+    state.status = "";
+    save();
+    react("jump");
+    flourish();
+    toast("WELCOME, " + state.pet.name.toUpperCase() + "!");
+    setScreen("home");
+  }
+  function confirmName() {
+    var input = document.getElementById("name-input");
+    var v = (input && input.value ? String(input.value) : "").trim();
+    if (!state.pet) return;
+    if (!v) {
+      toast("TYPE A NAME FIRST!");
+      return;
+    }
+    state.pet.name = v.slice(0, 12);
+    save();
+    toast("HELLO, " + state.pet.name.toUpperCase() + "!");
+    render();
+  }
+  function newPet() {
+    state.pet = null;
+    state.egg = null;
+    state.warmth = 0;
+    state.trained = false;
+    state.best = null;
+    state.result = null;
+    state.status = "";
+    save();
+    toast("A NEW EGG AWAITS!");
+    setScreen("hatch");
+  }
+
+  // ---------- plans & rounds ----------
+  function startTrain() {
+    if (!state.pet) return;
+    state.act = "train";
+    state.plan = TRAIN_PLAN;
+    state.planIdx = 0;
+    state.dayStars = [];
+    state.perfectTaps = 0;
+    nextRound();
+  }
+  function startShow() {
+    if (!state.pet || !state.trained) {
+      toast("TRAIN FIRST!");
+      return;
+    }
+    state.act = "show";
+    state.plan = SHOW_PLAN;
+    state.planIdx = 0;
+    state.dayStars = [];
+    state.perfectTaps = 0;
+    nextRound();
+  }
+  function nextRound() {
+    var item = state.plan[state.planIdx];
+    if (!item) {
+      finishAct();
+      return;
+    }
+    if (item.kind === "timing") {
+      startTiming(item);
+    } else {
+      startMemory(item);
+    }
+  }
+  function finishExercise(stars) {
+    state.dayStars.push(stars);
+    state.planIdx++;
+    if (state.planIdx < state.plan.length) {
+      nextRound();
+    } else {
+      finishAct();
+    }
+  }
+  function finishAct() {
+    var totalStars = 0;
+    for (var i = 0; i < state.dayStars.length; i++) totalStars += state.dayStars[i];
+    var score = totalStars * 100 + state.perfectTaps * 25;
+    var encore = totalStars >= 12;
+    var newBest = false;
+    if (state.act === "show") {
+      if (!state.best || score > state.best.score) {
+        state.best = { score: score, stars: totalStars };
+        newBest = true;
+        save();
+      }
+    } else {
+      state.trained = true;
+      save();
+    }
+    state.result = {
+      title: state.act === "show" ? "TALENT SHOW!" : "TRAINING DAY DONE!",
+      stars: state.dayStars.slice(),
+      totalStars: totalStars,
+      score: score,
+      encore: encore,
+      newBest: newBest
+    };
+    if (newBest) toast("NEW BEST SCORE!");
+    else if (encore) toast("ENCORE! ENCORE!");
+    flourish();
+    setScreen("result");
+  }
+
+  // ---------- timing engine ----------
+  function startTiming(item) {
+    state.timingName = item.name;
+    state.timing = {
+      pos: 0.5,
+      dir: Math.random() < 0.5 ? 1 : -1,
+      speed: 0.9,
+      taps: 0,
+      need: item.need,
+      points: 0,
+      grades: [],
+      verdict: "",
+      done: false
+    };
+    setScreen("timing");
+  }
+  function tapTiming() {
+    if (state.screen !== "timing" || state.timing.done) return;
+    var d = Math.abs(state.timing.pos - 0.5);
+    var grade, pts, reaction;
+    if (d <= 0.06) {
+      grade = "PERFECT!";
+      pts = 2;
+      reaction = "jump";
+      state.perfectTaps++;
+    } else if (d <= 0.15) {
+      grade = "GOOD!";
+      pts = 1;
+      reaction = "spin";
+    } else {
+      grade = "FLOP!";
+      pts = 0;
+      reaction = "flop";
+    }
+    state.timing.points += pts;
+    state.timing.grades.push(grade);
+    state.timing.verdict = grade;
+    state.timing.taps++;
+    react(reaction);
+    if (state.timing.taps >= state.timing.need) {
+      state.timing.done = true;
+      finishExercise(timingStars());
+      return;
+    }
+    render();
+  }
+  function timingStars() {
+    var s = Math.round((state.timing.points / (state.timing.need * 2)) * 5);
+    return Math.max(1, Math.min(5, s));
+  }
+
+  // ---------- memory engine ----------
+  function startMemory(item) {
+    state.memoryName = item.name;
+    state.memory = {
+      seq: [],
+      input: [],
+      phase: "demo",
+      showIdx: 0,
+      showTimer: 8,
+      roundsDone: 0,
+      roundsNeed: item.roundsNeed,
+      lens: item.lens.slice(),
+      failTimer: 0
+    };
+    memoryNewSeq();
+    setScreen("memory");
+  }
+  function memoryNewSeq() {
+    var lens = state.memory.lens;
+    var len = lens[Math.min(state.memory.roundsDone, lens.length - 1)];
+    state.memory.seq = [];
+    for (var i = 0; i < len; i++) {
+      state.memory.seq.push(MOVES[Math.floor(Math.random() * MOVES.length)]);
+    }
+    state.memory.input = [];
+    state.memory.phase = "demo";
+    state.memory.showIdx = 0;
+    state.memory.showTimer = 8;
+    state.status = "";
+  }
+  function memoryPress(move) {
+    if (state.screen !== "memory" || state.memory.phase !== "input") return;
+    var expect = state.memory.seq[state.memory.input.length];
+    if (move !== expect) {
+      state.memory.phase = "fail";
+      state.memory.failTimer = 5;
+      state.status = "TRY AGAIN!";
+      react("flop");
+      render();
+      return;
+    }
+    state.memory.input.push(move);
+    react(move);
+    if (state.memory.input.length >= state.memory.seq.length) {
+      state.memory.roundsDone++;
+      if (state.memory.roundsDone >= state.memory.roundsNeed) {
+        finishExercise(memoryStars());
+        return;
+      }
+      state.status = "NICE! NEXT ROUND...";
+      memoryNewSeq();
+      render();
+      return;
+    }
+    render();
+  }
+  function memoryStars() {
+    var s = 1 + Math.floor((state.memory.roundsDone * 4) / state.memory.roundsNeed);
+    return Math.max(1, Math.min(5, s));
+  }
+
+  function goHome() {
+    if (!state.pet) {
+      setScreen("hatch");
+      return;
+    }
+    setScreen("home");
+  }
+  function goAgain() {
+    if (!state.pet) return;
+    if (state.act === "show") startShow();
+    else startTrain();
+  }
+
+  function tick() {
+    if (state.reactionTimer > 0) {
+      state.reactionTimer--;
+      if (state.reactionTimer <= 0) state.reaction = null;
+    }
+    if (state.screen === "timing" && !state.timing.done) {
+      state.timing.pos += state.timing.dir * state.timing.speed * (TICK_MS / 1000);
+      if (state.timing.pos > 1) {
+        state.timing.pos = 1;
+        state.timing.dir = -1;
+      }
+      if (state.timing.pos < 0) {
+        state.timing.pos = 0;
+        state.timing.dir = 1;
+      }
+      render();
+    }
+    if (state.screen === "memory") {
+      if (state.memory.phase === "demo") {
+        state.memory.showTimer--;
+        if (state.memory.showTimer <= 0) {
+          state.memory.showIdx++;
+          if (state.memory.showIdx >= state.memory.seq.length) {
+            state.memory.phase = "input";
+            state.memory.input = [];
+          } else {
+            state.memory.showTimer = 8;
+          }
+        }
+        render();
+      } else if (state.memory.phase === "fail") {
+        state.memory.failTimer--;
+        if (state.memory.failTimer <= 0) {
+          finishExercise(memoryStars());
+        }
+      }
+    }
+  }
+
+  function onKey(e) {
+    if (!e || !e.key) return;
+    var k = String(e.key).toLowerCase();
+    if (state.screen === "timing" && (k === " " || k === "spacebar" || k === "enter")) {
+      tapTiming();
+    } else if (state.screen === "memory" && state.memory.phase === "input") {
+      if (k === "1" || k === "s") memoryPress("spin");
+      else if (k === "2" || k === "j") memoryPress("jump");
+      else if (k === "3" || k === "c") memoryPress("clap");
+    }
+  }
+
+  // ---------- canvas scene ----------
+  function scribbleStar(ctx, x, y, s) {
+    ctx.strokeStyle = "#d9a441";
+    ctx.lineWidth = 3;
+    for (var i = 0; i < 6; i++) {
+      var a = (i / 6) * Math.PI * 2 + Math.sin(frame * 0.03 + i) * 0.15;
+      ctx.beginPath();
+      ctx.moveTo(x - Math.cos(a) * s, y - Math.sin(a) * s);
+      ctx.lineTo(x + Math.cos(a) * s, y + Math.sin(a) * s);
+      ctx.stroke();
+    }
+  }
+  function drawEgg(ctx, cx, cy, eggId, warmth) {
+    var c = EGGS[eggId] || EGGS.speckle;
+    var wobble = warmth > 0 ? Math.sin(frame * 0.18) * (warmth * 2) : 0;
+    ctx.save();
+    ctx.translate(cx + wobble, cy);
+    ctx.fillStyle = c.eggBody;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 52, 66, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#3b2f2f";
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    // marks
+    ctx.fillStyle = c.eggMark;
+    if (eggId === "speckle") {
+      ctx.beginPath(); ctx.arc(-14, -18, 9, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(16, 6, 11, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(-8, 28, 8, 0, Math.PI * 2); ctx.fill();
+    } else if (eggId === "stripe") {
+      ctx.fillRect(-52, -16, 104, 12);
+      ctx.fillRect(-52, 14, 104, 12);
+    } else {
+      scribbleStar(ctx, -12, -14, 12);
+      scribbleStar(ctx, 18, 12, 10);
+      scribbleStar(ctx, -6, 32, 8);
+    }
+    // cracks as warmth grows
+    if (warmth >= 1) {
+      ctx.strokeStyle = "#3b2f2f";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(-10, -40); ctx.lineTo(-2, -22); ctx.lineTo(-12, -8);
+      ctx.stroke();
+    }
+    if (warmth >= 2) {
+      ctx.beginPath();
+      ctx.moveTo(14, -30); ctx.lineTo(6, -12); ctx.lineTo(18, 4); ctx.lineTo(10, 22);
+      ctx.stroke();
+    }
+    if (warmth >= 3) {
+      ctx.beginPath();
+      ctx.moveTo(-26, 10); ctx.lineTo(-14, 24); ctx.lineTo(-24, 42);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function drawPet(ctx, cx, cy, px) {
+    var colors = state.pet ? EGGS[state.pet.egg] : EGGS.speckle;
+    var bob = Math.sin(frame * 0.08) * 3;
+    var yOff = 0, rot = 0, sx = 1;
+    var r = state.reaction;
+    if (r === "jump") yOff = -22;
+    else if (r === "spin") rot = Math.sin(frame * 0.55) * 0.5;
+    else if (r === "clap") sx = 0.82;
+    else if (r === "flop") { rot = 0.4; yOff = 10; }
+    ctx.save();
+    ctx.translate(cx, cy + bob + yOff);
+    ctx.rotate(rot);
+    ctx.scale(sx, 1);
+    for (var y = 0; y < PET_MAP.length; y++) {
+      for (var x = 0; x < PET_MAP[y].length; x++) {
+        var ch = PET_MAP[y][x];
+        if (ch === ".") continue;
+        ctx.fillStyle = ch === "1" ? colors.body : ch === "2" ? colors.belly : "#2b2118";
+        ctx.fillRect((x - 6) * px, (y - 6) * px, px, px);
+      }
+    }
+    ctx.restore();
+  }
+  function draw() {
+    var canvas = document.getElementById("stage");
+    var ctx = canvas.getContext("2d");
+    frame++;
+
+    // paper page
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = "#f7ecd9";
+    ctx.fillRect(0, 0, 640, 480);
+
+    // ink frame
+    ctx.strokeStyle = "#3b2f2f";
+    ctx.lineWidth = 5;
+    ctx.strokeRect(14, 14, 612, 452);
+
+    // corner scribble stars
+    scribbleStar(ctx, 46, 46, 14);
+    scribbleStar(ctx, 594, 46, 14);
+    scribbleStar(ctx, 46, 434, 12);
+    scribbleStar(ctx, 594, 434, 12);
+
+    // hand-drawn ground line
+    ctx.strokeStyle = "#3b2f2f";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    for (var gx = 40; gx <= 600; gx += 12) {
+      var gy = 424 + Math.sin(gx * 0.08) * 2;
+      if (gx === 40) ctx.moveTo(gx, gy);
+      else ctx.lineTo(gx, gy);
+    }
+    ctx.stroke();
+
+    var showStage = state.act === "show" &&
+      (state.screen === "timing" || state.screen === "memory" || state.screen === "result");
+
+    if (showStage) {
+      // curtains
+      ctx.fillStyle = "#d9556c";
+      ctx.fillRect(14, 14, 90, 452);
+      ctx.fillRect(536, 14, 90, 452);
+      ctx.fillStyle = "#b23d52";
+      for (var f = 0; f < 5; f++) {
+        ctx.fillRect(14 + f * 18, 14, 8, 452);
+        ctx.fillRect(536 + f * 18, 14, 8, 452);
+      }
+      // spotlight
+      ctx.fillStyle = "rgba(217, 164, 65, 0.28)";
+      ctx.beginPath();
+      ctx.moveTo(320, 20);
+      ctx.lineTo(200, 430);
+      ctx.lineTo(440, 430);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    if (state.screen === "hatch" || (!state.pet && state.screen !== "result")) {
+      drawEgg(ctx, 320, 350, state.egg || "speckle", state.warmth);
+    } else {
+      // memory demo poses the pet mid-sequence
+      var savedReaction = state.reaction;
+      if (state.screen === "memory" && state.memory.phase === "demo" && state.memory.seq.length) {
+        state.reaction = state.memory.seq[Math.min(state.memory.showIdx, state.memory.seq.length - 1)];
+      }
+      drawPet(ctx, 320, 356, 13);
+      state.reaction = savedReaction;
+    }
+
+    // sparks (scribble confetti)
+    for (var s = 0; s < sparks.length; s++) {
+      var sp = sparks[s];
+      sp.x += sp.vx;
+      sp.y += sp.vy;
+      sp.vx *= 0.96;
+      sp.vy = sp.vy * 0.96 + 0.06;
+      sp.life--;
+      ctx.globalAlpha = Math.max(0, sp.life / sp.max);
+      ctx.strokeStyle = sp.c;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(sp.x - 3, sp.y);
+      ctx.lineTo(sp.x + 3, sp.y);
+      ctx.moveTo(sp.x, sp.y - 3);
+      ctx.lineTo(sp.x, sp.y + 3);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    var alive = [];
+    for (var q = 0; q < sparks.length; q++) {
+      if (sparks[q].life > 0) alive.push(sparks[q]);
+    }
+    sparks = alive;
+  }
+
+  // ---------- DOM render ----------
+  function starString(n) {
+    var out = "";
+    for (var i = 0; i < n; i++) out += "★";
+    return out || "–";
+  }
+  function render() {
+    // screen flip
+    var names = ["hatch", "home", "timing", "memory", "result"];
+    for (var i = 0; i < names.length; i++) {
+      var el = document.getElementById("screen-" + names[i]);
+      if (!el) continue;
+      if (state.screen === names[i]) el.classList.remove("hidden");
+      else el.classList.add("hidden");
+    }
+
+    // HUD
+    var total = 0;
+    for (var t = 0; t < state.dayStars.length; t++) total += state.dayStars[t];
+    document.getElementById("hud-stars").textContent = String(total);
+    var score = state.result ? state.result.score : (total * 100 + state.perfectTaps * 25);
+    document.getElementById("hud-score").textContent = String(score);
+    document.getElementById("hud-best").textContent =
+      state.best ? String(state.best.score) : "--";
+
+    // hatch
+    document.getElementById("warm-meter").textContent = WARM_WORDS[Math.min(state.warmth, 3)];
+    var eggIds = ["speckle", "stripe", "starry"];
+    for (var e = 0; e < eggIds.length; e++) {
+      var btn = document.getElementById("btn-egg-" + eggIds[e]);
+      if (!btn) continue;
+      if (state.egg === eggIds[e]) btn.classList.add("picked");
+      else btn.classList.remove("picked");
+    }
+
+    // home
+    if (state.pet) {
+      document.getElementById("home-title").textContent = "HELLO, " + state.pet.name.toUpperCase() + "!";
+      document.getElementById("home-best").textContent = state.best
+        ? "BEST SHOW: " + state.best.score + " PTS · " + state.best.stars + " STARS"
+        : "BEST SHOW: --  (PLAY A SHOW!)";
+    }
+    var showBtn = document.getElementById("btn-show");
+    if (showBtn) {
+      if (state.trained) showBtn.removeAttribute("disabled");
+      else showBtn.setAttribute("disabled", "1");
+    }
+
+    // timing
+    document.getElementById("timing-name").textContent = state.timingName + (state.act === "show" ? " — LIVE ON STAGE!" : " — TRAINING");
+    var marker = document.getElementById("timing-marker");
+    if (marker) marker.style.left = (state.timing.pos * 100).toFixed(1) + "%";
+    document.getElementById("timing-taps").textContent =
+      "TAPS " + state.timing.taps + "/" + state.timing.need;
+    document.getElementById("timing-verdict").textContent = state.timing.verdict;
+    document.getElementById("timing-grades").textContent =
+      state.timing.grades.length ? state.timing.grades.join("  ") : "";
+
+    // memory
+    document.getElementById("memory-name").textContent = state.memoryName + (state.act === "show" ? " — LIVE ON STAGE!" : " — TRAINING");
+    document.getElementById("memory-round").textContent =
+      "ROUND " + Math.min(state.memory.roundsDone + 1, state.memory.roundsNeed) + "/" + state.memory.roundsNeed;
+    var phaseEl = document.getElementById("memory-phase");
+    var seqEl = document.getElementById("memory-seq");
+    if (state.memory.phase === "demo") {
+      phaseEl.textContent = "WATCH...";
+      seqEl.textContent = "THE PET DOES: " +
+        String(state.memory.seq[Math.min(state.memory.showIdx, Math.max(0, state.memory.seq.length - 1))] || "").toUpperCase();
+    } else if (state.memory.phase === "input") {
+      phaseEl.textContent = "YOUR TURN!";
+      seqEl.textContent = "REPEATED: " + state.memory.input.length + "/" + state.memory.seq.length;
+    } else {
+      phaseEl.textContent = "TRY AGAIN!";
+      seqEl.textContent = "THE SEQUENCE WAS: " + state.memory.seq.join(" · ").toUpperCase();
+    }
+
+    // result
+    if (state.result) {
+      document.getElementById("result-title").textContent = state.result.title;
+      var lines = "";
+      for (var r = 0; r < state.result.stars.length; r++) {
+        lines += "ACT " + (r + 1) + ": " + starString(state.result.stars[r]) + " (" + state.result.stars[r] + ")<br>";
+      }
+      var linesEl = document.getElementById("result-lines");
+      linesEl.innerHTML = lines;
+      document.getElementById("result-stars").textContent = starString(Math.min(state.result.totalStars, 15));
+      document.getElementById("result-score").textContent =
+        "TOTAL " + state.result.totalStars + " STARS · SCORE " + state.result.score;
+      var en = document.getElementById("result-encore");
+      if (state.result.encore) en.classList.remove("hidden");
+      else en.classList.add("hidden");
+      var nb = document.getElementById("result-newbest");
+      if (state.result.newBest) nb.classList.remove("hidden");
+      else nb.classList.add("hidden");
+    }
+
+    var statusEl = document.getElementById("status");
+    if (state.status) {
+      statusEl.textContent = state.status;
+    } else if (state.screen === "hatch") {
+      statusEl.textContent = "once upon a time, an egg waited for you...";
+    } else if (state.screen === "home") {
+      statusEl.textContent = "train hard, then shine on stage!";
+    } else {
+      statusEl.textContent = "· · you can do it! · ·";
+    }
+    draw();
+  }
+
+  function setScreen(name) {
+    state.screen = name;
+    render();
+  }
+
+  // ---------- boot ----------
+  function boot() {
+    var data = load();
+    state.pet = data.pet;
+    state.best = data.best;
+    state.trained = data.trained;
+    if (state.pet) {
+      state.egg = state.pet.egg;
+      state.warmth = 3;
+      state.screen = "home";
+    }
+    sparks = [];
+
+    document.addEventListener("keydown", onKey);
+    document.getElementById("btn-egg-speckle").addEventListener("click", function () { pickEgg("speckle"); });
+    document.getElementById("btn-egg-stripe").addEventListener("click", function () { pickEgg("stripe"); });
+    document.getElementById("btn-egg-starry").addEventListener("click", function () { pickEgg("starry"); });
+    document.getElementById("btn-warm").addEventListener("click", warmEgg);
+    document.getElementById("btn-name").addEventListener("click", confirmName);
+    document.getElementById("btn-train").addEventListener("click", startTrain);
+    document.getElementById("btn-show").addEventListener("click", startShow);
+    document.getElementById("btn-tap").addEventListener("click", tapTiming);
+    document.getElementById("btn-spin").addEventListener("click", function () { memoryPress("spin"); });
+    document.getElementById("btn-jump").addEventListener("click", function () { memoryPress("jump"); });
+    document.getElementById("btn-clap").addEventListener("click", function () { memoryPress("clap"); });
+    document.getElementById("btn-home").addEventListener("click", goHome);
+    document.getElementById("btn-again").addEventListener("click", goAgain);
+    document.getElementById("btn-new-pet").addEventListener("click", newPet);
+
+    setInterval(tick, TICK_MS);
+    render();
+  }
+
+  boot();
+</script>
+</body>
+</html>
