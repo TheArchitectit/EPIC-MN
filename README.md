@@ -33,6 +33,7 @@ open study.html        # Example #3, Study Quest (the study arcade)
 open art.html          # Example #4, Art Arcade (pixel studio)
 open dress.html        # Example #5, Dress Studio (the fashion arcade)
 open time.html         # Example #6, Time Monster (the friendly day-tracker)
+open typing.html       # Example #7, Typing Rockets (the typing time-trial)
 xdg-open index.html    # Linux same files
 
 # option B — serve everything
@@ -42,7 +43,8 @@ python3 -m http.server 8123
 #         http://localhost:8123/study.html (study arcade),
 #         http://localhost:8123/art.html (pixel studio), and
 #         http://localhost:8123/dress.html (fashion arcade), and
-#         http://localhost:8123/time.html (friendly day-tracker)
+#         http://localhost:8123/time.html (friendly day-tracker), and
+#         http://localhost:8123/typing.html (typing time-trial)
 ```
 
 Everything is local-only, invented data, no accounts, no installs.
@@ -57,6 +59,7 @@ Everything is local-only, invented data, no accounts, no installs.
 | `art.html` | **Example #4 — Art Arcade**: the retro pixel studio — paint/erase/fill/undo on a chunky grid, a gallery wall of saved drawings, and PNG export to take art home |
 | `dress.html` | **Example #5 — Dress Studio**: the retro fashion arcade — dress a paper-doll model from a mix-and-match closet (tops, dresses, shoes, hats, bags, jewelry), save looks to a lookbook, export PNGs |
 | `time.html` | **Example #6 — Time Monster**: the friendly day-tracker — a cute monster grows with your screen time and wears colorful fur patches for the apps you used, with a happiness meter and kind 1–3 star days |
+| `typing.html` | **Example #7 — Typing Rockets**: the retro-neon typing time-trial — type space/school/silly fuel words to fly a rocket to the finish line, beat the clock on three tracks, and chase new best times |
 | `docs/reverse-prompt-guide.md` | **The playbook** — how students reverse-prompt with OpenSpec, with examples and drills |
 | `docs/runbook.md` | The 10-minute demo session script for the teacher/host (with troubleshooting) |
 | `docs/event-card.md` | A printable one-page journey card for the booth |
@@ -89,6 +92,7 @@ archived into its spec:
 - `openspec/specs/art-studio/spec.md` — the pixel studio (Example #4)
 - `openspec/specs/dress-studio/spec.md` — the fashion studio (Example #5)
 - `openspec/specs/time-monster/spec.md` — the friendly time monster (Example #6)
+- `openspec/specs/typing-rockets/spec.md` — the typing time-trial (Example #7)
 
 `openspec/changes/archive/` holds the complete history of every change.
 

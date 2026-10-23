@@ -1,0 +1,792 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Typing Rockets</title>
+<style>
+  :root {
+    --ink: #eaf6ff;
+    --pink: #ff2d95;
+    --cyan: #2de2e6;
+    --yellow: #ffd166;
+    --mint: #6ff2c5;
+    --purple: #8b5cf6;
+    --bg: #0b0b2b;
+    --panel: #14143f;
+    --mono: "Courier New", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --hard: 6px 6px 0 rgba(255, 45, 149, 0.35);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--mono);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.035) 0 2px,
+      transparent 2px 4px
+    );
+    z-index: 50;
+  }
+  .top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 20px 8px;
+  }
+  h1 {
+    font-size: clamp(20px, 4vw, 34px);
+    letter-spacing: 4px;
+    color: var(--pink);
+    text-shadow: 0 0 10px var(--pink), 0 0 32px var(--pink);
+  }
+  main {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 8px 16px 40px;
+    position: relative;
+  }
+  canvas {
+    width: 100%;
+    height: auto;
+    display: block;
+    border: 3px solid var(--purple);
+    border-radius: 10px;
+    box-shadow: var(--hard), 0 0 42px rgba(139, 92, 246, 0.35);
+    background: var(--bg);
+  }
+  .hud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 14px 0 10px;
+    justify-content: space-between;
+  }
+  .stat {
+    background: var(--panel);
+    border: 2px solid var(--cyan);
+    border-radius: 8px;
+    padding: 8px 14px;
+    min-width: 110px;
+    box-shadow: 4px 4px 0 rgba(45, 226, 230, 0.25);
+    flex: 1 1 auto;
+  }
+  .stat .lbl {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--cyan);
+  }
+  .stat .val {
+    display: block;
+    font-size: clamp(18px, 3vw, 26px);
+    font-weight: bold;
+    color: var(--yellow);
+    text-shadow: 0 0 12px rgba(255, 209, 102, 0.8);
+  }
+  .speedbar {
+    margin-top: 6px;
+    height: 12px;
+    background: #0b0b2b;
+    border: 2px solid var(--mint);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .speedfill {
+    height: 100%;
+    width: 20%;
+    background: linear-gradient(90deg, var(--mint), var(--cyan), var(--pink));
+    border-radius: 999px;
+    transition: width 0.12s linear;
+  }
+  .wordwrap {
+    text-align: center;
+    padding: 18px 8px 8px;
+  }
+  .word {
+    font-size: clamp(30px, 7vw, 56px);
+    font-weight: bold;
+    letter-spacing: 8px;
+    min-height: 1.3em;
+    text-shadow: 0 0 18px rgba(45, 226, 230, 0.8);
+  }
+  .w-done { color: var(--mint); opacity: 0.65; }
+  .w-next {
+    color: var(--bg);
+    background: var(--yellow);
+    border-radius: 6px;
+    padding: 0 6px;
+    box-shadow: 0 0 22px var(--yellow);
+  }
+  .w-rest { color: var(--ink); }
+  .word.flash .w-rest { color: var(--yellow); }
+  .hint {
+    margin-top: 10px;
+    font-size: 12px;
+    letter-spacing: 3px;
+    color: var(--purple);
+  }
+  .screen {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    top: 70px;
+    background: rgba(11, 11, 43, 0.92);
+    border: 3px solid var(--pink);
+    border-radius: 12px;
+    box-shadow: var(--hard), 0 0 60px rgba(255, 45, 149, 0.4);
+    padding: 28px 20px;
+    text-align: center;
+    z-index: 10;
+  }
+  .screen.hidden { display: none; }
+  .screen h2 {
+    color: var(--cyan);
+    letter-spacing: 5px;
+    text-shadow: 0 0 16px var(--cyan);
+    margin-bottom: 18px;
+  }
+  .tracks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 22px;
+  }
+  .track {
+    font-family: var(--mono);
+    background: var(--panel);
+    color: var(--ink);
+    border: 2px solid var(--purple);
+    border-radius: 10px;
+    padding: 12px 16px;
+    min-width: 170px;
+    cursor: pointer;
+    box-shadow: 4px 4px 0 rgba(139, 92, 246, 0.35);
+  }
+  .track:hover, .track.picked {
+    border-color: var(--pink);
+    color: var(--pink);
+    box-shadow: 4px 4px 0 rgba(255, 45, 149, 0.5);
+  }
+  .track .tname { display: block; font-size: 15px; letter-spacing: 2px; }
+  .track .tbest { display: block; margin-top: 6px; font-size: 12px; color: var(--cyan); }
+  .btn {
+    font-family: var(--mono);
+    font-size: 15px;
+    letter-spacing: 3px;
+    border-radius: 10px;
+    padding: 12px 22px;
+    cursor: pointer;
+    border: 3px solid var(--cyan);
+    background: var(--cyan);
+    color: var(--bg);
+    font-weight: bold;
+    box-shadow: 4px 4px 0 rgba(45, 226, 230, 0.4);
+  }
+  .btn:hover { filter: brightness(1.12); }
+  .btn.big { font-size: 18px; padding: 16px 30px; }
+  .btn.ghost {
+    background: transparent;
+    color: var(--cyan);
+    border-color: var(--purple);
+    box-shadow: 4px 4px 0 rgba(139, 92, 246, 0.35);
+    font-size: 12px;
+    padding: 10px 14px;
+  }
+  .big-time {
+    font-size: clamp(40px, 8vw, 64px);
+    color: var(--yellow);
+    text-shadow: 0 0 26px var(--yellow);
+    margin: 6px 0 12px;
+  }
+  .newbest {
+    color: var(--pink);
+    font-size: 22px;
+    letter-spacing: 4px;
+    text-shadow: 0 0 20px var(--pink);
+    margin-bottom: 10px;
+    animation: pulse 0.9s ease-in-out infinite alternate;
+  }
+  .newbest.hidden { display: none; }
+  @keyframes pulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.08); }
+  }
+  .stats {
+    color: var(--ink);
+    letter-spacing: 2px;
+    margin-bottom: 18px;
+    font-size: 14px;
+  }
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 26px;
+    transform: translateX(-50%);
+    background: var(--mint);
+    color: var(--bg);
+    font-weight: bold;
+    letter-spacing: 2px;
+    padding: 12px 22px;
+    border-radius: 999px;
+    box-shadow: var(--hard);
+    z-index: 60;
+  }
+  .toast.hidden { display: none; }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>TYPING ROCKETS</h1>
+  <button id="btn-reset" class="btn ghost">CLEAR RECORDS</button>
+</header>
+<main>
+  <canvas id="sky" width="760" height="420"></canvas>
+
+  <section class="hud">
+    <div class="stat"><span class="lbl">TIME</span><span id="hud-time" class="val">0.00S</span></div>
+    <div class="stat"><span class="lbl">BEST</span><span id="hud-best" class="val">--</span></div>
+    <div class="stat"><span class="lbl">WORDS</span><span id="hud-words" class="val">0</span></div>
+    <div class="stat">
+      <span class="lbl">SPEED</span>
+      <div class="speedbar"><div id="hud-speed" class="speedfill"></div></div>
+    </div>
+  </section>
+
+  <div class="wordwrap">
+    <div id="word" class="word">
+      <span id="word-done" class="w-done"></span><span id="word-next" class="w-next"></span><span id="word-rest" class="w-rest"></span>
+    </div>
+    <div class="hint">TYPE THE FUEL WORDS TO FLY  ·  ENTER TO LAUNCH</div>
+  </div>
+
+  <div id="screen-ready" class="screen">
+    <h2>PICK A TRACK</h2>
+    <div class="tracks">
+      <button id="btn-track-0" class="track">
+        <span class="tname">LAUNCH LOOP</span>
+        <span id="best-0" class="tbest">BEST --</span>
+      </button>
+      <button id="btn-track-1" class="track">
+        <span class="tname">COMET SPRINT</span>
+        <span id="best-1" class="tbest">BEST --</span>
+      </button>
+      <button id="btn-track-2" class="track">
+        <span class="tname">NEBULA NIGHT</span>
+        <span id="best-2" class="tbest">BEST --</span>
+      </button>
+    </div>
+    <button id="btn-start" class="btn big">START RACE</button>
+  </div>
+
+  <div id="screen-finish" class="screen hidden">
+    <h2 id="finish-title">TOUCHDOWN!</h2>
+    <div id="finish-time" class="big-time">0.00S</div>
+    <div id="finish-newbest" class="newbest hidden">NEW BEST!</div>
+    <div id="finish-stats" class="stats">0 WORDS  ·  0 TYPOS  ·  100% ACCURACY</div>
+    <button id="btn-again" class="btn big">FLY AGAIN</button>
+    <button id="btn-menu" class="btn ghost">CHANGE TRACK</button>
+  </div>
+</main>
+<div id="toast" class="toast hidden"></div>
+
+<script>
+  "use strict";
+
+  // ---------- constants ----------
+  var GKEY = "typing-rockets:v1";
+  var TICK_MS = 100;
+  var CHAR_FUEL = 0.08;
+  var CHAR_PUSH = 0.003;
+  var BURST_FUEL = 0.25;
+  var BURST_PUSH = 0.015;
+  var SPUTTER_MS = 600;
+  var DECAY = 0.992;
+  var SPEED_FLOOR = 0.3;
+  var SPEED_MAX = 1.5;
+
+  var POOLS = [
+    ["mars", "moon", "star", "nova", "comet", "orbit", "lunar", "alien", "rocket", "planet", "galaxy", "meteor", "cosmos", "saturn", "nebula", "launch", "gravity", "asteroid", "starship"],
+    ["pen", "art", "math", "read", "book", "desk", "test", "study", "class", "learn", "lesson", "pencil", "teacher", "recess", "school", "homework", "notebook", "learning"],
+    ["yay", "boo", "whee", "zany", "kook", "noodle", "pickle", "waffle", "banana", "giggle", "fluffy", "zoomie", "doodle", "goofy", "wobble", "blorp", "cupcake", "bonkers", "nonsense", "wiggles"]
+  ];
+  var POOL_NAMES = ["SPACE", "SCHOOL", "SILLY"];
+
+  var TRACKS = [
+    { id: "launch-loop", name: "LAUNCH LOOP", seconds: 38, accent: "#2de2e6" },
+    { id: "comet-sprint", name: "COMET SPRINT", seconds: 25, accent: "#ff2d95" },
+    { id: "nebula-night", name: "NEBULA NIGHT", seconds: 55, accent: "#8b5cf6" }
+  ];
+
+  // ---------- state ----------
+  var state = {
+    screen: "ready", // ready | racing | finished
+    track: 0,
+    poolIdx: 0,
+    word: "",
+    caret: 0,
+    progress: 0,
+    speed: SPEED_FLOOR,
+    sputterUntil: -1,
+    elapsedMs: 0,
+    wordsDone: 0,
+    charsTyped: 0,
+    typos: 0,
+    best: { "launch-loop": null, "comet-sprint": null, "nebula-night": null },
+    lastMs: null,
+    newBest: false
+  };
+
+  var frame = 0;
+  var sparks = [];
+  var stars = [];
+  var starSeed = 1234567;
+
+  // ---------- tiny helpers ----------
+  function starRand() {
+    starSeed = (starSeed * 1664525 + 1013904223) >>> 0;
+    return starSeed / 4294967296;
+  }
+  function track() {
+    return TRACKS[state.track] || TRACKS[0];
+  }
+  function fmtTime(ms) {
+    if (ms == null || !isFinite(ms)) return "--";
+    return (ms / 1000).toFixed(2) + "S";
+  }
+  function nowMs() {
+    return state.elapsedMs;
+  }
+
+  // ---------- persistence (house machinery) ----------
+  function seed() {
+    return { best: { "launch-loop": null, "comet-sprint": null, "nebula-night": null } };
+  }
+  function load() {
+    try {
+      var raw = localStorage.getItem(GKEY);
+      if (!raw) return seed();
+      var data = JSON.parse(raw);
+      if (!data || typeof data !== "object" || !data.best || typeof data.best !== "object") return seed();
+      var s = seed();
+      for (var key in s.best) {
+        var v = data.best[key];
+        if (typeof v === "number" && isFinite(v) && v > 0) s.best[key] = v;
+      }
+      return s;
+    } catch (err) {
+      return seed();
+    }
+  }
+  function save() {
+    try {
+      localStorage.setItem(GKEY, JSON.stringify({ best: state.best }));
+    } catch (err) { /* storage blocked: keep playing */ }
+  }
+  var toastTimer = null;
+  function toast(msg) {
+    var el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.remove("hidden");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      el.classList.add("hidden");
+    }, 2200);
+  }
+
+  // ---------- juice ----------
+  function sparkBurst() {
+    var x = rocketX() + 26;
+    var y = rocketY();
+    for (var i = 0; i < 10; i++) {
+      var a = starRand() * Math.PI * 2;
+      var sp = 1.2 + starRand() * 2.6;
+      sparks.push({
+        x: x, y: y,
+        vx: Math.cos(a) * sp,
+        vy: Math.sin(a) * sp,
+        life: 22,
+        max: 22,
+        c: i % 2 ? "#2de2e6" : "#ffd166"
+      });
+    }
+    if (sparks.length > 240) sparks.splice(0, sparks.length - 240);
+  }
+  function flourish() {
+    var el = document.getElementById("word");
+    el.classList.add("flash");
+    setTimeout(function () {
+      el.classList.remove("flash");
+    }, 180);
+    sparkBurst();
+    sparkBurst();
+  }
+
+  // ---------- word engine ----------
+  function pickWord() {
+    var pool = POOLS[state.poolIdx % POOLS.length];
+    state.poolIdx = (state.poolIdx + 1) % POOLS.length;
+    var target = 3 + Math.floor(state.progress * 5.5);
+    if (target > 8) target = 8;
+    var near = [];
+    for (var i = 0; i < pool.length; i++) {
+      if (Math.abs(pool[i].length - target) <= 1) near.push(pool[i]);
+    }
+    var from = near.length ? near : pool;
+    return from[Math.floor(Math.random() * from.length)];
+  }
+
+  function handleChar(raw) {
+    var ch = String(raw == null ? "" : raw).toLowerCase();
+    if (!/^[a-z]$/.test(ch)) return;
+    if (state.screen !== "racing") return;
+    state.charsTyped++;
+    var want = state.word.charAt(state.caret);
+    if (ch === want) {
+      state.caret++;
+      sparkBurst();
+      state.speed = Math.min(SPEED_MAX, state.speed + CHAR_FUEL);
+      state.progress = Math.min(1, state.progress + CHAR_PUSH);
+      if (state.caret >= state.word.length) {
+        state.wordsDone++;
+        state.speed = Math.min(SPEED_MAX, state.speed + BURST_FUEL);
+        state.progress = Math.min(1, state.progress + BURST_PUSH);
+        flourish();
+        state.word = pickWord();
+        state.caret = 0;
+      }
+      if (state.progress >= 1) finishRace();
+    } else {
+      state.typos++;
+      state.sputterUntil = nowMs() + SPUTTER_MS;
+      state.speed = Math.max(SPEED_FLOOR * 0.6, state.speed * 0.55);
+    }
+    render();
+  }
+
+  function onKey(e) {
+    if (!e || !e.key) return;
+    if (e.key === "Enter") {
+      if (state.screen === "ready" || state.screen === "finished") startRace();
+      return;
+    }
+    if (e.key.length === 1) handleChar(e.key);
+  }
+
+  // ---------- race flow ----------
+  function startRace() {
+    state.screen = "racing";
+    state.progress = 0;
+    state.speed = SPEED_FLOOR;
+    state.elapsedMs = 0;
+    state.sputterUntil = -1;
+    state.wordsDone = 0;
+    state.charsTyped = 0;
+    state.typos = 0;
+    state.caret = 0;
+    state.newBest = false;
+    state.lastMs = null;
+    state.word = pickWord();
+    state.caret = 0;
+    render();
+  }
+
+  function finishRace() {
+    if (state.screen === "finished") return;
+    state.screen = "finished";
+    state.lastMs = state.elapsedMs;
+    var id = track().id;
+    var prev = state.best[id];
+    state.newBest = prev == null || state.lastMs < prev;
+    if (state.newBest) {
+      state.best[id] = state.lastMs;
+      save();
+      toast("NEW BEST TIME!");
+    }
+    render();
+  }
+
+  function showReady() {
+    state.screen = "ready";
+    render();
+  }
+
+  function selectTrack(i) {
+    state.track = i;
+    render();
+  }
+
+  function resetRecords() {
+    state.best = seed().best;
+    save();
+    toast("BEST TIMES CLEARED");
+    render();
+  }
+
+  function tick() {
+    if (state.screen !== "racing") return;
+    state.elapsedMs += TICK_MS;
+    state.speed = Math.max(SPEED_FLOOR, state.speed * DECAY);
+    state.progress += (state.speed * TICK_MS) / (track().seconds * 1000);
+    if (state.progress >= 1) {
+      state.progress = 1;
+      finishRace();
+    }
+    render();
+  }
+
+  // ---------- canvas scene ----------
+  function rocketX() {
+    return 60 + state.progress * 620;
+  }
+  function rocketY() {
+    return 318;
+  }
+
+  function draw() {
+    var canvas = document.getElementById("sky");
+    var ctx = canvas.getContext("2d");
+    var W = 760;
+    var H = 420;
+    frame++;
+
+    // synthwave sky bands
+    var bands = ["#0b0b2b", "#12123f", "#1b1450", "#2a1660", "#3b1a6e", "#4a1f7a"];
+    for (var b = 0; b < bands.length; b++) {
+      ctx.fillStyle = bands[b];
+      ctx.fillRect(0, b * 40, W, 41);
+    }
+
+    // parallax starfield
+    for (var s = 0; s < stars.length; s++) {
+      var st = stars[s];
+      st.x -= st.layer * 0.22;
+      if (st.x < -4) st.x = W + 4;
+      ctx.globalAlpha = 0.35 + st.layer * 0.25;
+      ctx.fillStyle = "#eaf6ff";
+      ctx.fillRect(st.x, st.y, st.r, st.r);
+    }
+    ctx.globalAlpha = 1;
+
+    // synthwave sun with stripe cutouts
+    var sunX = 380;
+    var sunY = 236;
+    var sunR = 92;
+    ctx.beginPath();
+    ctx.arc(sunX, sunY, sunR, 0, Math.PI * 2);
+    ctx.fillStyle = "#ff2d95";
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(sunX, sunY, sunR * 0.72, 0, Math.PI * 2);
+    ctx.fillStyle = "#ffd166";
+    ctx.fill();
+    ctx.fillStyle = "#0b0b2b";
+    for (var k = 0; k < 5; k++) {
+      var sh = 6 + k * 7;
+      ctx.fillRect(sunX - sunR, sunY + 12 + k * 22, sunR * 2, sh);
+    }
+
+    // perspective grid
+    ctx.strokeStyle = "rgba(139, 92, 246, 0.75)";
+    ctx.lineWidth = 1.5;
+    for (var i = -10; i <= 10; i++) {
+      ctx.beginPath();
+      ctx.moveTo(sunX + i * 32, 242);
+      ctx.lineTo(sunX + i * 150, H);
+      ctx.stroke();
+    }
+    for (var j = 0; j < 9; j++) {
+      var t = j / 8;
+      var gy = 242 + t * t * (H - 242);
+      ctx.beginPath();
+      ctx.moveTo(0, gy);
+      ctx.lineTo(W, gy);
+      ctx.stroke();
+    }
+
+    // track strip: launchpad + finish
+    ctx.strokeStyle = "#2de2e6";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(40, rocketY() + 26);
+    ctx.lineTo(720, rocketY() + 26);
+    ctx.stroke();
+    ctx.fillStyle = "#6ff2c5";
+    ctx.fillRect(36, rocketY() + 18, 10, 18);
+    for (var f = 0; f < 8; f++) {
+      ctx.fillStyle = f % 2 ? "#eaf6ff" : "#0b0b2b";
+      ctx.fillRect(700 + (f % 2) * 12, rocketY() - 10 + Math.floor(f / 2) * 10, 12, 10);
+    }
+    ctx.fillStyle = "#eaf6ff";
+    ctx.fillRect(706, rocketY() - 10, 3, 38);
+
+    // rocket trail
+    var rx = rocketX();
+    var ry = rocketY();
+    for (var tr = 1; tr <= 8; tr++) {
+      ctx.globalAlpha = 0.28 - tr * 0.03;
+      ctx.fillStyle = tr % 2 ? "#2de2e6" : "#ff2d95";
+      ctx.beginPath();
+      ctx.arc(rx - 18 - tr * 14, ry, 10 - tr * 0.7, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    // flame (sputters when the engine coughs)
+    var sputter = nowMs() < state.sputterUntil;
+    var flicker = Math.abs(Math.sin(frame * 0.42));
+    var flameLen = 16 + flicker * 18;
+    if (sputter) flameLen = 8 + Math.abs(Math.sin(frame * 1.7)) * 12;
+    ctx.fillStyle = sputter ? "#ffd166" : "#ff2d95";
+    ctx.beginPath();
+    ctx.moveTo(rx - 16, ry - 10);
+    ctx.lineTo(rx - 16 - flameLen, ry);
+    ctx.lineTo(rx - 16, ry + 10);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "#ffd166";
+    ctx.beginPath();
+    ctx.moveTo(rx - 16, ry - 5);
+    ctx.lineTo(rx - 16 - flameLen * 0.55, ry);
+    ctx.lineTo(rx - 16, ry + 5);
+    ctx.closePath();
+    ctx.fill();
+
+    // neon rocket body (nose right)
+    ctx.fillStyle = "#eaf6ff";
+    ctx.beginPath();
+    ctx.moveTo(rx + 34, ry);
+    ctx.lineTo(rx - 14, ry - 16);
+    ctx.lineTo(rx - 14, ry + 16);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "#ff2d95";
+    ctx.beginPath();
+    ctx.moveTo(rx - 10, ry - 14);
+    ctx.lineTo(rx - 30, ry - 26);
+    ctx.lineTo(rx - 10, ry - 4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(rx - 10, ry + 14);
+    ctx.lineTo(rx - 30, ry + 26);
+    ctx.lineTo(rx - 10, ry + 4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "#2de2e6";
+    ctx.beginPath();
+    ctx.arc(rx + 6, ry, 8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // sparks
+    for (var p = 0; p < sparks.length; p++) {
+      var sp = sparks[p];
+      sp.x += sp.vx;
+      sp.y += sp.vy;
+      sp.vx *= 0.96;
+      sp.vy = sp.vy * 0.96 + 0.05;
+      sp.life--;
+      ctx.globalAlpha = Math.max(0, sp.life / sp.max);
+      ctx.fillStyle = sp.c;
+      ctx.fillRect(sp.x, sp.y, 3, 3);
+    }
+    ctx.globalAlpha = 1;
+    var alive = [];
+    for (var q = 0; q < sparks.length; q++) {
+      if (sparks[q].life > 0) alive.push(sparks[q]);
+    }
+    sparks = alive;
+  }
+
+  // ---------- DOM render ----------
+  function render() {
+    var done = document.getElementById("word-done");
+    var next = document.getElementById("word-next");
+    var rest = document.getElementById("word-rest");
+    done.textContent = state.word.slice(0, state.caret);
+    next.textContent = state.word.charAt(state.caret) || "";
+    rest.textContent = state.word.slice(state.caret + 1);
+
+    document.getElementById("hud-time").textContent = fmtTime(state.elapsedMs);
+    document.getElementById("hud-best").textContent = fmtTime(state.best[track().id]);
+    document.getElementById("hud-words").textContent = String(state.wordsDone);
+    var pct = Math.round((state.speed / SPEED_MAX) * 100);
+    document.getElementById("hud-speed").style.width = pct + "%";
+
+    for (var i = 0; i < TRACKS.length; i++) {
+      var bestEl = document.getElementById("best-" + i);
+      if (bestEl) bestEl.textContent = "BEST " + fmtTime(state.best[TRACKS[i].id]);
+      var btn = document.getElementById("btn-track-" + i);
+      if (btn) {
+        if (i === state.track) btn.classList.add("picked");
+        else btn.classList.remove("picked");
+      }
+    }
+
+    var ready = document.getElementById("screen-ready");
+    var fin = document.getElementById("screen-finish");
+    if (state.screen === "ready") {
+      ready.classList.remove("hidden");
+      fin.classList.add("hidden");
+    } else if (state.screen === "finished") {
+      ready.classList.add("hidden");
+      fin.classList.remove("hidden");
+      document.getElementById("finish-time").textContent = fmtTime(state.lastMs);
+      var nb = document.getElementById("finish-newbest");
+      if (state.newBest) nb.classList.remove("hidden");
+      else nb.classList.add("hidden");
+      var acc = state.charsTyped ? Math.round((100 * (state.charsTyped - state.typos)) / state.charsTyped) : 100;
+      document.getElementById("finish-stats").textContent =
+        state.wordsDone + " WORDS  ·  " + state.typos + " TYPOS  ·  " + acc + "% ACCURACY";
+    } else {
+      ready.classList.add("hidden");
+      fin.classList.add("hidden");
+    }
+    draw();
+  }
+
+  // ---------- boot ----------
+  function boot() {
+    var data = load();
+    state.best = data.best;
+    stars = [];
+    starSeed = 1234567;
+    for (var i = 0; i < 90; i++) {
+      stars.push({
+        x: starRand() * 760,
+        y: starRand() * 300,
+        r: 1 + Math.floor(starRand() * 2.6),
+        layer: 1 + Math.floor(starRand() * 3)
+      });
+    }
+    sparks = [];
+    document.addEventListener("keydown", onKey);
+    document.getElementById("btn-start").addEventListener("click", startRace);
+    document.getElementById("btn-again").addEventListener("click", startRace);
+    document.getElementById("btn-menu").addEventListener("click", showReady);
+    document.getElementById("btn-reset").addEventListener("click", resetRecords);
+    for (var t = 0; t < TRACKS.length; t++) {
+      (function (idx) {
+        var b = document.getElementById("btn-track-" + idx);
+        if (b) b.addEventListener("click", function () { selectTrack(idx); });
+      })(t);
+    }
+    setInterval(tick, TICK_MS);
+    render();
+  }
+
+  boot();
+</script>
+</body>
+</html>
