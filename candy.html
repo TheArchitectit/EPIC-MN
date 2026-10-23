@@ -342,6 +342,13 @@ try {
   if (typeof AudioContext !== "undefined") actx = new AudioContext();
 } catch (e) { actx = null; }
 
+// browsers mute new audio until the player's first input asks for it
+function unlockAudio() {
+  try {
+    if (actx && actx.resume) actx.resume();
+  } catch (e) { /* audio hiccup — never break the game */ }
+}
+
 function blip(freq, dur, type, gain, slideTo) {
   if (!actx) return;
   try {
@@ -382,6 +389,7 @@ function playBeat(beat) {
 
 // ---------- the run ----------
 function startRun() {
+  unlockAudio();
   state.phase = "playing";
   state.songStart = Date.now();
   state.songT = 0;
@@ -428,6 +436,7 @@ function stumble() {
 }
 
 function tap() {
+  unlockAudio();
   if (state.phase !== "playing") return;
   state.songT = Date.now() - state.songStart;
   if (state.hero.onGround) {
@@ -763,6 +772,7 @@ document.getElementById("btn-jump").addEventListener("click", function () { tap(
 canvas.addEventListener("click", function () { tap(); });
 
 document.addEventListener("keydown", function (e) {
+  unlockAudio();
   if (e.repeat) { if (e.preventDefault) e.preventDefault(); return; }
   var k = (e.key && e.key.length === 1) ? e.key.toLowerCase() : e.key;
   if (k === " " || k === "ArrowUp" || k === "w") {

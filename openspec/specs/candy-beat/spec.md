@@ -126,3 +126,28 @@ ride under the HUD without covering the track or controls.
 #### Scenario: play again
 - **WHEN** the run ends and the player presses play again
 - **THEN** a brand-new run starts with streak and crowd reset
+
+### Requirement: Sound plays while you run
+
+The game SHALL unlock the browser's audio on the player's first
+input and play its synthesized groove and action sounds, and SHALL
+keep running silently when no audio is available.
+
+#### Scenario: the first input unlocks the speaker
+- **WHEN** the player gives any first input (key, canvas tap, or
+  button press)
+- **THEN** the browser audio is resumed and the game's sounds are
+  audible from then on
+
+#### Scenario: the groove plays on the clock
+- **WHEN** beats pass during the run
+- **THEN** kick, snare, hat, and bass play on the beat clock
+
+#### Scenario: every action sounds off
+- **WHEN** the hero jumps, grabs a beat-orb, or stumbles
+- **THEN** the matching jump, sparkle, or stumble sound plays
+
+#### Scenario: silent browsers still run
+- **WHEN** the browser offers no audio support
+- **THEN** the run continues on visual cues alone, with no error and
+  no missing game behavior
