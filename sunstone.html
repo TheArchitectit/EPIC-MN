@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sunstone Vale</title>
+<style>
+  :root {
+    --gold:#ffd24a; --ruby:#e63956; --amethyst:#9b5cff; --sapphire:#3d7dff;
+    --emerald:#2fbf71; --lead:#201436; --panel:#31205e; --ink:#fff6e8;
+    --dim:#9a86c8; --danger:#ff5a6a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 16px;
+    background: var(--lead);
+    color: var(--ink);
+    font-family: "Courier New", monospace;
+    display: flex; flex-direction: column; align-items: center;
+    min-height: 100vh;
+  }
+  h1 {
+    margin: 4px 0 2px; font-size: 34px; letter-spacing: 3px;
+    color: var(--gold); text-shadow: 2px 2px 0 var(--lead), 0 0 18px rgba(255,210,74,0.45);
+  }
+  .sub {
+    margin: 0 0 12px; font-size: 12px; letter-spacing: 2px; color: var(--emerald);
+  }
+  .boardwrap {
+    position: relative; width: 540px; max-width: 100%;
+  }
+  canvas {
+    width: 100%; display: block; border-radius: 12px;
+    border: 3px solid var(--gold); background: var(--lead);
+  }
+  .toast {
+    position: absolute; top: 100px; left: 50%; transform: translateX(-50%);
+    background: var(--panel); color: var(--gold); border: 2px solid var(--gold);
+    padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: bold;
+    opacity: 0; transition: opacity .3s; z-index: 6; pointer-events: none;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+  .screen {
+    position: absolute; inset: 0; display: none; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center;
+    background: rgba(32,20,54,0.9); border-radius: 12px; padding: 20px; z-index: 5;
+  }
+  .screen.show { display: flex; }
+  .title-big {
+    font-size: 28px; font-weight: bold; letter-spacing: 2px; color: var(--gold);
+    text-shadow: 2px 2px 0 var(--lead); margin-bottom: 6px;
+  }
+  .tag { font-size: 13px; color: var(--emerald); letter-spacing: 1px; margin-bottom: 10px; }
+  .screen p { font-size: 13px; line-height: 1.75; color: var(--ink); margin: 6px 0 12px; }
+  .screen b { color: var(--gold); }
+  .rec { font-size: 12px; color: var(--dim); letter-spacing: 1px; margin: 8px 0; }
+  .best {
+    display: none; font-size: 15px; font-weight: bold; letter-spacing: 2px;
+    color: var(--lead); background: var(--gold); padding: 5px 14px; border-radius: 6px;
+    margin: 8px 0;
+  }
+  .best.show { display: inline-block; }
+  button {
+    font-family: inherit; font-weight: bold; cursor: pointer;
+    border-radius: 8px; border: 2px solid var(--gold);
+  }
+  .btn-big {
+    background: var(--ruby); color: var(--ink); font-size: 16px;
+    padding: 12px 26px; letter-spacing: 2px; margin-top: 6px;
+    box-shadow: 0 4px 0 var(--lead);
+  }
+  .btn-big:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--lead); }
+  .padrow { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; justify-content: center; }
+  .btn-dir {
+    background: var(--panel); color: var(--gold); font-size: 20px;
+    width: 58px; height: 52px;
+  }
+  .btn-sword {
+    background: var(--gold); color: var(--lead); font-size: 15px;
+    padding: 0 22px; height: 52px; letter-spacing: 2px;
+    box-shadow: 0 4px 0 var(--lead);
+  }
+  .btn-sword:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--lead); }
+  .btn-ghost {
+    background: transparent; color: var(--dim); border-color: var(--dim);
+    font-size: 11px; padding: 8px 16px; letter-spacing: 1px;
+  }
+  .strip { margin: 10px 0 24px; font-size: 12px; color: var(--dim); letter-spacing: 1px; }
+</style>
+</head>
+<body>
+<h1>SUNSTONE VALE</h1>
+<div class="sub">A STAINED-GLASS QUEST &middot; ONE HERO &middot; ONE RELIC</div>
+<div class="boardwrap">
+  <div id="toast"></div>
+  <canvas id="board" width="540" height="720"></canvas>
+  <div id="screen-ready" class="screen show">
+    <div class="title-big">SUNSTONE VALE</div>
+    <div class="tag">A STAINED-GLASS ADVENTURE</div>
+    <p>Walk the golden-hour kingdom with <b>arrows / WASD</b>.<br>
+    Swing your <b>sword</b> (space, X, or SWORD!) at the monsters.<br>
+    Crack the <b>chest</b> for the key, unlock the ruin's<br>
+    <b>golden door</b>, and touch the <b>Sunstone</b> to win!</p>
+    <div id="ready-records" class="rec"></div>
+    <button id="btn-start" class="btn-big">PRESS START!</button>
+  </div>
+  <div id="screen-over" class="screen">
+    <div id="over-result" class="title-big"></div>
+    <div id="over-score" class="tag"></div>
+    <div id="over-stats" class="rec"></div>
+    <div id="over-best" class="best">NEW BEST!</div>
+    <button id="btn-again" class="btn-big">PLAY AGAIN</button>
+  </div>
+</div>
+<div class="padrow">
+  <button id="btn-left" class="btn-dir">&#9664;</button>
+  <button id="btn-up" class="btn-dir">&#9650;</button>
+  <button id="btn-down" class="btn-dir">&#9660;</button>
+  <button id="btn-right" class="btn-dir">&#9654;</button>
+  <button id="btn-sword" class="btn-sword">SWORD!</button>
+</div>
+<div class="padrow">
+  <button id="btn-clear" class="btn-ghost">CLEAR RECORDS</button>
+</div>
+<div id="strip-records" class="strip"></div>
+<script>
+"use strict";
+// ---------- constants ----------
+var GKEY = "sunstone-vale:v1";
+var TICK_MS = 50;
+var TILE = 30;
+var MAP_W = 18, MAP_H = 22;
+var WORLD_Y = 60;
+var HERO_SPEED = 150;
+var SWORD_MS = 300;
+var SWORD_REACH = 36;
+var SWORD_ARC_MS = 200;
+var MERCY_TICKS = 24;
+var HEARTS_START = 4;
+var MON_SCORE = 100;
+var CHEST_SCORE = 200;
+var RELIC_SCORE = 500;
+
+// ---------- maps (18 x 22) ----------
+// legend: # wall  . floor  S spawn  C chest  A ruin arch  D golden door  P Sunstone
+var OVER_MAP = [
+  "##################",
+  "#................#",
+  "#................#",
+  "#..###......###..#",
+  "#..###......###..#",
+  "#................#",
+  "#.......C........#",
+  "#................#",
+  "#..##........##..#",
+  "#..##...S....##..#",
+  "#..##........##..#",
+  "#................#",
+  "#................#",
+  "#.....###........#",
+  "#.....###........#",
+  "#................#",
+  "#................#",
+  "#..........###...#",
+  "#...........A....#",
+  "#................#",
+  "#................#",
+  "##################"
+];
+var DUN_MAP = [
+  "##################",
+  "#.......P........#",
+  "#................#",
+  "########D#########",
+  "#................#",
+  "#................#",
+  "#................#",
+  "#................#",
+  "#................#",
+  "#................#",
+  "#................#",
+  "#................#",
+  "#................#",
+  "#................#",
+  "#................#",
+  "#................#",
+  "#................#",
+  "#................#",
+  "#................#",
+  "#.......S........#",
+  "#................#",
+  "##################"
+];
+
+// ---------- deterministic monster spawns ----------
+var OVER_SPAWNS = [
+  { kind: "slime", x: 255, y: 195, hp: 2, ax: "x", amp: 70, ph: 0, speed: 1.1 },
+  { kind: "slime", x: 135, y: 375, hp: 2, ax: "y", amp: 55, ph: 2, speed: 0.9 },
+  { kind: "slime", x: 390, y: 285, hp: 2, ax: "x", amp: 45, ph: 4, speed: 1.3 }
+];
+var DUN_SPAWNS = [
+  { kind: "bat", x: 135, y: 255, hp: 1, ax: "x", amp: 80, ph: 1, speed: 1.4 },
+  { kind: "bat", x: 405, y: 375, hp: 1, ax: "y", amp: 60, ph: 3, speed: 1.2 },
+  { kind: "bat", x: 255, y: 495, hp: 1, ax: "x", amp: 90, ph: 5, speed: 1.6 }
+];
+
+// ---------- state ----------
+var state = {
+  phase: "ready",
+  scene: "overworld",
+  hero: { x: 0, y: 0, dir: "down" },
+  hearts: HEARTS_START,
+  score: 0,
+  key: 0,
+  chest: 0,
+  doorOpen: 0,
+  tilePrev: "S",
+  elapsed: 0,
+  mercy: 0,
+  swordCool: 0,
+  swordArc: 0,
+  mons: [],
+  bursts: [],
+  judge: null,
+  keys: { up: false, down: false, left: false, right: false },
+  newBest: false,
+  endReason: null
+};
+var rec = { bestScore: 0, bestTime: 0 };
+
+// ---------- records ----------
+function loadRec() {
+  try {
+    var raw = localStorage.getItem(GKEY);
+    if (raw) {
+      var d = JSON.parse(raw);
+      if (typeof d.bestScore === "number") rec.bestScore = d.bestScore;
+      if (typeof d.bestTime === "number") rec.bestTime = d.bestTime;
+    }
+  } catch (e) { /* storage down — play on with fresh records */ }
+}
+function saveRec() {
+  try {
+    localStorage.setItem(GKEY, JSON.stringify({ bestScore: rec.bestScore, bestTime: rec.bestTime }));
+  } catch (e) { /* storage down — records live on in memory */ }
+}
+function clearRecords() {
+  rec = { bestScore: 0, bestTime: 0 };
+  saveRec();
+  var t = document.getElementById("toast");
+  t.textContent = "Records cleared";
+  t.classList.add("show");
+  setTimeout(function () { t.classList.remove("show"); }, 1600);
+  render();
+}
+
+// ---------- synthesized sound (optional Web Audio) ----------
+var actx = null;
+try {
+  if (typeof AudioContext !== "undefined") actx = new AudioContext();
+} catch (e) { actx = null; }
+
+// browsers mute new audio until the player's first input asks for it
+function unlockAudio() {
+  try {
+    if (actx && actx.resume) actx.resume();
+  } catch (e) { /* audio hiccup — never break the game */ }
+}
+
+function blip(freq, dur, type, gain, slideTo) {
+  if (!actx) return;
+  try {
+    var o = actx.createOscillator();
+    var g = actx.createGain();
+    o.type = type;
+    if (o.frequency.setValueAtTime) o.frequency.setValueAtTime(freq, actx.currentTime);
+    if (slideTo && o.frequency.exponentialRampToValueAtTime) {
+      o.frequency.exponentialRampToValueAtTime(slideTo, actx.currentTime + dur);
+    }
+    if (g.gain.setValueAtTime) g.gain.setValueAtTime(gain, actx.currentTime);
+    if (g.gain.exponentialRampToValueAtTime) {
+      g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + dur);
+    }
+    o.connect(g);
+    g.connect(actx.destination);
+    o.start();
+    o.stop(actx.currentTime + dur);
+  } catch (e) { /* audio hiccup — never break the game */ }
+}
+
+function swingSnd() { blip(520, 0.12, "sawtooth", 0.1, 220); }
+function hitSnd() { blip(180, 0.1, "square", 0.16, 90); }
+function pickupSnd() { blip(660, 0.14, "triangle", 0.16, 1320); }
+function doorSnd() { blip(220, 0.3, "triangle", 0.18, 440); }
+function hurtSnd() { blip(200, 0.2, "sawtooth", 0.14, 80); }
+function winSnd() {
+  blip(523, 0.14, "triangle", 0.16);
+  setTimeout(function () { blip(659, 0.14, "triangle", 0.16); }, 130);
+  setTimeout(function () { blip(784, 0.14, "triangle", 0.16); }, 260);
+  setTimeout(function () { blip(1046, 0.3, "triangle", 0.18); }, 390);
+}
+
+// ---------- helpers ----------
+function dist(x1, y1, x2, y2) {
+  var dx = x2 - x1, dy = y2 - y1;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+function facingVec(dir) {
+  if (dir === "up") return { x: 0, y: -1 };
+  if (dir === "down") return { x: 0, y: 1 };
+  if (dir === "left") return { x: -1, y: 0 };
+  return { x: 1, y: 0 };
+}
+function fmtTime(ms) {
+  var s = Math.floor(ms / 1000);
+  var m = Math.floor(s / 60);
+  return m + ":" + (s % 60 < 10 ? "0" : "") + (s % 60);
+}
+function tileAt(col, row) {
+  var map = state.scene === "overworld" ? OVER_MAP : DUN_MAP;
+  if (row < 0 || row >= MAP_H || col < 0 || col >= MAP_W) return "#";
+  return map[row].charAt(col);
+}
+function solid(col, row) {
+  var t = tileAt(col, row);
+  if (t === "#") return true;
+  if (t === "D" && !state.doorOpen) return true;
+  return false;
+}
+function canStand(x, y, h) {
+  h = h || 9;
+  var c1 = Math.floor((x - h) / TILE), c2 = Math.floor((x + h) / TILE);
+  var r1 = Math.floor((y - h - WORLD_Y) / TILE), r2 = Math.floor((y + h - WORLD_Y) / TILE);
+  return !solid(c1, r1) && !solid(c2, r1) && !solid(c1, r2) && !solid(c2, r2);
+}
+function findTile(ch, map) {
+  for (var r = 0; r < MAP_H; r++) {
+    var c = map[r].indexOf(ch);
+    if (c >= 0) return { x: c * TILE + TILE / 2, y: WORLD_Y + r * TILE + TILE / 2 };
+  }
+  return { x: 270, y: 390 };
+}
+function burst(x, y, n) {
+  for (var i = 0; i < n; i++) {
+    state.bursts.push({
+      x: x + ((i * 37) % 22) - 11,
+      y: y + ((i * 53) % 22) - 11,
+      life: 8 + ((i * 7) % 7),
+      max: 14
+    });
+  }
+}
+function questText() {
+  if (state.phase === "over") {
+    return state.endReason === "won" ? "QUEST COMPLETE" : "THE LIGHT FADED";
+  }
+  if (!state.chest) return "QUEST: FIND THE CHEST";
+  if (state.scene === "overworld") return "QUEST: ENTER THE RUIN";
+  if (!state.doorOpen) return "QUEST: UNLOCK THE GOLDEN DOOR";
+  return "QUEST: CLAIM THE SUNSTONE";
+}
+
+// ---------- game flow ----------
+function spawnMons(scene) {
+  var defs = scene === "overworld" ? OVER_SPAWNS : DUN_SPAWNS;
+  var out = [];
+  for (var i = 0; i < defs.length; i++) {
+    var d = defs[i];
+    out.push({
+      kind: d.kind, x: d.x, y: d.y, hp: d.hp,
+      hx: d.x, hy: d.y, ax: d.ax, amp: d.amp, ph: d.ph, speed: d.speed,
+      hurt: 0
+    });
+  }
+  state.mons = out;
+}
+
+function startRun() {
+  unlockAudio();
+  state.phase = "playing";
+  state.scene = "overworld";
+  var s = findTile("S", OVER_MAP);
+  state.hero = { x: s.x, y: s.y, dir: "down" };
+  state.hearts = HEARTS_START;
+  state.score = 0;
+  state.key = 0;
+  state.chest = 0;
+  state.doorOpen = 0;
+  state.tilePrev = "S";
+  state.elapsed = 0;
+  state.mercy = 0;
+  state.swordCool = 0;
+  state.swordArc = 0;
+  state.bursts = [];
+  state.judge = null;
+  state.keys = { up: false, down: false, left: false, right: false };
+  state.newBest = false;
+  state.endReason = null;
+  spawnMons("overworld");
+  render();
+}
+
+function endRun(reason) {
+  state.phase = "over";
+  state.endReason = reason;
+  var improved = false;
+  if (state.score > rec.bestScore) {
+    rec.bestScore = state.score;
+    improved = true;
+  }
+  if (reason === "won" && (rec.bestTime === 0 || state.elapsed < rec.bestTime)) {
+    rec.bestTime = state.elapsed;
+    improved = true;
+  }
+  state.newBest = improved;
+  if (improved) saveRec();
+  render();
+}
+
+function swing() {
+  unlockAudio();
+  if (state.phase !== "playing") return;
+  if (state.swordCool > 0) return;
+  state.swordCool = SWORD_MS;
+  state.swordArc = SWORD_ARC_MS;
+  swingSnd();
+  var f = facingVec(state.hero.dir);
+  for (var i = state.mons.length - 1; i >= 0; i--) {
+    var m = state.mons[i];
+    var dx = m.x - state.hero.x, dy = m.y - state.hero.y;
+    var d = Math.sqrt(dx * dx + dy * dy) || 1;
+    if (d > SWORD_REACH + 12) continue;
+    var dot = (dx / d) * f.x + (dy / d) * f.y;
+    if (dot < 0.15 && d > 22) continue;
+    m.hp -= 1;
+    m.hurt = 8;
+    var kx = m.x + dx / d * 20, ky = m.y + dy / d * 20;
+    if (canStand(kx, ky, 8)) { m.x = kx; m.y = ky; }
+    hitSnd();
+    burst(m.x, m.y, 5);
+    if (m.hp <= 0) {
+      state.mons.splice(i, 1);
+      state.score += MON_SCORE;
+      burst(m.x, m.y, 8);
+    }
+  }
+}
+
+function stepGame() {
+  if (state.phase !== "playing") return;
+  state.elapsed += TICK_MS;
+  if (state.mercy > 0) state.mercy -= 1;
+  if (state.swordCool > 0) state.swordCool -= TICK_MS;
+  if (state.swordArc > 0) state.swordArc -= TICK_MS;
+
+  // hero movement
+  var dx = (state.keys.right ? 1 : 0) - (state.keys.left ? 1 : 0);
+  var dy = (state.keys.down ? 1 : 0) - (state.keys.up ? 1 : 0);
+  if (dx !== 0 || dy !== 0) {
+    if (Math.abs(dx) > Math.abs(dy)) state.hero.dir = dx > 0 ? "right" : "left";
+    else state.hero.dir = dy > 0 ? "down" : "up";
+    if (dx !== 0 && dy !== 0) { dx *= 0.7071; dy *= 0.7071; }
+    var step = HERO_SPEED * TICK_MS / 1000;
+    if (canStand(state.hero.x + dx * step, state.hero.y)) state.hero.x += dx * step;
+    if (canStand(state.hero.x, state.hero.y + dy * step)) state.hero.y += dy * step;
+  }
+
+  // monsters
+  var dt = TICK_MS / 1000;
+  for (var i = 0; i < state.mons.length; i++) {
+    var m = state.mons[i];
+    if (m.hurt > 0) m.hurt -= 1;
+    var d = dist(m.x, m.y, state.hero.x, state.hero.y);
+    var tx, ty;
+    if (d < 130 && d > 1) {
+      tx = state.hero.x; ty = state.hero.y;
+    } else {
+      var off = Math.sin(state.elapsed / 1000 * m.speed * 2 + m.ph) * m.amp;
+      tx = m.hx + (m.ax === "x" ? off : 0);
+      ty = m.hy + (m.ax === "y" ? off : 0);
+    }
+    var ddx = tx - m.x, ddy = ty - m.y;
+    var dd = Math.sqrt(ddx * ddx + ddy * ddy) || 1;
+    var mv = Math.min(dd, 90 * dt);
+    var nx = m.x + ddx / dd * mv, ny = m.y + ddy / dd * mv;
+    if (canStand(nx, m.y, 8)) m.x = nx;
+    if (canStand(m.x, ny, 8)) m.y = ny;
+
+    if (state.mercy === 0 && dist(m.x, m.y, state.hero.x, state.hero.y) < 20) {
+      state.hearts -= 1;
+      state.mercy = MERCY_TICKS;
+      state.judge = { text: "OUCH!", life: 10, good: 0 };
+      hurtSnd();
+      if (state.hearts <= 0) { endRun("fell"); return; }
+    }
+  }
+
+  // tile interactions
+  var col = Math.floor(state.hero.x / TILE);
+  var row = Math.floor((state.hero.y - WORLD_Y) / TILE);
+  var t = tileAt(col, row);
+  // portals only fire when the hero steps ONTO them — arriving on one
+  // must not instantly bounce the hero back
+  var stepped = t !== state.tilePrev;
+  state.tilePrev = t;
+  if (t === "C" && !state.chest) {
+    state.chest = 1;
+    state.key = 1;
+    state.score += CHEST_SCORE;
+    state.judge = { text: "KEY GET!", life: 14, good: 1 };
+    burst(state.hero.x, state.hero.y, 8);
+    pickupSnd();
+  } else if (t === "A" && state.scene === "overworld" && stepped) {
+    state.scene = "dungeon";
+    var sp = findTile("S", DUN_MAP);
+    state.hero.x = sp.x;
+    state.hero.y = sp.y;
+    state.tilePrev = "S";
+    spawnMons("dungeon");
+    state.judge = { text: "THE RUIN", life: 12, good: 1 };
+    doorSnd();
+  } else if (t === "S" && state.scene === "dungeon" && stepped) {
+    // the way back out — a keyless visit to the ruin can always turn around
+    state.scene = "overworld";
+    var ap = findTile("A", OVER_MAP);
+    state.hero.x = ap.x;
+    state.hero.y = ap.y;
+    state.tilePrev = "A";
+    spawnMons("overworld");
+    state.judge = { text: "THE VALE", life: 12, good: 1 };
+    doorSnd();
+  } else if (t === "D" && !state.doorOpen) {
+    if (state.key) {
+      state.doorOpen = 1;
+      state.judge = { text: "OPEN!", life: 12, good: 1 };
+      burst(state.hero.x, state.hero.y, 10);
+      doorSnd();
+    } else {
+      state.judge = { text: "LOCKED!", life: 10, good: 0 };
+    }
+  } else if (t === "P") {
+    state.score += RELIC_SCORE;
+    burst(state.hero.x, state.hero.y, 14);
+    winSnd();
+    endRun("won");
+    return;
+  }
+
+  // bursts + judge fade
+  for (var b = state.bursts.length - 1; b >= 0; b--) {
+    state.bursts[b].life -= 1;
+    if (state.bursts[b].life <= 0) state.bursts.splice(b, 1);
+  }
+  if (state.judge) {
+    state.judge.life -= 1;
+    if (state.judge.life <= 0) state.judge = null;
+  }
+}
+
+// ---------- canvas ----------
+var canvas = document.getElementById("board");
+var ctx = canvas.getContext("2d");
+
+function css(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue("--" + name).trim();
+}
+
+function drawFloor() {
+  var map = state.scene === "overworld" ? OVER_MAP : DUN_MAP;
+  var shades = state.scene === "overworld"
+    ? ["#2fbf71", "#28a862", "#35cc7c"]
+    : ["#7a4ddd", "#8a5cff", "#6a3dc4"];
+  for (var r = 0; r < MAP_H; r++) {
+    for (var c = 0; c < MAP_W; c++) {
+      var t = map[r].charAt(c);
+      if (t === "#") continue;
+      var x = c * TILE, y = WORLD_Y + r * TILE;
+      ctx.fillStyle = shades[(c * 7 + r * 13) % 3];
+      ctx.fillRect(x + 1, y + 1, TILE - 2, TILE - 2);
+      ctx.strokeStyle = css("lead");
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x + 1, y + 1, TILE - 2, TILE - 2);
+    }
+  }
+}
+
+function drawLightShafts() {
+  ctx.save();
+  ctx.globalAlpha = 0.08;
+  ctx.fillStyle = css("gold");
+  ctx.beginPath();
+  ctx.moveTo(30, 0); ctx.lineTo(120, 0); ctx.lineTo(210, 720); ctx.lineTo(110, 720);
+  ctx.closePath(); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(210, 0); ctx.lineTo(270, 0); ctx.lineTo(380, 720); ctx.lineTo(310, 720);
+  ctx.closePath(); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(380, 0); ctx.lineTo(430, 0); ctx.lineTo(520, 720); ctx.lineTo(460, 720);
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+function drawWallTile(x, y, c, r) {
+  if (state.scene === "overworld") {
+    // glass tree canopy
+    ctx.fillStyle = "#1c7a4a";
+    ctx.strokeStyle = css("lead");
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(x + 15, y + 14, 14, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#2fbf71";
+    ctx.beginPath();
+    ctx.arc(x + 10, y + 10, 7, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#8a5a2a";
+    ctx.fillRect(x + 12, y + 22, 6, 8);
+    ctx.strokeRect(x + 12, y + 22, 6, 8);
+  } else {
+    ctx.fillStyle = "#2c1a52";
+    ctx.fillRect(x + 1, y + 1, TILE - 2, TILE - 2);
+    ctx.strokeStyle = css("lead");
+    ctx.lineWidth = 3;
+    ctx.strokeRect(x + 1, y + 1, TILE - 2, TILE - 2);
+    if ((c + r) % 4 === 0) {
+      ctx.fillStyle = css("ruby");
+      ctx.beginPath();
+      ctx.arc(x + 15, y + 15, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+  }
+}
+
+function drawTiles() {
+  var map = state.scene === "overworld" ? OVER_MAP : DUN_MAP;
+  for (var r = 0; r < MAP_H; r++) {
+    for (var c = 0; c < MAP_W; c++) {
+      var t = map[r].charAt(c);
+      var x = c * TILE, y = WORLD_Y + r * TILE;
+      if (t === "#") { drawWallTile(x, y, c, r); continue; }
+      if (t === "C") {
+        // glass chest
+        ctx.fillStyle = state.chest ? "#8a6a2a" : css("gold");
+        ctx.fillRect(x + 4, y + 10, 22, 14);
+        ctx.strokeStyle = css("lead");
+        ctx.lineWidth = 2.5;
+        ctx.strokeRect(x + 4, y + 10, 22, 14);
+        if (!state.chest) {
+          ctx.fillRect(x + 4, y + 5, 22, 8);
+          ctx.strokeRect(x + 4, y + 5, 22, 8);
+          var cg = ctx.createRadialGradient(x + 15, y + 15, 2, x + 15, y + 15, 26);
+          cg.addColorStop(0, "rgba(255,210,74,0.5)");
+          cg.addColorStop(1, "rgba(255,210,74,0)");
+          ctx.fillStyle = cg;
+          ctx.fillRect(x - 8, y - 8, 46, 46);
+        }
+      } else if (t === "A") {
+        // ruin arch
+        ctx.fillStyle = "#1a0e30";
+        ctx.fillRect(x + 2, y + 2, TILE - 4, TILE - 4);
+        ctx.strokeStyle = css("gold");
+        ctx.lineWidth = 3;
+        ctx.strokeRect(x + 2, y + 2, TILE - 4, TILE - 4);
+        ctx.beginPath();
+        ctx.arc(x + 15, y + 8, 10, Math.PI, 0);
+        ctx.stroke();
+      } else if (t === "D") {
+        if (state.doorOpen) {
+          var pg = ctx.createRadialGradient(x + 15, y + 15, 2, x + 15, y + 15, 30);
+          pg.addColorStop(0, "rgba(255,210,74,0.85)");
+          pg.addColorStop(1, "rgba(255,210,74,0)");
+          ctx.fillStyle = pg;
+          ctx.fillRect(x - 6, y - 6, 42, 42);
+          ctx.fillStyle = css("gold");
+          ctx.fillRect(x + 8, y + 2, 14, 26);
+        } else {
+          ctx.fillStyle = css("gold");
+          ctx.fillRect(x + 1, y + 1, TILE - 2, TILE - 2);
+          ctx.strokeStyle = css("lead");
+          ctx.lineWidth = 3;
+          ctx.strokeRect(x + 1, y + 1, TILE - 2, TILE - 2);
+          ctx.fillStyle = css("ruby");
+          ctx.beginPath();
+          ctx.arc(x + 15, y + 15, 6, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        }
+      } else if (t === "P") {
+        // pedestal + pulsing Sunstone
+        ctx.fillStyle = "#4a3468";
+        ctx.fillRect(x + 6, y + 18, 18, 10);
+        ctx.strokeStyle = css("lead");
+        ctx.lineWidth = 2.5;
+        ctx.strokeRect(x + 6, y + 18, 18, 10);
+        var pulse = 0.75 + 0.25 * Math.sin(state.elapsed / 300);
+        var sg = ctx.createRadialGradient(x + 15, y + 12, 2, x + 15, y + 12, 24);
+        sg.addColorStop(0, "rgba(255,230,120,0.95)");
+        sg.addColorStop(0.5, "rgba(255,180,60," + (0.55 * pulse) + ")");
+        sg.addColorStop(1, "rgba(255,180,60,0)");
+        ctx.fillStyle = sg;
+        ctx.fillRect(x - 8, y - 12, 46, 46);
+        ctx.fillStyle = css("gold");
+        ctx.beginPath();
+        ctx.arc(x + 15, y + 12, 8 * pulse, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#fff6c8";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    }
+  }
+}
+
+function drawHero() {
+  var x = state.hero.x, y = state.hero.y;
+  if (state.mercy > 0 && Math.floor(state.mercy / 2) % 2 === 0) ctx.globalAlpha = 0.45;
+  // glow
+  var hg = ctx.createRadialGradient(x, y, 2, x, y, 26);
+  hg.addColorStop(0, "rgba(255,210,74,0.35)");
+  hg.addColorStop(1, "rgba(255,210,74,0)");
+  ctx.fillStyle = hg;
+  ctx.fillRect(x - 26, y - 26, 52, 52);
+  // tunic
+  ctx.fillStyle = css("sapphire");
+  ctx.fillRect(x - 8, y - 4, 16, 15);
+  ctx.strokeStyle = css("lead");
+  ctx.lineWidth = 2.5;
+  ctx.strokeRect(x - 8, y - 4, 16, 15);
+  // helm
+  ctx.fillStyle = css("gold");
+  ctx.beginPath();
+  ctx.arc(x, y - 8, 8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  // face
+  ctx.fillStyle = "#f0c8a0";
+  ctx.fillRect(x - 3, y - 9, 6, 5);
+  ctx.globalAlpha = 1;
+}
+
+function drawMons() {
+  for (var i = 0; i < state.mons.length; i++) {
+    var m = state.mons[i];
+    var x = m.x, y = m.y;
+    if (m.hurt > 0 && m.hurt % 2 === 0) ctx.globalAlpha = 0.5;
+    var gg = ctx.createRadialGradient(x, y, 2, x, y, 22);
+    gg.addColorStop(0, "rgba(155,92,255,0.3)");
+    gg.addColorStop(1, "rgba(155,92,255,0)");
+    ctx.fillStyle = gg;
+    ctx.fillRect(x - 22, y - 22, 44, 44);
+    ctx.strokeStyle = css("lead");
+    ctx.lineWidth = 2.5;
+    if (m.kind === "slime") {
+      ctx.fillStyle = css("emerald");
+      ctx.beginPath();
+      ctx.arc(x, y + 2, 11, Math.PI, 0);
+      ctx.lineTo(x + 11, y + 8);
+      ctx.lineTo(x - 11, y + 8);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = css("lead");
+      ctx.fillRect(x - 5, y - 1, 3, 3);
+      ctx.fillRect(x + 2, y - 1, 3, 3);
+    } else {
+      ctx.fillStyle = css("amethyst");
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - 16, y - 8);
+      ctx.lineTo(x - 12, y + 6);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + 16, y - 8);
+      ctx.lineTo(x + 12, y + 6);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = css("amethyst");
+      ctx.beginPath();
+      ctx.arc(x, y, 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = css("gold");
+      ctx.fillRect(x - 4, y - 2, 2, 2);
+      ctx.fillRect(x + 2, y - 2, 2, 2);
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+
+function drawSwordArc() {
+  if (state.swordArc <= 0) return;
+  var a = state.swordArc / SWORD_ARC_MS;
+  var f = facingVec(state.hero.dir);
+  var base = Math.atan2(f.y, f.x);
+  ctx.save();
+  ctx.translate(state.hero.x, state.hero.y);
+  ctx.rotate(base);
+  ctx.globalAlpha = 0.3 + 0.5 * a;
+  ctx.fillStyle = css("gold");
+  ctx.beginPath();
+  ctx.moveTo(12, 0);
+  ctx.arc(0, 0, SWORD_REACH, -0.65, 0.65);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = "#fff6c8";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(0, 0, SWORD_REACH - 4, -0.55, 0.55);
+  ctx.stroke();
+  ctx.restore();
+  ctx.globalAlpha = 1;
+}
+
+function drawBursts() {
+  for (var i = 0; i < state.bursts.length; i++) {
+    var b = state.bursts[i];
+    var a = b.life / b.max;
+    ctx.save();
+    ctx.translate(b.x, b.y);
+    ctx.rotate(b.life * 0.35);
+    ctx.globalAlpha = a;
+    ctx.fillStyle = css("gold");
+    var s = 4 + (1 - a) * 10;
+    ctx.fillRect(-s / 2, -s / 2, s, s);
+    ctx.restore();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawJudge() {
+  if (!state.judge) return;
+  ctx.textAlign = "center";
+  ctx.font = "bold 15px Courier New";
+  ctx.fillStyle = state.judge.good ? css("gold") : css("danger");
+  ctx.fillText(state.judge.text, state.hero.x, state.hero.y - 28);
+  ctx.textAlign = "left";
+}
+
+function drawHeart(x, y, full) {
+  ctx.beginPath();
+  ctx.moveTo(x, y + 7);
+  ctx.bezierCurveTo(x - 11, y - 2, x - 7, y - 11, x, y - 4);
+  ctx.bezierCurveTo(x + 7, y - 11, x + 11, y - 2, x, y + 7);
+  ctx.closePath();
+  ctx.fillStyle = full ? css("ruby") : "#4a3468";
+  ctx.fill();
+  ctx.strokeStyle = css("lead");
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+}
+
+function drawHUD() {
+  ctx.fillStyle = css("panel");
+  ctx.fillRect(0, 0, 540, WORLD_Y);
+  ctx.strokeStyle = css("gold");
+  ctx.lineWidth = 2;
+  ctx.strokeRect(1, 1, 538, WORLD_Y - 2);
+  for (var i = 0; i < HEARTS_START; i++) {
+    drawHeart(26 + i * 28, 30, i < state.hearts);
+  }
+  ctx.fillStyle = css("ink");
+  ctx.font = "bold 13px Courier New";
+  ctx.fillText("SCORE " + state.score, 150, 22);
+  ctx.fillText("TIME " + fmtTime(state.elapsed), 150, 42);
+  ctx.textAlign = "right";
+  ctx.fillStyle = css("gold");
+  ctx.font = "bold 11px Courier New";
+  ctx.fillText(questText(), 528, 22);
+  ctx.fillStyle = state.key ? css("emerald") : css("dim");
+  ctx.fillText(state.key ? "KEY HELD" : "NO KEY", 528, 42);
+  ctx.textAlign = "left";
+}
+
+function drawVignette() {
+  var v = ctx.createRadialGradient(270, 380, 190, 270, 380, 470);
+  v.addColorStop(0, "rgba(0,0,0,0)");
+  v.addColorStop(1, "rgba(20,8,40,0.5)");
+  ctx.fillStyle = v;
+  ctx.fillRect(0, 0, 540, 720);
+}
+
+function draw() {
+  var sky = ctx.createLinearGradient(0, 0, 0, 720);
+  sky.addColorStop(0, "#2a1650");
+  sky.addColorStop(0.55, "#3a1e62");
+  sky.addColorStop(1, "#241040");
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, 540, 720);
+  drawFloor();
+  drawLightShafts();
+  drawTiles();
+  drawMons();
+  drawHero();
+  drawSwordArc();
+  drawBursts();
+  drawJudge();
+  drawHUD();
+  drawVignette();
+}
+
+// ---------- DOM ----------
+function render() {
+  document.getElementById("screen-ready").classList.toggle("show", state.phase === "ready");
+  document.getElementById("screen-over").classList.toggle("show", state.phase === "over");
+  var recLine = (rec.bestScore > 0 || rec.bestTime > 0)
+    ? "BEST " + rec.bestScore + " · FASTEST " + (rec.bestTime > 0 ? fmtTime(rec.bestTime) : "--")
+    : "NO RECORDS YET";
+  document.getElementById("ready-records").textContent = recLine;
+  document.getElementById("strip-records").textContent = recLine;
+  if (state.phase === "over") {
+    document.getElementById("over-result").textContent =
+      state.endReason === "won" ? "The Sunstone is yours!" : "The light faded";
+    document.getElementById("over-score").textContent =
+      "Score " + state.score + " · time " + fmtTime(state.elapsed);
+    document.getElementById("over-stats").textContent = recLine;
+    document.getElementById("over-best").classList.toggle("show", !!state.newBest);
+  }
+}
+
+// ---------- input ----------
+document.addEventListener("keydown", function (e) {
+  unlockAudio();
+  if (e.repeat) { if (e.preventDefault) e.preventDefault(); return; }
+  var k = (e.key && e.key.length === 1) ? e.key.toLowerCase() : e.key;
+  if (k === "ArrowUp" || k === "w") {
+    state.keys.up = true;
+    if (e.preventDefault) e.preventDefault();
+  } else if (k === "ArrowDown" || k === "s") {
+    state.keys.down = true;
+    if (e.preventDefault) e.preventDefault();
+  } else if (k === "ArrowLeft" || k === "a") {
+    state.keys.left = true;
+    if (e.preventDefault) e.preventDefault();
+  } else if (k === "ArrowRight" || k === "d") {
+    state.keys.right = true;
+    if (e.preventDefault) e.preventDefault();
+  } else if (k === " " || k === "x") {
+    if (e.preventDefault) e.preventDefault();
+    swing();
+  } else if (k === "Enter") {
+    if (e.preventDefault) e.preventDefault();
+    if (state.phase !== "playing") startRun();
+  }
+});
+document.addEventListener("keyup", function (e) {
+  var k = (e.key && e.key.length === 1) ? e.key.toLowerCase() : e.key;
+  if (k === "ArrowUp" || k === "w") state.keys.up = false;
+  else if (k === "ArrowDown" || k === "s") state.keys.down = false;
+  else if (k === "ArrowLeft" || k === "a") state.keys.left = false;
+  else if (k === "ArrowRight" || k === "d") state.keys.right = false;
+});
+
+function bindPad(id, dir) {
+  var el = document.getElementById(id);
+  var down = function (e) {
+    unlockAudio();
+    state.keys[dir] = true;
+    if (e && e.preventDefault) e.preventDefault();
+  };
+  var up = function () { state.keys[dir] = false; };
+  el.addEventListener("mousedown", down);
+  el.addEventListener("mouseup", up);
+  el.addEventListener("mouseleave", up);
+  el.addEventListener("touchstart", down);
+  el.addEventListener("touchend", up);
+}
+bindPad("btn-left", "left");
+bindPad("btn-up", "up");
+bindPad("btn-down", "down");
+bindPad("btn-right", "right");
+
+document.getElementById("btn-sword").addEventListener("click", function () { swing(); });
+canvas.addEventListener("click", function () { swing(); });
+document.getElementById("btn-start").addEventListener("click", function () { startRun(); });
+document.getElementById("btn-again").addEventListener("click", function () { startRun(); });
+document.getElementById("btn-clear").addEventListener("click", function () { clearRecords(); });
+
+// ---------- clock ----------
+loadRec();
+render();
+draw();
+setInterval(function () {
+  stepGame();
+  draw();
+}, TICK_MS);
+</script>
+</body>
+</html>

@@ -50,6 +50,7 @@ open football.html     # Example #16, Gridiron Rush (the retro football arcade)
 open backyard.html     # Example #17, Backyard Bastion (the golden-hour siege game)
 open beats.html        # Example #18, Beat Booth (the CRT-synth rhythm game)
 open candy.html        # Example #19, Candy Beat (the candy-80s rhythm auto-runner)
+open sunstone.html     # Example #20, Sunstone Vale (the stained-glass adventure)
 xdg-open index.html    # Linux same files
 
 # option B — serve everything
@@ -72,7 +73,8 @@ python3 -m http.server 8123
 #         http://localhost:8123/football.html (retro football arcade), and
 #         http://localhost:8123/backyard.html (golden-hour siege game), and
 #         http://localhost:8123/beats.html (CRT-synth rhythm game), and
-#         http://localhost:8123/candy.html (candy-80s rhythm auto-runner)
+#         http://localhost:8123/candy.html (candy-80s rhythm auto-runner), and
+#         http://localhost:8123/sunstone.html (stained-glass adventure)
 ```
 
 Everything is local-only, invented data, no accounts, no installs.
@@ -100,6 +102,7 @@ Everything is local-only, invented data, no accounts, no installs.
 | `backyard.html` | **Example #17 — Backyard Bastion**: the golden-hour siege game — build spike traps, pebble turrets, and stick walls around your fort, zap waves of bugs as a tiny hero, and rescue friendly bugs to fight beside you before the fort falls |
 | `beats.html` | **Example #18 — Beat Booth**: the CRT-synth rhythm game — you're the DJ at the neon club, notes rush four glowing lanes to the hit line, strike D F J K on the beat to feed the streak, and keep the crowd roaring until the set drops |
 | `candy.html` | **Example #19 — Candy Beat**: the candy-80s rhythm auto-runner — tap to jump your hero through a pixel arcade-cabinet world, grab the pop-up beat-orbs, and land every tap on the beat before the dance-floor crowd walks out |
+| `sunstone.html` | **Example #20 — Sunstone Vale**: the stained-glass adventure — walk the golden-hour kingdom, sword the monsters, crack the chest for the key, unlock the ruin's golden door, and claim the Sunstone before the light fades |
 | `docs/reverse-prompt-guide.md` | **The playbook** — how students reverse-prompt with OpenSpec, with examples and drills |
 | `docs/runbook.md` | The 10-minute demo session script for the teacher/host (with troubleshooting) |
 | `docs/event-card.md` | A printable one-page journey card for the booth |
@@ -145,6 +148,7 @@ archived into its spec:
 - `openspec/specs/backyard-bastion/spec.md` — the golden-hour siege game (Example #17)
 - `openspec/specs/beat-booth/spec.md` — the CRT-synth rhythm game (Example #18)
 - `openspec/specs/candy-beat/spec.md` — the candy-80s rhythm auto-runner (Example #19)
+- `openspec/specs/sunstone-vale/spec.md` — the stained-glass adventure (Example #20)
 
 `openspec/changes/archive/` holds the complete history of every change.
 
