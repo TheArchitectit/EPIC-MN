@@ -1,0 +1,1201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Backyard Bastion — EPIC-MN</title>
+<style>
+  :root {
+    --sun:#ffcf6e;
+    --grass:#4e8a3a;
+    --grass2:#5c9c46;
+    --dirt:#a8845a;
+    --ink:#2b1e12;
+    --cream:#fff3d6;
+    --gold:#ffb13d;
+    --fort:#c98f4e;
+    --bug:#6b3f2a;
+    --buddy:#5ec8e0;
+    --petal:#e86a8a;
+    --board:#2e2417;
+    --bg:#1b140c;
+    --panel:#3c2e1c;
+    --line:#5c4a2e;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    background:var(--bg);
+    color:var(--cream);
+    font-family:"Courier New", Courier, monospace;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:16px 12px 28px;
+  }
+  header { text-align:center; margin-bottom:12px; }
+  header h1 {
+    font-size:clamp(22px, 5vw, 34px);
+    letter-spacing:2px;
+    color:var(--gold);
+    text-transform:uppercase;
+    text-shadow:3px 3px 0 var(--ink);
+  }
+  header p {
+    margin-top:4px;
+    font-size:clamp(11px, 2.6vw, 14px);
+    color:var(--cream);
+    opacity:.85;
+    text-transform:uppercase;
+    letter-spacing:1px;
+  }
+  .boardwrap {
+    position:relative;
+    width:min(540px, 96vw);
+    border:4px solid var(--line);
+    border-radius:10px;
+    overflow:hidden;
+    background:var(--board);
+    box-shadow:0 10px 0 rgba(0,0,0,.35);
+  }
+  canvas {
+    display:block;
+    width:100%;
+    height:auto;
+  }
+  .toast {
+    position:absolute;
+    top:100px;
+    left:50%;
+    transform:translateX(-50%) translateY(-8px);
+    background:var(--gold);
+    color:var(--ink);
+    font-weight:bold;
+    font-size:14px;
+    letter-spacing:1px;
+    padding:8px 14px;
+    border-radius:8px;
+    border:3px solid var(--ink);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .18s, transform .18s;
+    z-index:6;
+    text-transform:uppercase;
+    white-space:nowrap;
+  }
+  .toast.show {
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+  }
+  .screen {
+    position:absolute;
+    inset:0;
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+    text-align:center;
+    padding:20px;
+    background:rgba(27, 20, 12, .84);
+    z-index:4;
+  }
+  .screen.show { display:flex; }
+  .screen h2 {
+    font-size:clamp(22px, 6vw, 34px);
+    letter-spacing:2px;
+    color:var(--gold);
+    text-transform:uppercase;
+    text-shadow:3px 3px 0 var(--ink);
+  }
+  .screen h3 {
+    font-size:clamp(18px, 5vw, 26px);
+    color:var(--cream);
+    text-transform:uppercase;
+  }
+  .screen .big {
+    font-size:clamp(26px, 7vw, 40px);
+    color:var(--cream);
+    letter-spacing:2px;
+  }
+  .screen .sub {
+    font-size:clamp(12px, 3vw, 15px);
+    color:var(--cream);
+    opacity:.9;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    line-height:1.6;
+  }
+  .newbest {
+    display:none;
+    background:var(--gold);
+    color:var(--ink);
+    font-weight:bold;
+    font-size:clamp(15px, 4vw, 20px);
+    letter-spacing:2px;
+    padding:8px 18px;
+    border-radius:8px;
+    border:3px solid var(--ink);
+    text-transform:uppercase;
+  }
+  .newbest.show { display:inline-block; }
+  .screenbtns {
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    justify-content:center;
+    margin-top:6px;
+  }
+  button {
+    font-family:inherit;
+    font-weight:bold;
+    font-size:clamp(12px, 3vw, 15px);
+    letter-spacing:1px;
+    text-transform:uppercase;
+    color:var(--ink);
+    background:var(--cream);
+    border:3px solid var(--ink);
+    border-radius:8px;
+    padding:12px 16px;
+    cursor:pointer;
+    box-shadow:0 4px 0 rgba(0,0,0,.4);
+    touch-action:manipulation;
+    user-select:none;
+    -webkit-user-select:none;
+  }
+  button:active { transform:translateY(2px); box-shadow:0 2px 0 rgba(0,0,0,.4); }
+  button.alt { background:var(--gold); }
+  button.bud { background:var(--buddy); }
+  button.plain { background:var(--panel); color:var(--cream); }
+  .strip {
+    width:min(540px, 96vw);
+    margin-top:12px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    align-items:center;
+  }
+  .pad {
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    flex-wrap:wrap;
+  }
+  .dpad {
+    display:grid;
+    grid-template-columns:repeat(3, 56px);
+    grid-template-rows:repeat(2, 48px);
+    gap:8px;
+  }
+  .dpad button { width:56px; height:48px; padding:0; font-size:18px; }
+  .dpad .sp { visibility:hidden; }
+  .rec {
+    font-size:12px;
+    letter-spacing:1px;
+    color:var(--cream);
+    opacity:.85;
+    text-transform:uppercase;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Backyard Bastion</h1>
+  <p>Shrunk to bug size · hold the fort at golden hour</p>
+</header>
+
+<div class="boardwrap">
+  <div class="toast" id="toast"></div>
+  <canvas id="board" width="540" height="720"></canvas>
+
+  <div class="screen" id="screen-ready">
+    <h2>Backyard Bastion</h2>
+    <h3>Hold the fort!</h3>
+    <p class="sub" id="ready-records">No records yet</p>
+    <p class="sub">Arrows steer the hero · Space zaps bugs<br>1/2/3 place trap / turret / wall · build between waves</p>
+    <div class="screenbtns">
+      <button class="alt" id="btn-start">Hunker down!</button>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-over">
+    <h2>The fort fell!</h2>
+    <h3 id="over-result">Wave 6 reached</h3>
+    <p class="big" id="over-score">48 bugs bonked</p>
+    <p class="sub" id="over-stats">Best wave 6 · Bonks 48</p>
+    <div class="newbest" id="over-best">New best!</div>
+    <div class="screenbtns">
+      <button class="alt" id="btn-again">Defend again</button>
+    </div>
+  </div>
+</div>
+
+<div class="strip">
+  <div class="dpad">
+    <button class="sp" aria-hidden="true"></button>
+    <button id="btn-up" aria-label="up">&#9650;</button>
+    <button class="sp" aria-hidden="true"></button>
+    <button id="btn-left" aria-label="left">&#9664;</button>
+    <button id="btn-down" aria-label="down">&#9660;</button>
+    <button id="btn-right" aria-label="right">&#9654;</button>
+  </div>
+  <div class="pad">
+    <button class="alt" id="btn-zap">Zap</button>
+    <button id="btn-trap">Trap 8</button>
+    <button id="btn-turret">Turret 14</button>
+    <button id="btn-wall">Wall 6</button>
+  </div>
+  <div class="pad">
+    <button class="bud" id="btn-wave">Start wave</button>
+    <button class="plain" id="btn-clear">Clear records</button>
+  </div>
+  <div class="rec" id="strip-records">No records yet</div>
+</div>
+
+<script>
+"use strict";
+// ===== Backyard Bastion — golden-hour siege at bug scale =====
+var GKEY = "backyard-bastion:v1";
+var TICK_MS = 100;
+var FORT_X = 270;
+var FORT_Y = 380;
+var FORT_R = 46;
+var FORT_HP = 30;
+var START_CRUMBS = 28;
+var HERO_SPEED = 7;
+var ZAP_R = 70;
+var ZAP_DMG = 2;
+var ZAP_CD = 6;
+var SPAWN_TICKS = 8;
+var TRAP_COST = 8;
+var TURRET_COST = 14;
+var WALL_COST = 6;
+var TRAP_R = 26;
+var TRAP_CD = 2;
+var TURRET_R = 170;
+var TURRET_CD = 3;
+var WALL_HP = 14;
+var BUDDY_MAX = 2;
+var BUDDY_HP = 10;
+var BUDDY_FOLLOW = 44;
+var BUDDY_BITE_R = 36;
+var BUDDY_CD = 2;
+
+var board = document.getElementById("board");
+var ctx = board.getContext("2d");
+
+var rec = { bestWave: 0, mostBonks: 0 };
+
+var state = {
+  phase: "ready",
+  hero: { x: 270, y: 520 },
+  bugs: [],
+  builds: [],
+  buddies: [],
+  strays: [],
+  wave: 1,
+  crumbs: START_CRUMBS,
+  fortHp: FORT_HP,
+  spawnLeft: 0,
+  spawnCd: 0,
+  bonks: 0,
+  zapCd: 0,
+  floats: [],
+  flash: [],
+  holds: { l: false, r: false, u: false, d: false },
+  tickN: 0,
+  newBest: false,
+  reachedWave: 0
+};
+
+var DECOR = [
+  { k: "peb", x: 90, y: 160, r: 16 },
+  { k: "peb", x: 460, y: 200, r: 12 },
+  { k: "peb", x: 120, y: 560, r: 14 },
+  { k: "peb", x: 430, y: 600, r: 18 },
+  { k: "peb", x: 500, y: 420, r: 10 },
+  { k: "flo", x: 150, y: 260, r: 12 },
+  { k: "flo", x: 400, y: 150, r: 10 },
+  { k: "flo", x: 90, y: 430, r: 11 },
+  { k: "flo", x: 470, y: 520, r: 12 },
+  { k: "flo", x: 220, y: 640, r: 10 },
+  { k: "dan", x: 330, y: 130, r: 13 },
+  { k: "dan", x: 60, y: 320, r: 11 },
+  { k: "twg", x: 380, y: 640, r: 22 }
+];
+
+// ----- house records machinery (save failures never break the game) -----
+function seedRec() {
+  try {
+    if (localStorage.getItem(GKEY) === null) {
+      localStorage.setItem(GKEY, JSON.stringify(rec));
+    }
+  } catch (e) { /* storage down — keep playing */ }
+}
+function loadRec() {
+  try {
+    var raw = localStorage.getItem(GKEY);
+    if (raw) {
+      var p = JSON.parse(raw);
+      rec = {
+        bestWave: (p && typeof p.bestWave === "number") ? p.bestWave : 0,
+        mostBonks: (p && typeof p.mostBonks === "number") ? p.mostBonks : 0
+      };
+    }
+  } catch (e) { /* storage down — keep playing */ }
+}
+function saveRec() {
+  try {
+    localStorage.setItem(GKEY, JSON.stringify(rec));
+  } catch (e) { /* storage down — keep playing */ }
+}
+function clearRecords() {
+  rec = { bestWave: 0, mostBonks: 0 };
+  saveRec();
+  render();
+  toast("Records cleared");
+}
+
+var toastTimer = null;
+function toast(msg) {
+  var el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () {
+    el.classList.remove("show");
+  }, 1800);
+}
+
+// ----- helpers -----
+function clamp(v, lo, hi) {
+  return v < lo ? lo : (v > hi ? hi : v);
+}
+function dist(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+function css(name) {
+  return getComputedStyle(document.documentElement)
+    .getPropertyValue("--" + name).trim() || "#888";
+}
+function addFloat(text, x, y) {
+  state.floats.push({ text: text, x: x, y: y, life: 20 });
+}
+
+// ----- bugs -----
+function bugSpec(kind) {
+  if (kind === "beetle") return { speed: 1.5, hp: 8, bite: 2, bounty: 4, biteTicks: 5 };
+  if (kind === "fly") return { speed: 3.4, hp: 2, bite: 1, bounty: 2, biteTicks: 5 };
+  return { speed: 2.2, hp: 3, bite: 1, bounty: 2, biteTicks: 5 }; // ant
+}
+function spawnBug(kind, x, y) {
+  var s = bugSpec(kind);
+  state.bugs.push({
+    kind: kind,
+    x: (x === undefined) ? 270 : x,
+    y: (y === undefined) ? 80 : y,
+    hp: s.hp,
+    maxHp: s.hp,
+    speed: s.speed,
+    bite: s.bite,
+    bounty: s.bounty,
+    biteTicks: s.biteTicks,
+    atkCd: 0
+  });
+}
+function spawnFromEdge(kind) {
+  var m = Math.random();
+  var x, y;
+  if (m < 0.25) { x = 55; y = 100 + Math.random() * 520; }
+  else if (m < 0.5) { x = 485; y = 100 + Math.random() * 520; }
+  else if (m < 0.75) { x = 60 + Math.random() * 420; y = 95; }
+  else { x = 60 + Math.random() * 420; y = 645; }
+  spawnBug(kind, x, y);
+}
+
+// ----- flow -----
+function startGame() {
+  state.phase = "build";
+  state.hero = { x: 270, y: 520 };
+  state.bugs = [];
+  state.builds = [];
+  state.buddies = [];
+  state.strays = [];
+  state.wave = 1;
+  state.crumbs = START_CRUMBS;
+  state.fortHp = FORT_HP;
+  state.spawnLeft = 0;
+  state.spawnCd = 0;
+  state.bonks = 0;
+  state.zapCd = 0;
+  state.floats = [];
+  state.flash = [];
+  state.newBest = false;
+  state.reachedWave = 0;
+  spawnStray();
+  toast("Build your defenses!");
+}
+
+function spawnStray() {
+  if (state.buddies.length >= BUDDY_MAX) return;
+  var m = Math.random();
+  state.strays.push({
+    x: (m < 0.5) ? 80 : 460,
+    y: 120 + Math.random() * 480
+  });
+}
+
+function startWave() {
+  if (state.phase !== "build") return;
+  state.phase = "wave";
+  state.spawnLeft = 4 + state.wave * 2;
+  state.spawnCd = 0;
+  toast("Wave " + state.wave + " — here they come!");
+}
+
+function waveCleared() {
+  var bonus = 12 + state.wave * 3;
+  state.crumbs += bonus;
+  addFloat("+" + bonus + " CRUMBS", FORT_X, FORT_Y - 70);
+  state.wave++;
+  for (var i = 0; i < state.buddies.length; i++) {
+    state.buddies[i].level++;
+    state.buddies[i].hp = Math.min(state.buddies[i].hp + 3, BUDDY_HP + state.buddies[i].level * 2);
+  }
+  state.phase = "build";
+  if (state.buddies.length < BUDDY_MAX) spawnStray();
+  toast("Wave cleared! Build up.");
+}
+
+function endSiege() {
+  state.reachedWave = state.wave;
+  var improved = false;
+  if (state.wave > rec.bestWave) { rec.bestWave = state.wave; improved = true; }
+  if (state.bonks > rec.mostBonks) { rec.mostBonks = state.bonks; improved = true; }
+  state.newBest = improved;
+  if (improved) saveRec();
+  state.floats = [];
+  state.flash = [];
+  state.phase = "over";
+}
+
+// ----- actions -----
+function setMove(dir, on) {
+  if (dir === "l") state.holds.l = on;
+  if (dir === "r") state.holds.r = on;
+  if (dir === "u") state.holds.u = on;
+  if (dir === "d") state.holds.d = on;
+}
+
+function zap() {
+  if (state.phase !== "wave" && state.phase !== "build") return;
+  if (state.zapCd > 0) return;
+  var best = null;
+  var bestD = ZAP_R;
+  for (var i = 0; i < state.bugs.length; i++) {
+    var d = dist(state.hero, state.bugs[i]);
+    if (d < bestD) { bestD = d; best = state.bugs[i]; }
+  }
+  if (!best) {
+    toast("No bug in reach!");
+    return;
+  }
+  state.zapCd = ZAP_CD;
+  best.hp -= ZAP_DMG;
+  state.flash.push({ x1: state.hero.x, y1: state.hero.y, x2: best.x, y2: best.y, life: 2 });
+  addFloat("ZAP!", best.x, best.y - 18);
+  if (best.hp <= 0) killBug(best);
+}
+
+function killBug(b) {
+  var idx = state.bugs.indexOf(b);
+  if (idx >= 0) state.bugs.splice(idx, 1);
+  state.bonks++;
+  state.crumbs += b.bounty;
+  addFloat("BONK! +" + b.bounty, b.x, b.y - 12);
+}
+
+function buildCost(kind) {
+  if (kind === "trap") return TRAP_COST;
+  if (kind === "turret") return TURRET_COST;
+  return WALL_COST;
+}
+
+function canPlace(x, y) {
+  if (x < 50 || x > 490 || y < 90 || y > 650) return false;
+  if (Math.hypot(x - FORT_X, y - FORT_Y) < FORT_R + 24) return false;
+  for (var i = 0; i < state.builds.length; i++) {
+    if (Math.hypot(x - state.builds[i].x, y - state.builds[i].y) < 42) return false;
+  }
+  return true;
+}
+
+function placeBuild(kind) {
+  if (state.phase !== "build") {
+    toast("Build between waves!");
+    return;
+  }
+  var cost = buildCost(kind);
+  if (state.crumbs < cost) {
+    toast("Not enough crumbs!");
+    return;
+  }
+  var x = state.hero.x;
+  var y = state.hero.y;
+  if (!canPlace(x, y)) {
+    toast("Can't build there!");
+    return;
+  }
+  state.crumbs -= cost;
+  state.builds.push({
+    kind: kind,
+    x: x,
+    y: y,
+    hp: (kind === "wall") ? WALL_HP : 999,
+    cd: 0
+  });
+  toast(kind === "trap" ? "Spike trap set!" : (kind === "turret" ? "Turret up!" : "Wall built!"));
+}
+
+// ----- per-tick simulation -----
+function stepPhase() {
+  state.tickN++;
+
+  // hero steering
+  var vx = 0;
+  var vy = 0;
+  if (state.holds.l) vx -= 1;
+  if (state.holds.r) vx += 1;
+  if (state.holds.u) vy -= 1;
+  if (state.holds.d) vy += 1;
+  if (vx !== 0 || vy !== 0) {
+    var len = Math.hypot(vx, vy);
+    state.hero.x += (vx / len) * HERO_SPEED;
+    state.hero.y += (vy / len) * HERO_SPEED;
+    state.hero.x = clamp(state.hero.x, 40, 500);
+    state.hero.y = clamp(state.hero.y, 85, 655);
+  }
+
+  // rescue strays
+  for (var s = state.strays.length - 1; s >= 0; s--) {
+    if (dist(state.hero, state.strays[s]) < 24 && state.buddies.length < BUDDY_MAX) {
+      state.buddies.push({
+        x: state.strays[s].x,
+        y: state.strays[s].y,
+        hp: BUDDY_HP,
+        level: 0,
+        cd: 0,
+        ox: (state.buddies.length === 0) ? -34 : 34,
+        oy: 24
+      });
+      state.strays.splice(s, 1);
+      toast("Buddy joined the cause!");
+    }
+  }
+
+  // buddies: follow the hero and bite nearby bugs
+  for (var b = 0; b < state.buddies.length; b++) {
+    var bud = state.buddies[b];
+    var tx = state.hero.x + bud.ox;
+    var ty = state.hero.y + bud.oy;
+    var fdx = tx - bud.x;
+    var fdy = ty - bud.y;
+    var flen = Math.hypot(fdx, fdy) || 1;
+    if (flen > 6) {
+      bud.x += (fdx / flen) * Math.min(5, flen);
+      bud.y += (fdy / flen) * Math.min(5, flen);
+    }
+    if (bud.cd > 0) bud.cd--;
+    if (bud.cd === 0) {
+      var target = null;
+      var td = BUDDY_BITE_R;
+      for (var k = 0; k < state.bugs.length; k++) {
+        var dd = dist(bud, state.bugs[k]);
+        if (dd < td) { td = dd; target = state.bugs[k]; }
+      }
+      if (target) {
+        bud.cd = BUDDY_CD;
+        target.hp -= (1 + bud.level);
+        if (target.hp <= 0) killBug(target);
+      }
+    }
+  }
+
+  if (state.phase === "wave") {
+    // spawn queue
+    if (state.spawnLeft > 0) {
+      state.spawnCd--;
+      if (state.spawnCd <= 0) {
+        var i = state.spawnLeft;
+        var kind = "ant";
+        if (state.wave >= 2 && i % 3 === 1) kind = "beetle";
+        else if (state.wave >= 3 && i % 3 === 2) kind = "fly";
+        spawnFromEdge(kind);
+        state.spawnLeft--;
+        state.spawnCd = SPAWN_TICKS;
+      }
+    }
+
+    // bugs: chew walls, bite the fort, or march
+    for (var j = state.bugs.length - 1; j >= 0; j--) {
+      var g = state.bugs[j];
+      if (g.atkCd > 0) g.atkCd--;
+      var wall = null;
+      var wd = 32;
+      for (var w = 0; w < state.builds.length; w++) {
+        if (state.builds[w].kind !== "wall") continue;
+        var dd2 = dist(g, state.builds[w]);
+        if (dd2 < wd) { wd = dd2; wall = state.builds[w]; }
+      }
+      if (wall) {
+        if (g.atkCd === 0) {
+          wall.hp -= 1;
+          g.atkCd = 4;
+          if (wall.hp <= 0) {
+            state.builds.splice(state.builds.indexOf(wall), 1);
+            addFloat("CRUNCH!", wall.x, wall.y - 14);
+          }
+        }
+      } else if (dist(g, { x: FORT_X, y: FORT_Y }) < FORT_R + 14) {
+        if (g.atkCd === 0) {
+          state.fortHp -= g.bite;
+          g.atkCd = g.biteTicks;
+          addFloat("-" + g.bite, FORT_X, FORT_Y - 50);
+          if (state.fortHp <= 0) {
+            state.fortHp = 0;
+            endSiege();
+            return;
+          }
+        }
+      } else {
+        var gdx = FORT_X - g.x;
+        var gdy = FORT_Y - g.y;
+        var glen = Math.hypot(gdx, gdy) || 1;
+        g.x += (gdx / glen) * g.speed;
+        g.y += (gdy / glen) * g.speed;
+      }
+    }
+
+    // defenses fire on their own
+    for (var t = 0; t < state.builds.length; t++) {
+      var bd = state.builds[t];
+      if (bd.cd > 0) bd.cd--;
+      if (bd.kind === "turret" && bd.cd === 0) {
+        var tgt = null;
+        var tr = TURRET_R;
+        for (var q = 0; q < state.bugs.length; q++) {
+          var d3 = dist(bd, state.bugs[q]);
+          if (d3 < tr) { tr = d3; tgt = state.bugs[q]; }
+        }
+        if (tgt) {
+          bd.cd = TURRET_CD;
+          tgt.hp -= 1;
+          state.flash.push({ x1: bd.x, y1: bd.y, x2: tgt.x, y2: tgt.y, life: 2 });
+          if (tgt.hp <= 0) killBug(tgt);
+        }
+      } else if (bd.kind === "trap" && bd.cd === 0) {
+        var hitAny = false;
+        for (var r = state.bugs.length - 1; r >= 0; r--) {
+          if (dist(bd, state.bugs[r]) < TRAP_R) {
+            state.bugs[r].hp -= 1;
+            hitAny = true;
+            if (state.bugs[r].hp <= 0) killBug(state.bugs[r]);
+          }
+        }
+        if (hitAny) bd.cd = TRAP_CD;
+      }
+    }
+
+    // wave clear
+    if (state.spawnLeft === 0 && state.bugs.length === 0 && state.phase === "wave") {
+      waveCleared();
+      return;
+    }
+  }
+
+  // zap cooldown, floats, flash decay
+  if (state.zapCd > 0) state.zapCd--;
+  for (var fi = state.floats.length - 1; fi >= 0; fi--) {
+    state.floats[fi].life--;
+    if (state.floats[fi].life <= 0) state.floats.splice(fi, 1);
+  }
+  for (var li = state.flash.length - 1; li >= 0; li--) {
+    state.flash[li].life--;
+    if (state.flash[li].life <= 0) state.flash.splice(li, 1);
+  }
+}
+
+function tick() {
+  if (state.phase === "wave" || state.phase === "build") stepPhase();
+  draw();
+  render();
+}
+
+// ----- canvas painting (all art in code, zero images) -----
+function draw() {
+  var i;
+  // warm grass base
+  ctx.fillStyle = css("grass");
+  ctx.fillRect(0, 0, 540, 720);
+
+  // mow patches
+  for (i = 0; i < 12; i++) {
+    if (i % 2 === 0) {
+      ctx.fillStyle = css("grass2");
+      ctx.fillRect(0, i * 60, 540, 60);
+    }
+  }
+
+  // giant decor
+  for (i = 0; i < DECOR.length; i++) drawDecor(DECOR[i]);
+
+  // sun flare from the top-right
+  var flare = ctx.createRadialGradient(430, 70, 20, 430, 70, 380);
+  flare.addColorStop(0, "rgba(255, 220, 140, 0.45)");
+  flare.addColorStop(1, "rgba(255, 220, 140, 0)");
+  ctx.fillStyle = flare;
+  ctx.fillRect(0, 0, 540, 720);
+
+  // fort
+  drawFort();
+
+  // builds
+  for (i = 0; i < state.builds.length; i++) drawBuild(state.builds[i]);
+
+  // strays, buddies, bugs, hero
+  for (i = 0; i < state.strays.length; i++) drawBuddy(state.strays[i], true);
+  for (i = 0; i < state.buddies.length; i++) drawBuddy(state.buddies[i], false);
+  for (i = 0; i < state.bugs.length; i++) drawBug(state.bugs[i]);
+  drawHero();
+
+  // zap flashes
+  for (i = 0; i < state.flash.length; i++) {
+    var f = state.flash[i];
+    ctx.globalAlpha = Math.min(1, f.life / 2);
+    ctx.strokeStyle = css("sun");
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(f.x1, f.y1);
+    ctx.lineTo(f.x2, f.y2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  // floats
+  ctx.font = "bold 16px Courier New";
+  ctx.textAlign = "center";
+  for (i = 0; i < state.floats.length; i++) {
+    var fl = state.floats[i];
+    ctx.globalAlpha = Math.min(1, fl.life / 12);
+    ctx.fillStyle = css("cream");
+    ctx.fillText(fl.text, fl.x, fl.y - (20 - fl.life) * 1.5);
+    ctx.globalAlpha = 1;
+  }
+
+  drawHUD();
+}
+
+function drawDecor(d) {
+  if (d.k === "peb") {
+    ctx.fillStyle = "#8d8a7a";
+    ctx.beginPath();
+    ctx.ellipse(d.x, d.y, d.r, d.r * 0.7, 0.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,0.18)";
+    ctx.beginPath();
+    ctx.ellipse(d.x - d.r * 0.25, d.y - d.r * 0.25, d.r * 0.45, d.r * 0.3, 0.4, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (d.k === "flo") {
+    for (var p = 0; p < 6; p++) {
+      var ang = (p / 6) * Math.PI * 2;
+      ctx.fillStyle = css("petal");
+      ctx.beginPath();
+      ctx.arc(d.x + Math.cos(ang) * d.r * 0.7, d.y + Math.sin(ang) * d.r * 0.7, d.r * 0.45, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = css("sun");
+    ctx.beginPath();
+    ctx.arc(d.x, d.y, d.r * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (d.k === "dan") {
+    ctx.strokeStyle = "#3f7a2e";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(d.x, d.y + 30);
+    ctx.lineTo(d.x, d.y);
+    ctx.stroke();
+    ctx.fillStyle = "rgba(255, 240, 180, 0.9)";
+    for (var q = 0; q < 8; q++) {
+      var a2 = (q / 8) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.arc(d.x + Math.cos(a2) * d.r * 0.7, d.y + Math.sin(a2) * d.r * 0.7, d.r * 0.32, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = css("sun");
+    ctx.beginPath();
+    ctx.arc(d.x, d.y, d.r * 0.35, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    // twig
+    ctx.strokeStyle = "#7a5232";
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(d.x - d.r, d.y + 8);
+    ctx.lineTo(d.x + d.r, d.y - 10);
+    ctx.moveTo(d.x, d.y);
+    ctx.lineTo(d.x + 12, d.y + 16);
+    ctx.stroke();
+  }
+}
+
+function drawFort() {
+  // dirt ring
+  ctx.fillStyle = css("dirt");
+  ctx.beginPath();
+  ctx.arc(FORT_X, FORT_Y, FORT_R + 14, 0, Math.PI * 2);
+  ctx.fill();
+  // bottle-cap fort
+  ctx.fillStyle = css("fort");
+  ctx.beginPath();
+  ctx.arc(FORT_X, FORT_Y, FORT_R, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "#8a5a2e";
+  ctx.lineWidth = 5;
+  ctx.stroke();
+  // inner courtyard
+  ctx.fillStyle = "#e0b072";
+  ctx.beginPath();
+  ctx.arc(FORT_X, FORT_Y, FORT_R * 0.55, 0, Math.PI * 2);
+  ctx.fill();
+  // flag
+  ctx.strokeStyle = "#5c3a1e";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(FORT_X, FORT_Y - 6);
+  ctx.lineTo(FORT_X, FORT_Y - 52);
+  ctx.stroke();
+  ctx.fillStyle = css("gold");
+  ctx.beginPath();
+  ctx.moveTo(FORT_X, FORT_Y - 52);
+  ctx.lineTo(FORT_X + 26, FORT_Y - 44);
+  ctx.lineTo(FORT_X, FORT_Y - 34);
+  ctx.closePath();
+  ctx.fill();
+  // health pips on the ring
+  var pips = 6;
+  var lit = Math.ceil((state.fortHp / FORT_HP) * pips);
+  for (var i = 0; i < pips; i++) {
+    var ang = -Math.PI / 2 + (i / pips) * Math.PI * 2;
+    ctx.fillStyle = (i < lit) ? css("buddy") : "rgba(0,0,0,0.35)";
+    ctx.beginPath();
+    ctx.arc(FORT_X + Math.cos(ang) * (FORT_R + 22), FORT_Y + Math.sin(ang) * (FORT_R + 22), 5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawBuild(b) {
+  if (b.kind === "trap") {
+    ctx.fillStyle = "#3f2a18";
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, 11, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = css("cream");
+    for (var i = 0; i < 8; i++) {
+      var ang = (i / 8) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(b.x + Math.cos(ang) * 8, b.y + Math.sin(ang) * 8);
+      ctx.lineTo(b.x + Math.cos(ang) * 17, b.y + Math.sin(ang) * 17);
+      ctx.lineTo(b.x + Math.cos(ang + 0.35) * 8, b.y + Math.sin(ang + 0.35) * 8);
+      ctx.closePath();
+      ctx.fill();
+    }
+  } else if (b.kind === "turret") {
+    ctx.fillStyle = "#8a5a2e";
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, 14, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#5c3a1e";
+    ctx.beginPath();
+    ctx.arc(b.x, b.y - 4, 10, Math.PI, 0);
+    ctx.fill();
+    ctx.fillStyle = css("gold");
+    ctx.fillRect(b.x - 3, b.y - 22, 6, 16);
+    ctx.fillStyle = "rgba(255,255,255,0.25)";
+    ctx.beginPath();
+    ctx.arc(b.x - 4, b.y - 6, 4, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    // wall: stacked planks
+    ctx.fillStyle = "#a67c4a";
+    ctx.fillRect(b.x - 20, b.y - 7, 40, 14);
+    ctx.fillRect(b.x - 16, b.y - 17, 32, 12);
+    ctx.fillRect(b.x - 16, b.y + 5, 32, 12);
+    ctx.strokeStyle = "#6e4a26";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(b.x - 20, b.y - 7, 40, 14);
+  }
+}
+
+function drawHero() {
+  var x = state.hero.x;
+  var y = state.hero.y;
+  // shadow
+  ctx.fillStyle = "rgba(0,0,0,0.28)";
+  ctx.beginPath();
+  ctx.ellipse(x, y + 14, 13, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // body
+  ctx.fillStyle = "#2f6fed";
+  ctx.fillRect(x - 9, y - 2, 18, 18);
+  // head
+  ctx.fillStyle = "#f2c99a";
+  ctx.beginPath();
+  ctx.arc(x, y - 10, 10, 0, Math.PI * 2);
+  ctx.fill();
+  // cap
+  ctx.fillStyle = css("gold");
+  ctx.beginPath();
+  ctx.arc(x, y - 12, 10, Math.PI, 0);
+  ctx.fill();
+  // zap wand
+  ctx.strokeStyle = css("sun");
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(x + 8, y + 2);
+  ctx.lineTo(x + 18, y - 8);
+  ctx.stroke();
+  if (state.zapCd === 0) {
+    ctx.fillStyle = css("sun");
+    ctx.beginPath();
+    ctx.arc(x + 19, y - 10, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawBuddy(s, isStray) {
+  var x = s.x;
+  var y = s.y;
+  // glow
+  ctx.fillStyle = isStray ? "rgba(255, 220, 120, 0.5)" : "rgba(94, 200, 224, 0.45)";
+  ctx.beginPath();
+  ctx.arc(x, y, 17, 0, Math.PI * 2);
+  ctx.fill();
+  // body
+  ctx.fillStyle = isStray ? css("sun") : css("buddy");
+  ctx.beginPath();
+  ctx.arc(x, y - 6, 7, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(x, y + 4, 8, 0, Math.PI * 2);
+  ctx.fill();
+  // antennae
+  ctx.strokeStyle = isStray ? css("sun") : css("buddy");
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x - 3, y - 11);
+  ctx.lineTo(x - 7, y - 18);
+  ctx.moveTo(x + 3, y - 11);
+  ctx.lineTo(x + 7, y - 18);
+  ctx.stroke();
+  if (!isStray) {
+    ctx.fillStyle = css("cream");
+    ctx.font = "bold 10px Courier New";
+    ctx.textAlign = "center";
+    ctx.fillText("L" + (s.level + 1), x, y + 22);
+  }
+}
+
+function drawBug(g) {
+  var x = g.x;
+  var y = g.y;
+  ctx.fillStyle = "rgba(0,0,0,0.25)";
+  ctx.beginPath();
+  ctx.ellipse(x, y + 10, 11, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+  if (g.kind === "ant") {
+    ctx.fillStyle = css("bug");
+    ctx.beginPath();
+    ctx.arc(x, y - 8, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x, y + 1, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x, y + 10, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = css("bug");
+    ctx.lineWidth = 2;
+    for (var i = -1; i <= 1; i++) {
+      ctx.beginPath();
+      ctx.moveTo(x - 5, y + i * 5);
+      ctx.lineTo(x - 13, y + i * 5 - 3);
+      ctx.moveTo(x + 5, y + i * 5);
+      ctx.lineTo(x + 13, y + i * 5 - 3);
+      ctx.stroke();
+    }
+  } else if (g.kind === "beetle") {
+    ctx.fillStyle = "#3d2a1c";
+    ctx.beginPath();
+    ctx.ellipse(x, y, 14, 16, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#6b4226";
+    ctx.beginPath();
+    ctx.ellipse(x, y - 2, 11, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#2a1a10";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x, y - 13);
+    ctx.lineTo(x, y + 11);
+    ctx.stroke();
+  } else {
+    // fly
+    ctx.fillStyle = "#4a4a52";
+    ctx.beginPath();
+    ctx.ellipse(x, y, 8, 11, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "rgba(220, 230, 255, 0.7)";
+    ctx.beginPath();
+    ctx.ellipse(x - 11, y - 4, 8, 5, -0.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(x + 11, y - 4, 8, 5, 0.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#c23b3b";
+    ctx.beginPath();
+    ctx.arc(x - 3, y - 9, 3, 0, Math.PI * 2);
+    ctx.arc(x + 3, y - 9, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // hp bar when hurt
+  if (g.hp < g.maxHp) {
+    ctx.fillStyle = "rgba(0,0,0,0.45)";
+    ctx.fillRect(x - 12, y - 24, 24, 4);
+    ctx.fillStyle = css("petal");
+    ctx.fillRect(x - 12, y - 24, 24 * (g.hp / g.maxHp), 4);
+  }
+}
+
+function drawHUD() {
+  ctx.fillStyle = "rgba(43, 30, 18, 0.92)";
+  ctx.fillRect(0, 0, 540, 54);
+  ctx.strokeStyle = css("gold");
+  ctx.lineWidth = 3;
+  ctx.strokeRect(0, 0, 540, 54);
+
+  // fort hearts
+  ctx.textAlign = "left";
+  ctx.fillStyle = css("cream");
+  ctx.font = "bold 13px Courier New";
+  ctx.fillText("FORT", 18, 22);
+  var hearts = 10;
+  var lit = Math.ceil((state.fortHp / FORT_HP) * hearts);
+  for (var i = 0; i < hearts; i++) {
+    ctx.fillStyle = (i < lit) ? css("petal") : "rgba(255,255,255,0.18)";
+    ctx.fillRect(18 + i * 13, 32, 10, 10);
+  }
+
+  // crumbs
+  ctx.fillStyle = css("sun");
+  ctx.font = "bold 13px Courier New";
+  ctx.textAlign = "center";
+  ctx.fillText("CRUMBS " + state.crumbs, 270, 22);
+
+  // wave
+  ctx.fillStyle = css("cream");
+  ctx.font = "bold 13px Courier New";
+  ctx.textAlign = "right";
+  ctx.fillText("WAVE " + state.wave, 522, 22);
+  ctx.fillStyle = (state.phase === "wave") ? css("petal") : css("buddy");
+  ctx.font = "bold 11px Courier New";
+  var sub = "BUILD TIME";
+  if (state.phase === "wave") sub = "BUGS LEFT " + (state.bugs.length + state.spawnLeft);
+  else if (state.phase === "over") sub = "SIEGE OVER";
+  else if (state.phase === "ready") sub = "HOLD THE FORT";
+  ctx.fillText(sub, 522, 42);
+}
+
+// ----- DOM render -----
+function render() {
+  var ph = state.phase;
+  document.getElementById("screen-ready").classList.toggle("show", ph === "ready");
+  document.getElementById("screen-over").classList.toggle("show", ph === "over");
+
+  var recLine = (rec.bestWave > 0 || rec.mostBonks > 0)
+    ? ("Best wave " + rec.bestWave + " · Bonks " + rec.mostBonks)
+    : "No records yet";
+  document.getElementById("ready-records").textContent = recLine;
+  document.getElementById("strip-records").textContent = recLine;
+
+  if (ph === "over") {
+    document.getElementById("over-result").textContent = "Wave " + state.reachedWave + " reached";
+    document.getElementById("over-score").textContent = state.bonks + " bugs bonked";
+    document.getElementById("over-stats").textContent =
+      "Best wave " + rec.bestWave + " · Bonks " + rec.mostBonks;
+    document.getElementById("over-best").classList.toggle("show", state.newBest);
+  }
+}
+
+// ----- input -----
+function pressAction() {
+  if (state.phase === "ready" || state.phase === "over") {
+    startGame();
+    return;
+  }
+  if (state.phase === "build") {
+    startWave();
+    return;
+  }
+  zap();
+}
+
+function onKey(down, key) {
+  var k = String(key).toLowerCase();
+  if (k === "arrowleft" || k === "a") { setMove("l", down); return true; }
+  if (k === "arrowright" || k === "d") { setMove("r", down); return true; }
+  if (k === "arrowup" || k === "w") { setMove("u", down); return true; }
+  if (k === "arrowdown" || k === "s") { setMove("d", down); return true; }
+  if (!down) return false;
+  if (k === " " || k === "j") { zap(); return true; }
+  if (k === "1") { placeBuild("trap"); return true; }
+  if (k === "2") { placeBuild("turret"); return true; }
+  if (k === "3") { placeBuild("wall"); return true; }
+  if (k === "enter") { pressAction(); return true; }
+  return false;
+}
+
+document.addEventListener("keydown", function (ev) {
+  if (onKey(true, ev.key)) ev.preventDefault();
+});
+document.addEventListener("keyup", function (ev) {
+  if (onKey(false, ev.key)) ev.preventDefault();
+});
+
+function bindMove(id, dir) {
+  document.getElementById(id).addEventListener("click", function () {
+    setMove(dir, !state.holds[dir]);
+  });
+}
+bindMove("btn-left", "l");
+bindMove("btn-right", "r");
+bindMove("btn-up", "u");
+bindMove("btn-down", "d");
+
+document.getElementById("btn-zap").addEventListener("click", zap);
+document.getElementById("btn-trap").addEventListener("click", function () { placeBuild("trap"); });
+document.getElementById("btn-turret").addEventListener("click", function () { placeBuild("turret"); });
+document.getElementById("btn-wall").addEventListener("click", function () { placeBuild("wall"); });
+document.getElementById("btn-wave").addEventListener("click", startWave);
+document.getElementById("btn-start").addEventListener("click", startGame);
+document.getElementById("btn-again").addEventListener("click", startGame);
+document.getElementById("btn-clear").addEventListener("click", clearRecords);
+
+// ----- boot -----
+seedRec();
+loadRec();
+draw();
+render();
+setInterval(tick, TICK_MS);
+</script>
+</body>
+</html>
