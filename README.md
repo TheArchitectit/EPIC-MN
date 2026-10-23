@@ -9,6 +9,10 @@ This is the public showcase for **https://epic-mn.com/**. Every example,
 playbook, and script here is meant to be run live, in front of a class, on
 a laptop with nothing but a browser.
 
+**Made with Claude Code** — the first two examples (the Clubhouse,
+Bubblegum Zap) were made with **Mercury**; every example from #3 onward
+was made with **NeuralWatt**.
+
 ---
 
 ## 🎯 Why this repo exists
