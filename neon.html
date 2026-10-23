@@ -1,0 +1,795 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Neon Delivery</title>
+<style>
+  :root {
+    --bg: #12081f;
+    --bg2: #1c0f33;
+    --road: #1c1230;
+    --cyan: #39e6ff;
+    --pink: #ff4fd8;
+    --gold: #ffd166;
+    --green: #59ffa1;
+    --ink: #f4eeff;
+    --mono: "Lucida Console", "Courier New", monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: radial-gradient(circle at 50% 0%, var(--bg2), var(--bg) 70%);
+    color: var(--ink);
+    font-family: var(--mono);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  .top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 20px 10px;
+    max-width: 620px;
+    margin: 0 auto;
+  }
+  h1 {
+    font-size: clamp(20px, 4.5vw, 34px);
+    letter-spacing: 4px;
+    color: var(--cyan);
+    text-shadow: 0 0 12px var(--cyan), 0 0 28px rgba(57, 230, 255, 0.5);
+  }
+  main {
+    max-width: 620px;
+    margin: 0 auto;
+    padding: 4px 16px 40px;
+    position: relative;
+  }
+  .btn {
+    font-family: var(--mono);
+    font-size: 14px;
+    letter-spacing: 3px;
+    border-radius: 10px;
+    padding: 12px 18px;
+    cursor: pointer;
+    border: 2px solid var(--pink);
+    background: rgba(255, 79, 216, 0.12);
+    color: var(--pink);
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(255, 79, 216, 0.8);
+    box-shadow: 0 0 14px rgba(255, 79, 216, 0.35), inset 0 0 12px rgba(255, 79, 216, 0.15);
+  }
+  .btn:hover { background: rgba(255, 79, 216, 0.22); }
+  .btn.big { font-size: 17px; padding: 14px 30px; }
+  .btn.cyan {
+    border-color: var(--cyan);
+    color: var(--cyan);
+    background: rgba(57, 230, 255, 0.1);
+    text-shadow: 0 0 10px rgba(57, 230, 255, 0.8);
+    box-shadow: 0 0 14px rgba(57, 230, 255, 0.35), inset 0 0 12px rgba(57, 230, 255, 0.15);
+  }
+  .btn.gold {
+    border-color: var(--gold);
+    color: var(--gold);
+    background: rgba(255, 209, 102, 0.1);
+    text-shadow: 0 0 10px rgba(255, 209, 102, 0.8);
+    box-shadow: 0 0 14px rgba(255, 209, 102, 0.35), inset 0 0 12px rgba(255, 209, 102, 0.15);
+  }
+  .btn.ghost {
+    background: transparent;
+    color: var(--ink);
+    border: 1px dashed rgba(244, 238, 255, 0.4);
+    box-shadow: none;
+    text-shadow: none;
+    font-size: 11px;
+    padding: 9px 12px;
+  }
+  .btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .boardwrap {
+    position: relative;
+    margin: 0 auto;
+    border-radius: 14px;
+    border: 2px solid rgba(57, 230, 255, 0.4);
+    box-shadow: 0 0 22px rgba(57, 230, 255, 0.25), 0 0 60px rgba(255, 79, 216, 0.12);
+    overflow: hidden;
+    background: var(--bg);
+  }
+  canvas {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .hud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 12px 0 6px;
+    justify-content: space-between;
+  }
+  .stat {
+    background: rgba(57, 230, 255, 0.07);
+    border: 1px solid rgba(57, 230, 255, 0.3);
+    border-radius: 8px;
+    padding: 7px 10px;
+    min-width: 86px;
+    flex: 1 1 auto;
+    text-align: center;
+    box-shadow: 0 0 10px rgba(57, 230, 255, 0.12);
+  }
+  .stat .lbl {
+    display: block;
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--gold);
+    text-shadow: 0 0 8px rgba(255, 209, 102, 0.6);
+  }
+  .stat .val {
+    display: block;
+    font-size: clamp(14px, 2.4vw, 20px);
+    font-weight: bold;
+    color: var(--ink);
+    margin-top: 2px;
+    text-shadow: 0 0 10px rgba(244, 238, 255, 0.4);
+  }
+  .pizzabar {
+    height: 10px;
+    margin: 6px 2px 2px;
+    border: 1px solid rgba(255, 209, 102, 0.5);
+    border-radius: 999px;
+    background: rgba(255, 209, 102, 0.1);
+    overflow: hidden;
+    box-shadow: 0 0 10px rgba(255, 209, 102, 0.25);
+  }
+  .pizzabar i {
+    display: block;
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, var(--pink), var(--gold));
+    box-shadow: 0 0 12px var(--gold);
+    transition: width 0.15s linear;
+  }
+  .levers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 12px 0 4px;
+    justify-content: center;
+    align-items: center;
+  }
+  .steer {
+    font-size: 22px;
+    min-width: 86px;
+    padding: 14px 0;
+  }
+  .status {
+    text-align: center;
+    letter-spacing: 2px;
+    font-size: 12px;
+    color: var(--green);
+    min-height: 18px;
+    margin: 8px 0 2px;
+    text-shadow: 0 0 10px rgba(89, 255, 161, 0.6);
+  }
+  .screen {
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    top: 24px;
+    background: rgba(18, 8, 31, 0.9);
+    border: 2px solid rgba(57, 230, 255, 0.55);
+    border-radius: 14px;
+    box-shadow: 0 0 30px rgba(57, 230, 255, 0.3);
+    padding: 26px 18px;
+    text-align: center;
+    z-index: 10;
+  }
+  .screen.hidden { display: none; }
+  .screen h2 {
+    color: var(--pink);
+    letter-spacing: 5px;
+    text-shadow: 0 0 16px var(--pink), 0 0 40px rgba(255, 79, 216, 0.5);
+    margin-bottom: 12px;
+    font-size: clamp(19px, 3.6vw, 28px);
+  }
+  .rules {
+    font-size: 13px;
+    line-height: 2.1;
+    letter-spacing: 1px;
+    margin: 8px 0 16px;
+    color: var(--ink);
+  }
+  .big-score {
+    font-size: clamp(30px, 6vw, 46px);
+    color: var(--gold);
+    text-shadow: 0 0 22px rgba(255, 209, 102, 0.7);
+    margin: 6px 0;
+  }
+  .banner {
+    display: inline-block;
+    background: var(--gold);
+    color: var(--bg);
+    font-size: 14px;
+    letter-spacing: 3px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    box-shadow: 0 0 18px rgba(255, 209, 102, 0.8);
+    margin: 6px;
+    animation: pulse 0.8s ease-in-out infinite alternate;
+  }
+  .banner.hidden { display: none; }
+  @keyframes pulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.06); }
+  }
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
+    background: var(--bg2);
+    color: var(--gold);
+    font-weight: bold;
+    letter-spacing: 2px;
+    padding: 12px 22px;
+    border-radius: 999px;
+    border: 1px solid var(--gold);
+    box-shadow: 0 0 18px rgba(255, 209, 102, 0.5);
+    z-index: 60;
+  }
+  .toast.hidden { display: none; }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>NEON DELIVERY</h1>
+  <button id="btn-records" class="btn ghost">CLEAR RECORDS</button>
+</header>
+<main>
+  <div class="boardwrap">
+    <canvas id="road" width="540" height="720"></canvas>
+    <div id="screen-ready" class="screen">
+      <h2>MIDNIGHT PIZZA RUN</h2>
+      <div class="rules">
+        🏃 YOUR HERO RUNS ON THEIR OWN<br>
+        ◀ ▶ STEER BETWEEN THE GLOWING LANES<br>
+        🍕 DON'T LET THE PIZZA SLIDE OFF THE BOX!<br>
+        🏁 CROSS A BLOCK = ONE DELIVERY = ONE TIP
+      </div>
+      <button id="btn-start" class="btn big cyan">START THE RUN</button>
+      <div class="status">← → or A / D to steer · Enter to start</div>
+    </div>
+    <div id="screen-over" class="screen hidden">
+      <h2>PIZZA LOST!</h2>
+      <div id="over-newbest" class="banner hidden">NEW BEST!</div>
+      <div id="over-score" class="big-score">0</div>
+      <div id="over-info" class="rules">0 DELIVERIES</div>
+      <button id="btn-again" class="btn big cyan">PLAY AGAIN</button>
+    </div>
+  </div>
+
+  <section class="hud">
+    <div class="stat"><span class="lbl">SCORE</span><span id="hud-score" class="val">0</span></div>
+    <div class="stat"><span class="lbl">DELIVERIES</span><span id="hud-deliveries" class="val">0</span></div>
+    <div class="stat"><span class="lbl">BLOCK</span><span id="hud-block" class="val">1</span></div>
+    <div class="stat"><span class="lbl">BEST</span><span id="hud-best" class="val">--</span></div>
+  </section>
+  <div class="pizzabar"><i id="pizza-fill"></i></div>
+
+  <div class="levers">
+    <button id="btn-left" class="btn steer">◀</button>
+    <button id="btn-right" class="btn steer">▶</button>
+  </div>
+  <div id="status" class="status">the night is young... deliver the pizza!</div>
+</main>
+<div id="toast" class="toast hidden"></div>
+
+<script>
+  "use strict";
+
+  // ---------- constants ----------
+  var GKEY = "neon-delivery:v1";
+  var TICK_MS = 100;
+  var LANES = 5;
+  var LANE_W = 96;
+  var ROAD_L = 30;
+  var HERO_Y = 560;
+  var BASE_RUN_PX_S = 260;
+  var BLOCK_DIST = 1700;
+  var BAND_GAP = 130;
+  var N_BANDS = 14;
+  var CAR_LEN = 92;
+  var SEMI_LEN = 180;
+  var BUMP_SLIDE = 0.38;
+  var BUMP_INTEGRITY = 0.14;
+  var BUMP_CD_MS = 600;
+  var RECENTER = 0.01;
+
+  // ---------- state ----------
+  var state = {
+    screen: "ready", // ready | running | over
+    runDist: 0,
+    block: 1,
+    deliveries: 0,
+    score: 0,
+    targetLane: 2,
+    heroX: 270,
+    slide: 0,
+    integrity: 1,
+    sinceBumpMs: 99999,
+    bumpFlashMs: 0,
+    vehicles: [],
+    bestScore: 0,
+    bestDeliveries: 0,
+    result: null,
+    status: ""
+  };
+
+  var frame = 0;
+  var sparks = [];
+
+  // ---------- persistence (house machinery) ----------
+  function seed() {
+    return { bestScore: 0, bestDeliveries: 0 };
+  }
+  function load() {
+    try {
+      var raw = localStorage.getItem(GKEY);
+      if (!raw) return seed();
+      var d = JSON.parse(raw);
+      if (!d || typeof d !== "object") return seed();
+      var s = seed();
+      if (typeof d.bestScore === "number" && isFinite(d.bestScore)) s.bestScore = d.bestScore;
+      if (typeof d.bestDeliveries === "number" && isFinite(d.bestDeliveries)) s.bestDeliveries = d.bestDeliveries;
+      return s;
+    } catch (err) {
+      return seed();
+    }
+  }
+  function save() {
+    try {
+      localStorage.setItem(GKEY, JSON.stringify({
+        bestScore: state.bestScore,
+        bestDeliveries: state.bestDeliveries
+      }));
+    } catch (err) { /* storage blocked: keep running */ }
+  }
+  var toastTimer = null;
+  function toast(msg) {
+    var el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.remove("hidden");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      el.classList.add("hidden");
+    }, 2200);
+  }
+  function refuse(msg) {
+    state.status = msg;
+    toast(msg);
+    render();
+  }
+
+  // ---------- helpers ----------
+  function hash(i) {
+    var x = Math.sin(i * 127.1) * 43758.5453;
+    return x - Math.floor(x);
+  }
+  function laneCenter(i) {
+    return ROAD_L + LANE_W * i + LANE_W / 2;
+  }
+  function runSpeed() {
+    return BASE_RUN_PX_S + 18 * (state.block - 1);
+  }
+  function addSparks(x, y) {
+    for (var i = 0; i < 10; i++) {
+      sparks.push({
+        x: x, y: y,
+        vx: (Math.random() - 0.5) * 6,
+        vy: (Math.random() - 0.5) * 6,
+        life: 16,
+        max: 16
+      });
+    }
+    if (sparks.length > 160) sparks.splice(0, sparks.length - 160);
+  }
+
+  // ---------- traffic ----------
+  function buildTraffic() {
+    state.vehicles = [];
+    var gapBase = 300 - 12 * (state.block - 1);
+    for (var k = 0; k < N_BANDS; k++) {
+      var y = state.runDist + 200 + k * BAND_GAP;
+      var dir = hash(k * 3 + 1) < 0.5 ? -1 : 1;
+      var speed = (140 + hash(k * 7 + 2) * 140) * (1 + (state.block - 1) * 0.15);
+      var gap = gapBase - hash(k * 11 + 3) * 80;
+      var semi = hash(k * 13 + 4) < 0.18;
+      for (var j = 0; j < 5; j++) {
+        state.vehicles.push({
+          y: y,
+          x: 20 + j * gap + hash(k * 17 + j) * 60,
+          dir: dir,
+          speed: speed,
+          len: semi ? SEMI_LEN : CAR_LEN,
+          semi: semi,
+          hue: (k + j) % 3
+        });
+      }
+    }
+  }
+
+  // ---------- flow ----------
+  function startGame() {
+    state.screen = "running";
+    state.runDist = 0;
+    state.block = 1;
+    state.deliveries = 0;
+    state.score = 0;
+    state.targetLane = 2;
+    state.heroX = laneCenter(2);
+    state.slide = 0;
+    state.integrity = 1;
+    state.sinceBumpMs = 99999;
+    state.bumpFlashMs = 0;
+    state.result = null;
+    state.status = "";
+    sparks = [];
+    buildTraffic();
+    render();
+  }
+  function gameOver() {
+    if (state.screen !== "running") return;
+    state.screen = "over";
+    var newBest = false;
+    if (state.score > state.bestScore) {
+      state.bestScore = state.score;
+      newBest = true;
+    }
+    if (state.deliveries > state.bestDeliveries) {
+      state.bestDeliveries = state.deliveries;
+      newBest = true;
+    }
+    save();
+    state.result = {
+      score: state.score,
+      deliveries: state.deliveries,
+      newBest: newBest
+    };
+    if (newBest) toast("NEW BEST!");
+    render();
+  }
+  function resetRecords() {
+    state.bestScore = 0;
+    state.bestDeliveries = 0;
+    save();
+    toast("RECORDS CLEARED");
+    render();
+  }
+
+  // ---------- controls ----------
+  function steer(dir) {
+    if (state.screen !== "running") return;
+    var next = state.targetLane + dir;
+    if (next < 0 || next >= LANES) return;
+    state.targetLane = next;
+    state.status = "";
+    render();
+  }
+
+  // ---------- run sim ----------
+  function deliver() {
+    state.deliveries++;
+    var tip = Math.round(state.integrity * 100);
+    var gain = 100 + tip;
+    state.score += gain;
+    state.block++;
+    toast("DELIVERY MADE! +" + gain);
+    buildTraffic();
+  }
+  function tick() {
+    if (state.screen !== "running") return;
+    var dt = TICK_MS / 1000;
+    state.runDist += runSpeed() * dt;
+    state.sinceBumpMs += TICK_MS;
+    if (state.bumpFlashMs > 0) state.bumpFlashMs -= TICK_MS;
+
+    // hero eases toward the target lane
+    var tx = laneCenter(state.targetLane);
+    state.heroX += (tx - state.heroX) * 0.25;
+
+    // traffic streams + recycle behind
+    for (var i = 0; i < state.vehicles.length; i++) {
+      var v = state.vehicles[i];
+      v.x += v.dir * v.speed * dt;
+      if (v.x < -320) v.x += 940;
+      if (v.x > 860) v.x -= 940;
+      if (v.y < state.runDist - 500) v.y += N_BANDS * BAND_GAP;
+    }
+
+    // graze check
+    if (state.sinceBumpMs >= BUMP_CD_MS) {
+      for (var j = 0; j < state.vehicles.length; j++) {
+        var u = state.vehicles[j];
+        if (Math.abs(u.y - state.runDist) > 32) continue;
+        var hit = state.heroX + 22 > u.x && state.heroX - 22 < u.x + u.len;
+        if (!hit) continue;
+        var carCenter = u.x + u.len / 2;
+        var dir = Math.sign(carCenter - state.heroX) || u.dir;
+        state.slide += dir * BUMP_SLIDE;
+        if (state.slide > 1) state.slide = 1;
+        if (state.slide < -1) state.slide = -1;
+        state.integrity -= BUMP_INTEGRITY;
+        if (state.integrity < 0) state.integrity = 0;
+        state.sinceBumpMs = 0;
+        state.bumpFlashMs = 200;
+        addSparks(state.heroX + dir * 26, HERO_Y - 10);
+        break;
+      }
+    }
+
+    // pizza lost?
+    if (Math.abs(state.slide) >= 1 || state.integrity <= 0) {
+      refuse("THE PIZZA IS GONE!");
+      gameOver();
+      return;
+    }
+
+    // clean running re-centers the pizza
+    if (state.slide > 0) {
+      state.slide -= RECENTER;
+      if (state.slide < 0) state.slide = 0;
+    } else if (state.slide < 0) {
+      state.slide += RECENTER;
+      if (state.slide > 0) state.slide = 0;
+    }
+
+    // delivery?
+    if (state.runDist >= state.block * BLOCK_DIST) {
+      deliver();
+    }
+
+    render();
+  }
+
+  function onKey(e) {
+    if (!e || !e.key) return;
+    var k = String(e.key).toLowerCase();
+    if (k === "enter") {
+      if (state.screen === "ready" || state.screen === "over") startGame();
+    } else if (k === "arrowleft" || k === "a") {
+      steer(-1);
+    } else if (k === "arrowright" || k === "d") {
+      steer(1);
+    }
+  }
+
+  // ---------- canvas scene ----------
+  function draw() {
+    var canvas = document.getElementById("road");
+    var ctx = canvas.getContext("2d");
+    frame++;
+
+    // synthwave sky
+    var sky = ctx.createLinearGradient(0, 0, 0, 720);
+    sky.addColorStop(0, "#12081f");
+    sky.addColorStop(0.55, "#2b1055");
+    sky.addColorStop(1, "#1c0f33");
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, 540, 720);
+
+    // stars
+    for (var s = 0; s < 24; s++) {
+      var sx = hash(s * 3 + 99) * 540;
+      var sy = hash(s * 5 + 7) * 150;
+      ctx.globalAlpha = 0.4 + 0.4 * Math.abs(Math.sin(frame * 0.02 + s));
+      ctx.fillStyle = "#f4eeff";
+      ctx.fillRect(sx, sy, 2, 2);
+    }
+    ctx.globalAlpha = 1;
+
+    // skyline silhouettes
+    for (var b = 0; b < 9; b++) {
+      var bw = 40 + hash(b * 7 + 3) * 40;
+      var bh = 50 + hash(b * 11 + 5) * 80;
+      var bx = b * 62 - 10;
+      ctx.fillStyle = "#160b28";
+      ctx.fillRect(bx, 150 - bh, bw, bh);
+      // neon windows
+      ctx.fillStyle = b % 2 ? "rgba(57,230,255,0.35)" : "rgba(255,79,216,0.3)";
+      for (var w = 0; w < 6; w++) {
+        ctx.fillRect(bx + 8 + (w % 3) * 14, 150 - bh + 10 + Math.floor(w / 3) * 18, 6, 8);
+      }
+    }
+
+    // road
+    ctx.fillStyle = "#1c1230";
+    ctx.fillRect(ROAD_L, 150, LANES * LANE_W, 570);
+
+    // glowing edges
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = "#39e6ff";
+    ctx.fillStyle = "#39e6ff";
+    ctx.fillRect(ROAD_L - 4, 150, 4, 570);
+    ctx.fillRect(ROAD_L + LANES * LANE_W, 150, 4, 570);
+    ctx.shadowBlur = 0;
+
+    // scrolling lane dashes (gold)
+    var dashOff = state.runDist % 40;
+    ctx.fillStyle = "rgba(255, 209, 102, 0.55)";
+    for (var ln = 1; ln < LANES; ln++) {
+      var lx = ROAD_L + ln * LANE_W - 2;
+      for (var dy = -40 + dashOff; dy < 720; dy += 40) {
+        ctx.fillRect(lx, dy, 4, 18);
+      }
+    }
+
+    // customer arch at the next block end
+    var archWorld = state.block * BLOCK_DIST;
+    var archY = HERO_Y - (archWorld - state.runDist);
+    if (archY > -80 && archY < 780) {
+      ctx.shadowBlur = 16;
+      ctx.shadowColor = "#59ffa1";
+      ctx.fillStyle = "#59ffa1";
+      ctx.fillRect(60, archY - 80, 10, 100);
+      ctx.fillRect(470, archY - 80, 10, 100);
+      ctx.fillRect(60, archY - 88, 420, 12);
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = "#59ffa1";
+      ctx.font = "bold 16px monospace";
+      ctx.fillText("DELIVERY", 216, archY - 96);
+    }
+
+    // vehicles
+    for (var i = 0; i < state.vehicles.length; i++) {
+      var v = state.vehicles[i];
+      var vy = HERO_Y - (v.y - state.runDist);
+      if (vy < -120 || vy > 800) continue;
+      var col = v.hue === 0 ? "#39e6ff" : v.hue === 1 ? "#ff4fd8" : "#ffd166";
+      // body
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = col;
+      ctx.fillStyle = col;
+      ctx.fillRect(v.x, vy - 16, v.len, 32);
+      ctx.shadowBlur = 0;
+      // dark cabin
+      ctx.fillStyle = "rgba(18, 8, 31, 0.55)";
+      ctx.fillRect(v.x + v.len * 0.3, vy - 11, v.len * 0.38, 22);
+      // headlight / tail streaks
+      var fx = v.dir > 0 ? v.x + v.len : v.x;
+      var bx2 = v.dir > 0 ? v.x : v.x + v.len;
+      ctx.strokeStyle = "rgba(255, 209, 102, 0.8)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(fx, vy - 8);
+      ctx.lineTo(fx + v.dir * 34, vy - 12);
+      ctx.moveTo(fx, vy + 8);
+      ctx.lineTo(fx + v.dir * 34, vy + 12);
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(255, 79, 216, 0.7)";
+      ctx.beginPath();
+      ctx.moveTo(bx2, vy - 8);
+      ctx.lineTo(bx2 - v.dir * 42, vy - 14);
+      ctx.moveTo(bx2, vy + 8);
+      ctx.lineTo(bx2 - v.dir * 42, vy + 14);
+      ctx.stroke();
+    }
+
+    // hero: hover skater + pizza box
+    var hx = state.heroX;
+    ctx.shadowBlur = 14;
+    ctx.shadowColor = "#39e6ff";
+    ctx.fillStyle = "#39e6ff";
+    ctx.fillRect(hx - 30, HERO_Y + 14, 60, 10);
+    ctx.shadowBlur = 0;
+    // body
+    ctx.fillStyle = "#ff4fd8";
+    ctx.fillRect(hx - 11, HERO_Y - 38, 22, 54);
+    ctx.fillStyle = "#f4eeff";
+    ctx.beginPath();
+    ctx.arc(hx, HERO_Y - 50, 12, 0, Math.PI * 2);
+    ctx.fill();
+    // pizza box balanced on the head
+    ctx.fillStyle = "#ffd166";
+    ctx.fillRect(hx - 28, HERO_Y - 74, 56, 14);
+    // the wobbly pizza
+    ctx.save();
+    ctx.translate(hx + state.slide * 22, HERO_Y - 88);
+    ctx.rotate(state.slide * 0.35);
+    ctx.fillStyle = "#ffb84d";
+    ctx.beginPath();
+    ctx.arc(0, 0, 17, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#ff4fd8";
+    ctx.fillRect(-7, -8, 6, 6);
+    ctx.fillRect(3, -3, 6, 6);
+    ctx.fillRect(-4, 5, 6, 6);
+    ctx.restore();
+
+    // bump sparks
+    for (var p = 0; p < sparks.length; p++) {
+      var sp = sparks[p];
+      sp.x += sp.vx;
+      sp.y += sp.vy;
+      sp.life--;
+      ctx.globalAlpha = Math.max(0, sp.life / sp.max);
+      ctx.fillStyle = p % 2 ? "#ffd166" : "#ff4fd8";
+      ctx.fillRect(sp.x, sp.y, 3, 3);
+    }
+    ctx.globalAlpha = 1;
+    var alive = [];
+    for (var q = 0; q < sparks.length; q++) {
+      if (sparks[q].life > 0) alive.push(sparks[q]);
+    }
+    sparks = alive;
+
+    // bump flash
+    if (state.bumpFlashMs > 0) {
+      ctx.globalAlpha = (state.bumpFlashMs / 200) * 0.22;
+      ctx.fillStyle = "#ff4fd8";
+      ctx.fillRect(0, 0, 540, 720);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // ---------- DOM render ----------
+  function render() {
+    var ready = document.getElementById("screen-ready");
+    var over = document.getElementById("screen-over");
+    if (state.screen === "ready") ready.classList.remove("hidden");
+    else ready.classList.add("hidden");
+    if (state.screen === "over") over.classList.remove("hidden");
+    else over.classList.add("hidden");
+
+    document.getElementById("hud-score").textContent = String(state.score);
+    document.getElementById("hud-deliveries").textContent = String(state.deliveries);
+    document.getElementById("hud-block").textContent = String(state.block);
+    document.getElementById("hud-best").textContent =
+      state.bestScore > 0 ? state.bestScore + " · " + state.bestDeliveries + "🚚" : "--";
+    document.getElementById("pizza-fill").style.width =
+      Math.round(state.integrity * 100) + "%";
+
+    if (state.result) {
+      document.getElementById("over-score").textContent = String(state.result.score);
+      document.getElementById("over-info").textContent =
+        state.result.deliveries + " DELIVERIES";
+      var nb = document.getElementById("over-newbest");
+      if (state.result.newBest) nb.classList.remove("hidden");
+      else nb.classList.add("hidden");
+    }
+
+    var statusEl = document.getElementById("status");
+    if (state.status) {
+      statusEl.textContent = state.status;
+    } else if (state.screen === "ready") {
+      statusEl.textContent = "the night is young... deliver the pizza!";
+    } else if (state.screen === "running") {
+      statusEl.textContent = "block " + state.block + " · keep the pizza on the box!";
+    } else {
+      statusEl.textContent = "the city sleeps... the pizza does not";
+    }
+    draw();
+  }
+
+  // ---------- boot ----------
+  function boot() {
+    var data = load();
+    state.bestScore = data.bestScore;
+    state.bestDeliveries = data.bestDeliveries;
+
+    document.addEventListener("keydown", onKey);
+    document.getElementById("btn-start").addEventListener("click", startGame);
+    document.getElementById("btn-again").addEventListener("click", startGame);
+    document.getElementById("btn-left").addEventListener("click", function () { steer(-1); });
+    document.getElementById("btn-right").addEventListener("click", function () { steer(1); });
+    document.getElementById("btn-records").addEventListener("click", resetRecords);
+
+    setInterval(tick, TICK_MS);
+    render();
+  }
+
+  boot();
+</script>
+</body>
+</html>
