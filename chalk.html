@@ -1,0 +1,943 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chalk Rush</title>
+<style>
+  :root {
+    --ink: #e8e6d5;
+    --board: #2e4739;
+    --board2: #24382d;
+    --wood: #8a5a33;
+    --wood2: #6e4426;
+    --red: #d97b6c;
+    --gold: #d9b441;
+    --mint: #9fd9b4;
+    --mono: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+    --hard: 4px 4px 0 rgba(0, 0, 0, 0.35);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--board2);
+    color: var(--ink);
+    font-family: var(--mono);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  .top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 20px 10px;
+  }
+  h1 {
+    font-size: clamp(22px, 4.5vw, 38px);
+    letter-spacing: 2px;
+    color: var(--ink);
+    text-shadow: 0 0 14px rgba(232, 230, 213, 0.25);
+  }
+  main {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 4px 16px 40px;
+    position: relative;
+  }
+  .btn {
+    font-family: var(--mono);
+    font-size: 15px;
+    letter-spacing: 2px;
+    border-radius: 10px;
+    padding: 12px 18px;
+    cursor: pointer;
+    border: 3px solid var(--wood2);
+    background: linear-gradient(#a06a3c, var(--wood) 30%, var(--wood2));
+    color: var(--ink);
+    font-weight: bold;
+    box-shadow: var(--hard), inset 0 2px 0 rgba(255, 255, 255, 0.22);
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+  }
+  .btn:hover { filter: brightness(1.1); }
+  .btn.big { font-size: 18px; padding: 14px 30px; }
+  .btn.rush {
+    background: linear-gradient(#e0c061, var(--gold) 30%, #a37f22);
+    border-color: #7c5f16;
+  }
+  .btn.ghost {
+    background: transparent;
+    color: var(--ink);
+    border: 2px dashed rgba(232, 230, 213, 0.5);
+    box-shadow: none;
+    font-size: 12px;
+    padding: 9px 13px;
+    text-shadow: none;
+  }
+  .btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    filter: none;
+  }
+  .boardwrap {
+    position: relative;
+    max-width: 940px;
+    margin: 0 auto;
+    background: var(--board);
+    border: 10px solid var(--wood);
+    border-radius: 14px;
+    box-shadow: 0 0 0 3px var(--wood2), 0 14px 30px rgba(0, 0, 0, 0.45);
+  }
+  canvas {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 6px;
+    background: var(--board);
+  }
+  .hud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 14px 0 6px;
+    justify-content: space-between;
+  }
+  .stat {
+    background: rgba(0, 0, 0, 0.22);
+    border: 2px dashed rgba(232, 230, 213, 0.35);
+    border-radius: 10px;
+    padding: 8px 14px;
+    min-width: 110px;
+    flex: 1 1 auto;
+    text-align: center;
+  }
+  .stat .lbl {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--gold);
+  }
+  .stat .val {
+    display: block;
+    font-size: clamp(16px, 2.6vw, 24px);
+    font-weight: bold;
+    color: var(--ink);
+    margin-top: 2px;
+    text-shadow: 0 0 10px rgba(232, 230, 213, 0.3);
+  }
+  .levers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 12px 0 4px;
+    justify-content: center;
+  }
+  .status {
+    text-align: center;
+    letter-spacing: 2px;
+    font-size: 13px;
+    color: var(--mint);
+    min-height: 20px;
+    margin: 8px 0 2px;
+    font-style: italic;
+  }
+  .screen {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    top: 30px;
+    background: rgba(36, 56, 45, 0.94);
+    border: 3px dashed rgba(232, 230, 213, 0.55);
+    border-radius: 14px;
+    box-shadow: var(--hard);
+    padding: 28px 20px;
+    text-align: center;
+    z-index: 10;
+  }
+  .screen.hidden { display: none; }
+  .screen h2 {
+    color: var(--gold);
+    letter-spacing: 4px;
+    text-shadow: 0 0 18px rgba(217, 180, 65, 0.5);
+    margin-bottom: 12px;
+    font-size: clamp(20px, 3.6vw, 30px);
+  }
+  .rules {
+    font-size: 15px;
+    line-height: 2;
+    letter-spacing: 1px;
+    margin: 8px 0 16px;
+    color: var(--ink);
+  }
+  .big-time {
+    font-size: clamp(34px, 6vw, 52px);
+    color: var(--ink);
+    text-shadow: 0 0 22px rgba(232, 230, 213, 0.4);
+    margin: 6px 0;
+  }
+  .banner {
+    display: inline-block;
+    background: var(--gold);
+    color: var(--board2);
+    font-size: 17px;
+    letter-spacing: 3px;
+    padding: 9px 16px;
+    border-radius: 10px;
+    border: 3px solid var(--wood2);
+    box-shadow: var(--hard);
+    margin: 6px;
+    animation: sway 0.9s ease-in-out infinite alternate;
+  }
+  .banner.hidden { display: none; }
+  @keyframes sway {
+    from { transform: rotate(-1.5deg) scale(1); }
+    to { transform: rotate(1.5deg) scale(1.05); }
+  }
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 26px;
+    transform: translateX(-50%);
+    background: var(--ink);
+    color: var(--board2);
+    font-weight: bold;
+    letter-spacing: 2px;
+    padding: 12px 22px;
+    border-radius: 999px;
+    box-shadow: var(--hard);
+    z-index: 60;
+  }
+  .toast.hidden { display: none; }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>CHALK RUSH</h1>
+  <button id="btn-records" class="btn ghost">CLEAR RECORDS</button>
+</header>
+<main>
+  <div class="boardwrap">
+    <canvas id="field" width="900" height="420"></canvas>
+    <div id="screen-ready" class="screen">
+      <h2>THE WAR ROOM</h2>
+      <div class="rules">
+        👷 WORKERS GATHER ENERGY EVERY SECOND<br>
+        ⚔️ SOLDIERS MARCH AND FIGHT ON THEIR OWN<br>
+        🏰 SMASH THEIR CASTLE BEFORE THEY SMASH YOURS<br>
+        ⚡ PULL <b>RUSH!</b> FOR A BIG CHALK-ARROW SURGE
+      </div>
+      <button id="btn-start" class="btn big">START THE BATTLE</button>
+      <div class="status">W = worker · S = soldier · R = rush · Enter = start</div>
+    </div>
+    <div id="screen-won" class="screen hidden">
+      <h2>VICTORY!</h2>
+      <div id="win-newbest" class="banner hidden">NEW BEST!</div>
+      <div id="win-time" class="big-time">0.0S</div>
+      <div id="win-streak" class="rules">WIN STREAK: 1</div>
+      <button id="btn-again-win" class="btn big">PLAY AGAIN</button>
+    </div>
+    <div id="screen-lost" class="screen hidden">
+      <h2>THEY GOT YOUR CASTLE</h2>
+      <div id="lose-time" class="big-time">0.0S</div>
+      <div class="rules">THE STREAK ENDS — BUT THE BOARD REMEMBERS YOUR BEST.</div>
+      <button id="btn-again-lose" class="btn big">PLAY AGAIN</button>
+    </div>
+  </div>
+
+  <section class="hud">
+    <div class="stat"><span class="lbl">ENERGY</span><span id="hud-energy" class="val">50</span></div>
+    <div class="stat"><span class="lbl">WORKERS</span><span id="hud-workers" class="val">3</span></div>
+    <div class="stat"><span class="lbl">SOLDIERS</span><span id="hud-soldiers" class="val">0</span></div>
+    <div class="stat"><span class="lbl">FOE CASTLE</span><span id="hud-foe" class="val">100%</span></div>
+    <div class="stat"><span class="lbl">TIME</span><span id="hud-time" class="val">0.0S</span></div>
+    <div class="stat"><span class="lbl">BEST</span><span id="hud-best" class="val">--</span></div>
+  </section>
+
+  <div class="levers">
+    <button id="btn-worker" class="btn">👷 HIRE WORKER · 25</button>
+    <button id="btn-soldier" class="btn">⚔️ HATCH SOLDIER · 50</button>
+    <button id="btn-rush" class="btn rush big">⚡ RUSH!</button>
+  </div>
+  <div id="status" class="status">the board is quiet... pull a lever to begin</div>
+</main>
+<div id="toast" class="toast hidden"></div>
+
+<script>
+  "use strict";
+
+  // ---------- constants ----------
+  var GKEY = "chalk-rush:v1";
+  var TICK_MS = 100;
+  var WORKER_COST = 25;
+  var SOLDIER_COST = 50;
+  var WORKER_RATE = 2; // energy per second per worker
+  var CASTLE_HP = 600;
+  var CASTLE_P_X = 70;
+  var CASTLE_E_X = 830;
+  var FIGHT_RANGE = 64;
+  var SIEGE_RANGE = 36;
+  var CASTLE_ARROW_RANGE = 130;
+  var CASTLE_ARROW_DMG = 5;
+  var CASTLE_ARROW_CD = 1000;
+  var RUSH_MS = 5000;
+  var RUSH_CD = 15000;
+  var AI_PERIOD = 2500;
+  var SOLDIER = { hp: 30, atk: 6, cool: 500, speed: 42 };
+
+  // ---------- state ----------
+  var state = {
+    screen: "ready", // ready | playing | won | lost
+    energy: 50,
+    enemyEnergy: 50,
+    workers: 3,
+    enemyWorkers: 3,
+    units: [],
+    castlePHp: CASTLE_HP,
+    castleEHp: CASTLE_HP,
+    elapsedMs: 0,
+    rushUntilMs: -1,
+    rushCooldownUntilMs: -1,
+    aiTimerMs: 0,
+    castleCoolP: 0,
+    castleCoolE: 0,
+    bestWinMs: null,
+    bestStreak: 0,
+    streak: 0,
+    result: null,
+    status: ""
+  };
+
+  var frame = 0;
+  var scribbles = [];
+  var dust = [];
+  var unitSeq = 0;
+
+  // ---------- persistence (house machinery) ----------
+  function seed() {
+    return { bestWinMs: null, bestStreak: 0 };
+  }
+  function load() {
+    try {
+      var raw = localStorage.getItem(GKEY);
+      if (!raw) return seed();
+      var d = JSON.parse(raw);
+      if (!d || typeof d !== "object") return seed();
+      var s = seed();
+      if (typeof d.bestWinMs === "number" && isFinite(d.bestWinMs)) s.bestWinMs = d.bestWinMs;
+      if (typeof d.bestStreak === "number" && isFinite(d.bestStreak)) s.bestStreak = d.bestStreak;
+      return s;
+    } catch (err) {
+      return seed();
+    }
+  }
+  function save() {
+    try {
+      localStorage.setItem(GKEY, JSON.stringify({
+        bestWinMs: state.bestWinMs,
+        bestStreak: state.bestStreak
+      }));
+    } catch (err) { /* storage blocked: keep playing */ }
+  }
+  var toastTimer = null;
+  function toast(msg) {
+    var el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.remove("hidden");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      el.classList.add("hidden");
+    }, 2200);
+  }
+  function refuse(msg) {
+    state.status = msg;
+    toast(msg);
+    render();
+  }
+
+  // ---------- juice ----------
+  function addScribble(x, y) {
+    scribbles.push({ x: x, y: y, life: 10, max: 10 });
+    if (scribbles.length > 60) scribbles.shift();
+  }
+  function addDust(x, y) {
+    for (var i = 0; i < 8; i++) {
+      dust.push({
+        x: x, y: y,
+        vx: (Math.random() - 0.5) * 2.4,
+        vy: -Math.random() * 1.8,
+        life: 18,
+        max: 18
+      });
+    }
+    if (dust.length > 200) dust.splice(0, dust.length - 200);
+  }
+  function sparkBurst() {
+    for (var i = 0; i < 18; i++) {
+      dust.push({
+        x: 450, y: 220,
+        vx: (Math.random() - 0.5) * 6,
+        vy: (Math.random() - 0.5) * 5,
+        life: 30,
+        max: 30
+      });
+    }
+  }
+
+  // ---------- helpers ----------
+  function fmtTime(ms) {
+    if (ms == null || !isFinite(ms)) return "--";
+    return (ms / 1000).toFixed(1) + "S";
+  }
+  function playerSoldiers() {
+    var n = 0;
+    for (var i = 0; i < state.units.length; i++) {
+      if (state.units[i].side === "p") n++;
+    }
+    return n;
+  }
+  function spawnUnit(side) {
+    state.units.push({
+      id: unitSeq++,
+      side: side,
+      x: side === "p" ? 120 : 780,
+      y: 268 + (unitSeq % 3) * 16,
+      hp: SOLDIER.hp,
+      atk: SOLDIER.atk,
+      cool: 0
+    });
+  }
+  function nearestFoe(u) {
+    var best = null;
+    var bestD = 1e9;
+    for (var i = 0; i < state.units.length; i++) {
+      var o = state.units[i];
+      if (o.side === u.side || o.hp <= 0) continue;
+      var d = Math.abs(o.x - u.x);
+      if (d < bestD) {
+        bestD = d;
+        best = o;
+      }
+    }
+    return best;
+  }
+
+  // ---------- flow ----------
+  function startGame() {
+    state.screen = "playing";
+    state.energy = 50;
+    state.enemyEnergy = 50;
+    state.workers = 3;
+    state.enemyWorkers = 3;
+    state.units = [];
+    state.castlePHp = CASTLE_HP;
+    state.castleEHp = CASTLE_HP;
+    state.elapsedMs = 0;
+    state.rushUntilMs = -1;
+    state.rushCooldownUntilMs = -1;
+    state.aiTimerMs = AI_PERIOD;
+    state.castleCoolP = 0;
+    state.castleCoolE = 0;
+    state.result = null;
+    state.status = "";
+    scribbles = [];
+    dust = [];
+    render();
+  }
+  function winGame() {
+    if (state.screen !== "playing") return;
+    state.screen = "won";
+    state.streak++;
+    var newBest = false;
+    if (state.bestWinMs == null || state.elapsedMs < state.bestWinMs) {
+      state.bestWinMs = state.elapsedMs;
+      newBest = true;
+    }
+    if (state.streak > state.bestStreak) {
+      state.bestStreak = state.streak;
+      newBest = true;
+    }
+    save();
+    state.result = {
+      won: true,
+      winMs: state.elapsedMs,
+      streak: state.streak,
+      newBest: newBest
+    };
+    if (newBest) toast("NEW BEST!");
+    sparkBurst();
+    render();
+  }
+  function loseGame() {
+    if (state.screen !== "playing") return;
+    state.screen = "lost";
+    state.streak = 0;
+    state.result = {
+      won: false,
+      winMs: state.elapsedMs,
+      streak: 0,
+      newBest: false
+    };
+    toast("THEY GOT YOUR CASTLE!");
+    render();
+  }
+  function resetRecords() {
+    state.bestWinMs = null;
+    state.bestStreak = 0;
+    save();
+    toast("RECORDS CLEARED");
+    render();
+  }
+
+  // ---------- player levers ----------
+  function hireWorker() {
+    if (state.screen !== "playing") return;
+    if (state.energy < WORKER_COST) {
+      refuse("NEED MORE ENERGY!");
+      return;
+    }
+    state.energy -= WORKER_COST;
+    state.workers++;
+    state.status = "";
+    render();
+  }
+  function hatchSoldier() {
+    if (state.screen !== "playing") return;
+    if (state.energy < SOLDIER_COST) {
+      refuse("NEED MORE ENERGY!");
+      return;
+    }
+    state.energy -= SOLDIER_COST;
+    spawnUnit("p");
+    state.status = "";
+    render();
+  }
+  function rush() {
+    if (state.screen !== "playing") return;
+    if (state.elapsedMs < state.rushUntilMs) return;
+    if (state.elapsedMs < state.rushCooldownUntilMs) {
+      refuse("RUSH IS RECHARGING!");
+      return;
+    }
+    state.rushUntilMs = state.elapsedMs + RUSH_MS;
+    state.rushCooldownUntilMs = state.elapsedMs + RUSH_MS + RUSH_CD;
+    state.status = "";
+    toast("RUSH! RUSH! RUSH!");
+    render();
+  }
+
+  // ---------- battle sim ----------
+  function enemyAct() {
+    var cap = 4 + Math.floor(state.elapsedMs / 30000);
+    if (state.enemyEnergy >= WORKER_COST && state.enemyWorkers < cap) {
+      state.enemyEnergy -= WORKER_COST;
+      state.enemyWorkers++;
+      return;
+    }
+    if (state.enemyEnergy >= SOLDIER_COST) {
+      var n = state.enemyEnergy >= 120 ? 2 : 1;
+      for (var i = 0; i < n && state.enemyEnergy >= SOLDIER_COST; i++) {
+        state.enemyEnergy -= SOLDIER_COST;
+        spawnUnit("e");
+      }
+    }
+  }
+  function stepBattle(dt) {
+    var rushActive = state.elapsedMs < state.rushUntilMs;
+    var i, u;
+    for (i = 0; i < state.units.length; i++) {
+      u = state.units[i];
+      if (u.hp <= 0) continue;
+      var boost = rushActive && u.side === "p";
+      var foe = nearestFoe(u);
+      var castleX = u.side === "p" ? CASTLE_E_X : CASTLE_P_X;
+      u.cool -= dt * 1000;
+      if (foe && Math.abs(u.x - foe.x) <= FIGHT_RANGE) {
+        if (u.cool <= 0) {
+          foe.hp -= u.atk * (boost ? 1.5 : 1);
+          u.cool = SOLDIER.cool;
+          addScribble((u.x + foe.x) / 2, u.y - 16);
+        }
+      } else if (Math.abs(u.x - castleX) <= SIEGE_RANGE) {
+        if (u.cool <= 0) {
+          if (u.side === "p") state.castleEHp -= u.atk * (boost ? 1.5 : 1);
+          else state.castlePHp -= u.atk * (boost ? 1.5 : 1);
+          u.cool = SOLDIER.cool;
+          addScribble(castleX, 250);
+        }
+      } else {
+        var dir = u.side === "p" ? 1 : -1;
+        u.x += dir * SOLDIER.speed * (boost ? 1.8 : 1) * dt;
+      }
+    }
+    // castle arrows
+    state.castleCoolP -= dt * 1000;
+    state.castleCoolE -= dt * 1000;
+    if (state.castleCoolP <= 0) {
+      var t = nearestInRange("e", CASTLE_P_X, CASTLE_ARROW_RANGE);
+      if (t) {
+        t.hp -= CASTLE_ARROW_DMG;
+        state.castleCoolP = CASTLE_ARROW_CD;
+        addScribble(t.x, t.y - 20);
+      }
+    }
+    if (state.castleCoolE <= 0) {
+      var t2 = nearestInRange("p", CASTLE_E_X, CASTLE_ARROW_RANGE);
+      if (t2) {
+        t2.hp -= CASTLE_ARROW_DMG;
+        state.castleCoolE = CASTLE_ARROW_CD;
+        addScribble(t2.x, t2.y - 20);
+      }
+    }
+    // sweep the fallen
+    var alive = [];
+    for (i = 0; i < state.units.length; i++) {
+      u = state.units[i];
+      if (u.hp > 0) alive.push(u);
+      else addDust(u.x, u.y);
+    }
+    state.units = alive;
+  }
+  function nearestInRange(side, fromX, range) {
+    var best = null;
+    var bestD = 1e9;
+    for (var i = 0; i < state.units.length; i++) {
+      var o = state.units[i];
+      if (o.side !== side || o.hp <= 0) continue;
+      var d = Math.abs(o.x - fromX);
+      if (d <= range && d < bestD) {
+        bestD = d;
+        best = o;
+      }
+    }
+    return best;
+  }
+
+  function tick() {
+    if (state.screen !== "playing") return;
+    state.elapsedMs += TICK_MS;
+    var dt = TICK_MS / 1000;
+
+    // economies
+    state.energy += state.workers * WORKER_RATE * dt;
+    state.enemyEnergy += state.enemyWorkers * WORKER_RATE * (1 + state.elapsedMs / 90000) * dt;
+
+    // rival general
+    state.aiTimerMs -= TICK_MS;
+    if (state.aiTimerMs <= 0) {
+      state.aiTimerMs = AI_PERIOD;
+      enemyAct();
+    }
+
+    stepBattle(dt);
+
+    if (state.castleEHp <= 0) winGame();
+    else if (state.castlePHp <= 0) loseGame();
+    else render();
+  }
+
+  function onKey(e) {
+    if (!e || !e.key) return;
+    var k = String(e.key).toLowerCase();
+    if (k === "enter") {
+      if (state.screen === "ready" || state.screen === "won" || state.screen === "lost") startGame();
+    } else if (k === "w") hireWorker();
+    else if (k === "s") hatchSoldier();
+    else if (k === "r") rush();
+  }
+
+  // ---------- canvas scene ----------
+  function chalkLine(ctx, x1, y1, x2, y2, wobble) {
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    var mx = (x1 + x2) / 2 + Math.sin(frame * 0.05 + x1) * wobble;
+    var my = (y1 + y2) / 2 + Math.cos(frame * 0.05 + y1) * wobble;
+    ctx.quadraticCurveTo(mx, my, x2, y2);
+    ctx.stroke();
+  }
+  function drawCastle(ctx, x, isEnemy, hp) {
+    var col = isEnemy ? "#d97b6c" : "#e8e6d5";
+    var w = 110;
+    var top = 150;
+    var bot = 320;
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 4;
+    ctx.fillStyle = "rgba(0,0,0,0.18)";
+    // body
+    chalkLine(ctx, x - w / 2, bot, x - w / 2, top, 3);
+    chalkLine(ctx, x + w / 2, bot, x + w / 2, top, 3);
+    chalkLine(ctx, x - w / 2, top, x + w / 2, top, 3);
+    ctx.fillRect(x - w / 2, top, w, bot - top);
+    // battlements
+    for (var i = 0; i < 4; i++) {
+      var bx = x - w / 2 + 8 + i * 26;
+      chalkLine(ctx, bx, top, bx, top - 18, 2);
+      chalkLine(ctx, bx, top - 18, bx + 16, top - 18, 2);
+      chalkLine(ctx, bx + 16, top - 18, bx + 16, top, 2);
+    }
+    // gate
+    ctx.beginPath();
+    ctx.moveTo(x - 16, bot);
+    ctx.lineTo(x - 16, bot - 34);
+    ctx.quadraticCurveTo(x, bot - 58, x + 16, bot - 34);
+    ctx.lineTo(x + 16, bot);
+    ctx.closePath();
+    ctx.stroke();
+    // flag
+    chalkLine(ctx, x, top - 18, x, top - 52, 2);
+    ctx.beginPath();
+    ctx.moveTo(x, top - 52);
+    ctx.lineTo(x + 26, top - 44);
+    ctx.lineTo(x, top - 34);
+    ctx.closePath();
+    ctx.fillStyle = col;
+    ctx.fill();
+    // hp bar
+    var frac = Math.max(0, hp / CASTLE_HP);
+    ctx.fillStyle = "rgba(0,0,0,0.35)";
+    ctx.fillRect(x - 55, 122, 110, 12);
+    ctx.fillStyle = frac > 0.35 ? "#9fd9b4" : "#d97b6c";
+    ctx.fillRect(x - 55, 122, 110 * frac, 12);
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x - 55, 122, 110, 12);
+  }
+  function drawStamp(ctx, x, y, col, boost) {
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 3;
+    ctx.fillStyle = col;
+    if (boost) {
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = "#d9b441";
+    }
+    // head
+    ctx.beginPath();
+    ctx.arc(x, y - 16, 6, 0, Math.PI * 2);
+    ctx.fill();
+    // body
+    chalkLine(ctx, x, y - 10, x, y, 1.5);
+    // arms
+    chalkLine(ctx, x, y - 7, x - 8, y - 2, 1);
+    chalkLine(ctx, x, y - 7, x + 8, y - 2, 1);
+    // legs
+    chalkLine(ctx, x, y, x - 6, y + 8, 1);
+    chalkLine(ctx, x, y, x + 6, y + 8, 1);
+    ctx.shadowBlur = 0;
+  }
+  function drawWorker(ctx, castleX, count, col) {
+    var shown = Math.min(count, 8);
+    for (var i = 0; i < shown; i++) {
+      var wx = castleX + ((i % 4) - 1.5) * 26;
+      var wy = 348 + Math.floor(i / 4) * 22 + Math.sin(frame * 0.08 + i) * 2;
+      drawStamp(ctx, wx, wy, col, false);
+    }
+    if (count > 8) {
+      ctx.fillStyle = col;
+      ctx.font = "16px " + getComputedStyle(document.body).getPropertyValue("font-family");
+      ctx.fillText("+" + (count - 8), castleX + 58, 372);
+    }
+  }
+  function draw() {
+    var canvas = document.getElementById("field");
+    var ctx = canvas.getContext("2d");
+    frame++;
+
+    // board
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = "#2e4739";
+    ctx.fillRect(0, 0, 900, 420);
+
+    // faint chalk grid smudges
+    ctx.strokeStyle = "rgba(232, 230, 213, 0.07)";
+    ctx.lineWidth = 1;
+    for (var gx = 0; gx <= 900; gx += 60) {
+      ctx.beginPath();
+      ctx.moveTo(gx, 0);
+      ctx.lineTo(gx, 420);
+      ctx.stroke();
+    }
+    for (var gy = 0; gy <= 420; gy += 60) {
+      ctx.beginPath();
+      ctx.moveTo(0, gy);
+      ctx.lineTo(900, gy);
+      ctx.stroke();
+    }
+
+    // lane
+    ctx.strokeStyle = "rgba(232, 230, 213, 0.35)";
+    ctx.lineWidth = 3;
+    ctx.setLineDash([12, 10]);
+    chalkLine(ctx, 140, 300, 760, 300, 2);
+    ctx.setLineDash([]);
+
+    // rush arrow
+    if (state.screen === "playing" && state.elapsedMs < state.rushUntilMs) {
+      ctx.strokeStyle = "#d9b441";
+      ctx.lineWidth = 6;
+      ctx.setLineDash([18, 12]);
+      chalkLine(ctx, 160, 220, 720, 220, 4);
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.moveTo(720, 220);
+      ctx.lineTo(688, 202);
+      ctx.lineTo(688, 238);
+      ctx.closePath();
+      ctx.fillStyle = "#d9b441";
+      ctx.fill();
+    }
+
+    // castles
+    drawCastle(ctx, CASTLE_P_X, false, state.castlePHp);
+    drawCastle(ctx, CASTLE_E_X, true, state.castleEHp);
+
+    // workers
+    drawWorker(ctx, CASTLE_P_X + 70, state.workers, "#e8e6d5");
+    drawWorker(ctx, CASTLE_E_X - 70, state.enemyWorkers, "#d97b6c");
+
+    // soldiers
+    for (var i = 0; i < state.units.length; i++) {
+      var u = state.units[i];
+      var boost = state.elapsedMs < state.rushUntilMs && u.side === "p";
+      drawStamp(ctx, u.x, u.y, u.side === "p" ? "#e8e6d5" : "#d97b6c", boost);
+      // tiny hp tick
+      var frac = Math.max(0, u.hp / SOLDIER.hp);
+      ctx.fillStyle = "rgba(0,0,0,0.4)";
+      ctx.fillRect(u.x - 10, u.y - 30, 20, 4);
+      ctx.fillStyle = u.side === "p" ? "#9fd9b4" : "#d9b441";
+      ctx.fillRect(u.x - 10, u.y - 30, 20 * frac, 4);
+    }
+
+    // fight scribbles
+    for (var s = 0; s < scribbles.length; s++) {
+      var sc = scribbles[s];
+      sc.life--;
+      ctx.globalAlpha = Math.max(0, sc.life / sc.max);
+      ctx.strokeStyle = s % 2 ? "#d9b441" : "#e8e6d5";
+      ctx.lineWidth = 3;
+      for (var k = 0; k < 3; k++) {
+        var a = (sc.life + k * 2) * 0.9;
+        ctx.beginPath();
+        ctx.moveTo(sc.x - Math.cos(a) * 10, sc.y - Math.sin(a) * 10);
+        ctx.lineTo(sc.x + Math.cos(a) * 10, sc.y + Math.sin(a) * 10);
+        ctx.stroke();
+      }
+    }
+    ctx.globalAlpha = 1;
+    var aliveScr = [];
+    for (var q = 0; q < scribbles.length; q++) {
+      if (scribbles[q].life > 0) aliveScr.push(scribbles[q]);
+    }
+    scribbles = aliveScr;
+
+    // dust
+    for (var d = 0; d < dust.length; d++) {
+      var p = dust[d];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vx *= 0.95;
+      p.vy = p.vy * 0.95 + 0.05;
+      p.life--;
+      ctx.globalAlpha = Math.max(0, p.life / p.max) * 0.8;
+      ctx.fillStyle = "#e8e6d5";
+      ctx.fillRect(p.x, p.y, 3, 3);
+    }
+    ctx.globalAlpha = 1;
+    var aliveD = [];
+    for (var w = 0; w < dust.length; w++) {
+      if (dust[w].life > 0) aliveD.push(dust[w]);
+    }
+    dust = aliveD;
+  }
+
+  // ---------- DOM render ----------
+  function render() {
+    var names = ["ready", "won", "lost"];
+    for (var i = 0; i < names.length; i++) {
+      var el = document.getElementById("screen-" + names[i]);
+      if (!el) continue;
+      var show = state.screen === names[i];
+      if (show) el.classList.remove("hidden");
+      else el.classList.add("hidden");
+    }
+
+    document.getElementById("hud-energy").textContent = String(Math.floor(state.energy));
+    document.getElementById("hud-workers").textContent = String(state.workers);
+    document.getElementById("hud-soldiers").textContent = String(playerSoldiers());
+    document.getElementById("hud-foe").textContent =
+      Math.max(0, Math.round((state.castleEHp / CASTLE_HP) * 100)) + "%";
+    document.getElementById("hud-time").textContent = fmtTime(state.elapsedMs);
+    document.getElementById("hud-best").textContent =
+      state.bestWinMs != null
+        ? fmtTime(state.bestWinMs) + " · " + state.bestStreak + "🔥"
+        : "--";
+
+    // levers
+    var playing = state.screen === "playing";
+    var wBtn = document.getElementById("btn-worker");
+    var sBtn = document.getElementById("btn-soldier");
+    var rBtn = document.getElementById("btn-rush");
+    wBtn.disabled = !playing || state.energy < WORKER_COST;
+    sBtn.disabled = !playing || state.energy < SOLDIER_COST;
+    if (!playing) {
+      rBtn.disabled = true;
+      rBtn.textContent = "⚡ RUSH!";
+    } else if (state.elapsedMs < state.rushUntilMs) {
+      rBtn.disabled = true;
+      rBtn.textContent = "⚡ RUSHING...";
+    } else if (state.elapsedMs < state.rushCooldownUntilMs) {
+      rBtn.disabled = true;
+      var left = Math.ceil((state.rushCooldownUntilMs - state.elapsedMs) / 1000);
+      rBtn.textContent = "⚡ RUSH (" + left + "S)";
+    } else {
+      rBtn.disabled = false;
+      rBtn.textContent = "⚡ RUSH!";
+    }
+
+    // result panels
+    if (state.result) {
+      if (state.result.won) {
+        document.getElementById("win-time").textContent = fmtTime(state.result.winMs);
+        document.getElementById("win-streak").textContent =
+          "WIN STREAK: " + state.result.streak + "  ·  BEST: " + state.bestStreak;
+        var nb = document.getElementById("win-newbest");
+        if (state.result.newBest) nb.classList.remove("hidden");
+        else nb.classList.add("hidden");
+      } else {
+        document.getElementById("lose-time").textContent = fmtTime(state.result.winMs);
+      }
+    }
+
+    var statusEl = document.getElementById("status");
+    if (state.status) {
+      statusEl.textContent = state.status;
+    } else if (state.screen === "ready") {
+      statusEl.textContent = "the board is quiet... pull a lever to begin";
+    } else if (state.screen === "playing") {
+      statusEl.textContent = "workers gather · soldiers march · you call the rush";
+    } else {
+      statusEl.textContent = "chalk settles... the next battle awaits";
+    }
+    draw();
+  }
+
+  // ---------- boot ----------
+  function boot() {
+    var data = load();
+    state.bestWinMs = data.bestWinMs;
+    state.bestStreak = data.bestStreak;
+
+    document.addEventListener("keydown", onKey);
+    document.getElementById("btn-start").addEventListener("click", startGame);
+    document.getElementById("btn-again-win").addEventListener("click", startGame);
+    document.getElementById("btn-again-lose").addEventListener("click", startGame);
+    document.getElementById("btn-worker").addEventListener("click", hireWorker);
+    document.getElementById("btn-soldier").addEventListener("click", hatchSoldier);
+    document.getElementById("btn-rush").addEventListener("click", rush);
+    document.getElementById("btn-records").addEventListener("click", resetRecords);
+
+    setInterval(tick, TICK_MS);
+    render();
+  }
+
+  boot();
+</script>
+</body>
+</html>

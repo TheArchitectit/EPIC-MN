@@ -36,6 +36,7 @@ open time.html         # Example #6, Time Monster (the friendly day-tracker)
 open typing.html       # Example #7, Typing Rockets (the typing time-trial)
 open maze.html         # Example #8, Maze Maker (the maze workshop)
 open pet.html          # Example #9, Pet Hatchery (the pet training game)
+open chalk.html        # Example #10, Chalk Rush (the chalkboard RTS)
 xdg-open index.html    # Linux same files
 
 # option B — serve everything
@@ -48,7 +49,8 @@ python3 -m http.server 8123
 #         http://localhost:8123/time.html (friendly day-tracker), and
 #         http://localhost:8123/typing.html (typing time-trial), and
 #         http://localhost:8123/maze.html (maze workshop), and
-#         http://localhost:8123/pet.html (pet training game)
+#         http://localhost:8123/pet.html (pet training game), and
+#         http://localhost:8123/chalk.html (chalkboard RTS)
 ```
 
 Everything is local-only, invented data, no accounts, no installs.
@@ -66,6 +68,7 @@ Everything is local-only, invented data, no accounts, no installs.
 | `typing.html` | **Example #7 — Typing Rockets**: the retro-neon typing time-trial — type space/school/silly fuel words to fly a rocket to the finish line, beat the clock on three tracks, and chase new best times |
 | `maze.html` | **Example #8 — Maze Maker**: the neon build-and-solve maze workshop — paint glowing walls, hide treasures, then steer a light-cycle ball to the goal with arrows or clicks and chase best runs per maze |
 | `pet.html` | **Example #9 — Pet Hatchery**: the storybook pixel pet game — hatch an egg, train a wiggly pet with tap-timing and memory tricks, then star in a talent show scored with hand-drawn stars |
+| `chalk.html` | **Example #10 — Chalk Rush**: the chalkboard real-time strategy game — hire workers for energy, hatch auto-battling chalk soldiers, pull the big RUSH lever, and smash the rival general's castle |
 | `docs/reverse-prompt-guide.md` | **The playbook** — how students reverse-prompt with OpenSpec, with examples and drills |
 | `docs/runbook.md` | The 10-minute demo session script for the teacher/host (with troubleshooting) |
 | `docs/event-card.md` | A printable one-page journey card for the booth |
@@ -101,6 +104,7 @@ archived into its spec:
 - `openspec/specs/typing-rockets/spec.md` — the typing time-trial (Example #7)
 - `openspec/specs/maze-maker/spec.md` — the neon maze workshop (Example #8)
 - `openspec/specs/pet-hatchery/spec.md` — the storybook pet game (Example #9)
+- `openspec/specs/chalk-rush/spec.md` — the chalkboard RTS (Example #10)
 
 `openspec/changes/archive/` holds the complete history of every change.
 
