@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Street Hoops — EPIC-MN</title>
+<style>
+  :root {
+    --dusk: #7a2d5c;
+    --asphalt: #3a3d44;
+    --sky: #ff6b35;
+    --chalk: #f4f1ea;
+    --ink: #1c1e24;
+    --cream: #ffe9c7;
+    --team: #2f6fed;
+    --rival: #e8482f;
+    --chain: #8a929e;
+    --shadow: 5px 5px 0 var(--ink);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+      radial-gradient(1200px 700px at 50% -10%, #ff6b35 0%, var(--dusk) 55%, #4a2458 100%);
+    color: var(--cream);
+    font-family: "Trebuchet MS", "Verdana", sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 14px 10px 26px;
+  }
+  .top {
+    width: 100%;
+    max-width: 620px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(22px, 5vw, 34px);
+    letter-spacing: 3px;
+    color: var(--chalk);
+    text-shadow: 3px 3px 0 var(--ink), 6px 6px 0 rgba(0,0,0,0.35);
+    font-weight: 900;
+  }
+  .btn {
+    font-family: inherit;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    color: var(--ink);
+    background: var(--chalk);
+    border: 3px solid var(--ink);
+    border-radius: 12px;
+    padding: 10px 14px;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    touch-action: manipulation;
+    user-select: none;
+  }
+  .btn:hover { transform: translate(-1px, -1px); box-shadow: 6px 6px 0 var(--ink); }
+  .btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink); }
+  .btn.ghost { background: var(--asphalt); color: var(--cream); border-color: var(--sky); }
+  .btn.big { font-size: 18px; padding: 14px 26px; background: var(--sky); color: var(--cream); }
+  .btn.pad { font-size: 20px; min-width: 72px; min-height: 56px; background: var(--chalk); }
+  .btn.act { background: var(--team); color: var(--cream); min-width: 88px; }
+  .btn.act.hot { background: var(--rival); }
+  main {
+    width: 100%;
+    max-width: 620px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .boardwrap {
+    position: relative;
+    margin: 0 auto;
+    border-radius: 14px;
+    border: 4px solid var(--ink);
+    box-shadow: 8px 8px 0 rgba(0,0,0,0.45);
+    overflow: hidden;
+    background: var(--asphalt);
+    width: 100%;
+    max-width: 560px;
+    align-self: center;
+  }
+  canvas { width: 100%; height: auto; display: block; }
+  .screen {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    text-align: center;
+    padding: 18px;
+    background: rgba(28, 30, 36, 0.84);
+  }
+  .screen.hidden { display: none; }
+  .screen h2 {
+    margin: 0;
+    font-size: clamp(26px, 7vw, 40px);
+    letter-spacing: 3px;
+    color: var(--chalk);
+    text-shadow: 3px 3px 0 var(--rival);
+    font-weight: 900;
+  }
+  .rules {
+    font-size: 13px;
+    line-height: 1.9;
+    letter-spacing: 1px;
+    color: var(--cream);
+  }
+  .big-score {
+    font-size: clamp(36px, 9vw, 56px);
+    font-weight: 900;
+    color: var(--chalk);
+    text-shadow: 4px 4px 0 var(--team);
+  }
+  .banner {
+    background: var(--sky);
+    color: var(--ink);
+    font-weight: 900;
+    letter-spacing: 2px;
+    padding: 8px 14px;
+    border-radius: 12px;
+    border: 3px solid var(--ink);
+    box-shadow: var(--shadow);
+    margin: 6px;
+    animation: bounce 0.7s ease-in-out infinite alternate;
+  }
+  .banner.hidden { display: none; }
+  .banner.win { background: var(--team); color: var(--cream); }
+  .banner.lose { background: var(--rival); color: var(--cream); }
+  @keyframes bounce {
+    from { transform: translateY(0) rotate(-2deg); }
+    to { transform: translateY(-5px) rotate(2deg); }
+  }
+  .status {
+    font-size: 12px;
+    letter-spacing: 1px;
+    color: var(--cream);
+    text-align: center;
+    min-height: 16px;
+  }
+  .hud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 12px 0 6px;
+    justify-content: space-between;
+  }
+  .stat {
+    flex: 1 1 100px;
+    background: var(--asphalt);
+    border: 3px solid var(--ink);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 6px 10px;
+    text-align: center;
+  }
+  .stat .lbl {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--sky);
+    font-weight: 900;
+  }
+  .stat .val {
+    display: block;
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--chalk);
+  }
+  .levers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    margin-top: 4px;
+  }
+  .toast {
+    position: absolute;
+    left: 50%;
+    top: 14px;
+    transform: translateX(-50%);
+    background: var(--chalk);
+    color: var(--ink);
+    font-weight: 900;
+    letter-spacing: 1px;
+    padding: 12px 22px;
+    border-radius: 999px;
+    border: 3px solid var(--ink);
+    box-shadow: var(--shadow);
+    z-index: 60;
+    white-space: nowrap;
+  }
+  .toast.hidden { display: none; }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>STREET HOOPS</h1>
+  <button id="btn-records" class="btn ghost">CLEAR RECORDS</button>
+</header>
+<main>
+  <div class="boardwrap">
+    <canvas id="road" width="540" height="720"></canvas>
+    <div id="screen-ready" class="screen">
+      <h2>STREET HOOPS!</h2>
+      <div class="rules">
+        🏀 2-ON-2 BLACKTOP — 45 SECONDS ON THE SUNSET COURT<br>
+        ◀ ▶ ▲ ▼ DRIVE THE BALL HANDLER, SHAKE THE DEFENDER<br>
+        🎯 SHOOT FROM THE OPEN — DEEP SHOTS COUNT THREE!<br>
+        🔥 FOULS EARN FREE THROWS — SWISHES BUILD A STREAK
+      </div>
+      <div id="ready-records" class="status">NO RECORDS YET</div>
+      <button id="btn-start" class="btn big">START THE GAME</button>
+      <div class="status">arrows / WASD drive · Space shoots · P passes · Shift turbos · Enter starts</div>
+    </div>
+    <div id="screen-over" class="screen hidden">
+      <h2>BUZZER!</h2>
+      <div id="over-title" class="banner">YOU WIN!</div>
+      <div id="over-score" class="big-score">0 — 0</div>
+      <div id="over-info" class="rules">MARGIN 0 · STREAK 0</div>
+      <div id="over-newbest" class="banner hidden">NEW BEST!</div>
+      <button id="btn-again" class="btn big">PLAY AGAIN</button>
+    </div>
+    <div id="toast" class="toast hidden"></div>
+  </div>
+
+  <section class="hud">
+    <div class="stat"><span class="lbl">YOU</span><span id="hud-you" class="val">0</span></div>
+    <div class="stat"><span class="lbl">RIVALS</span><span id="hud-rivals" class="val">0</span></div>
+    <div class="stat"><span class="lbl">CLOCK</span><span id="hud-clock" class="val">0:45</span></div>
+    <div class="stat"><span class="lbl">STREAK</span><span id="hud-streak" class="val">0</span></div>
+  </section>
+
+  <div class="levers">
+    <button id="btn-up" class="btn pad">▲</button>
+  </div>
+  <div class="levers">
+    <button id="btn-left" class="btn pad">◀</button>
+    <button id="btn-down" class="btn pad">▼</button>
+    <button id="btn-right" class="btn pad">▶</button>
+  </div>
+  <div class="levers">
+    <button id="btn-pass" class="btn act">PASS</button>
+    <button id="btn-shoot" class="btn act hot">SHOOT</button>
+    <button id="btn-turbo" class="btn act">TURBO</button>
+  </div>
+  <div id="status" class="status">the court is warming up... all ball!</div>
+</main>
+
+<script>
+  "use strict";
+
+  // ---------- constants ----------
+  var GKEY = "street-hoops:v1";
+  var TICK_MS = 100;
+  var MATCH_TICKS = 450;
+  var LEFT_HOOP = { x: 70, y: 250 };
+  var RIGHT_HOOP = { x: 470, y: 250 };
+  var THREE_DIST = 250;
+  var DRIVE_SPEED = 7;
+  var GUARD_SPEED = 6.2;
+  var TURBO_MULT = 1.7;
+  var TURBO_DRAIN = 5;
+  var TURBO_REFILL = 1.5;
+  var TURBO_MIN = 15;
+  var OPEN_PX = 90;
+  var ODDS_OPEN = 0.8;
+  var ODDS_GUARDED = 0.32;
+  var ODDS_THREE_PEN = 0.12;
+  var FOUL_CHANCE = 0.28;
+  var FLIGHT_TICKS = 10;
+  var PASS_TICKS = 4;
+  var FT_SPEED = 6;
+  var FT_GREEN = 14;
+  var FT_PERFECT = 5;
+  var OPP_BASE_CHANCE = 0.55;
+  var OPP_DEF_PEN = 0.3;
+  var OPP_CD_MIN = 22;
+  var OPP_CD_SPAN = 9;
+  var DEFEND_PX = 100;
+
+  // ---------- state ----------
+  var state = {
+    screen: "ready",
+    mode: "play",
+    clockTicks: MATCH_TICKS,
+    scoreYou: 0,
+    scoreRival: 0,
+    possession: "you",
+    owner: 0,
+    ctrl: 0,
+    actors: [
+      { x: 300, y: 460, team: "team" },
+      { x: 200, y: 520, team: "team" },
+      { x: 330, y: 470, team: "rival" },
+      { x: 140, y: 420, team: "rival" }
+    ],
+    move: { l: false, r: false, u: false, d: false },
+    turboHeld: false,
+    turboFuel: 100,
+    shot: null,
+    passFlight: null,
+    ft: null,
+    ftStreak: 0,
+    matchBestStreak: 0,
+    oppTimer: 26,
+    floats: [],
+    frame: 0,
+    bestMargin: 0,
+    bestStreak: 0,
+    result: null,
+    status: ""
+  };
+
+  // ---------- helpers ----------
+  function hash(i) {
+    var x = Math.sin(i * 127.1) * 43758.5453;
+    return x - Math.floor(x);
+  }
+  function dist(a, b) {
+    return Math.sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
+  }
+  function formatClock(ticks) {
+    var s = Math.ceil(ticks / 10);
+    return "0:" + (s < 10 ? "0" + s : String(s));
+  }
+
+  // ---------- storage ----------
+  function seedRecords() {
+    return { bestMargin: 0, bestStreak: 0 };
+  }
+  function loadRecords() {
+    try {
+      var raw = localStorage.getItem(GKEY);
+      if (!raw) return seedRecords();
+      var d = JSON.parse(raw);
+      if (typeof d.bestMargin !== "number" || typeof d.bestStreak !== "number") return seedRecords();
+      return d;
+    } catch (e) {
+      return seedRecords();
+    }
+  }
+  function saveRecords() {
+    try {
+      localStorage.setItem(GKEY, JSON.stringify({
+        bestMargin: state.bestMargin,
+        bestStreak: state.bestStreak
+      }));
+    } catch (e) { /* save failures never break play */ }
+  }
+
+  var toastTimer = null;
+  function toast(msg) {
+    var el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.remove("hidden");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      el.classList.add("hidden");
+    }, 1600);
+    state.status = msg.toLowerCase();
+  }
+
+  // ---------- game flow ----------
+  function startGame() {
+    state.screen = "running";
+    state.mode = "play";
+    state.clockTicks = MATCH_TICKS;
+    state.scoreYou = 0;
+    state.scoreRival = 0;
+    state.possession = "you";
+    state.owner = 0;
+    state.ctrl = 0;
+    state.actors = [
+      { x: 300, y: 460, team: "team" },
+      { x: 200, y: 520, team: "team" },
+      { x: 330, y: 470, team: "rival" },
+      { x: 140, y: 420, team: "rival" }
+    ];
+    state.move = { l: false, r: false, u: false, d: false };
+    state.turboHeld = false;
+    state.turboFuel = 100;
+    state.shot = null;
+    state.passFlight = null;
+    state.ft = null;
+    state.ftStreak = 0;
+    state.matchBestStreak = 0;
+    state.oppTimer = 26;
+    state.floats = [];
+    state.result = null;
+    toast("ALL BALL!");
+    render();
+  }
+
+  function gameOver() {
+    state.screen = "over";
+    state.shot = null;
+    state.passFlight = null;
+    state.mode = "play";
+    state.ft = null;
+    var margin = state.scoreYou - state.scoreRival;
+    var newBest = (margin > state.bestMargin) || (state.matchBestStreak > state.bestStreak);
+    if (margin > state.bestMargin) state.bestMargin = margin;
+    if (state.matchBestStreak > state.bestStreak) state.bestStreak = state.matchBestStreak;
+    saveRecords();
+    state.result = {
+      scoreYou: state.scoreYou,
+      scoreRival: state.scoreRival,
+      margin: margin,
+      streak: state.matchBestStreak,
+      newBest: newBest
+    };
+    state.floats = [];
+    render();
+  }
+
+  // ---------- controls ----------
+  function setMove(dir, on) {
+    if (on) {
+      if (dir === "l") { state.move.l = true; state.move.r = false; }
+      if (dir === "r") { state.move.r = true; state.move.l = false; }
+      if (dir === "u") { state.move.u = true; state.move.d = false; }
+      if (dir === "d") { state.move.d = true; state.move.u = false; }
+    } else {
+      state.move[dir] = false;
+    }
+    render();
+  }
+  function setTurbo(on) {
+    state.turboHeld = !!on;
+  }
+  function action() {
+    if (state.mode === "ft") tapFT();
+    else shoot();
+  }
+  function pass() {
+    if (state.screen !== "running" || state.mode !== "play") return;
+    if (state.possession !== "you") return;
+    if (state.shot || state.passFlight) return;
+    state.passFlight = { t: 0, ticks: PASS_TICKS, to: state.owner === 0 ? 1 : 0 };
+    state.status = "passing to the open teammate...";
+    render();
+  }
+  function shoot() {
+    if (state.screen !== "running" || state.mode !== "play") return;
+    if (state.possession !== "you" || state.shot || state.passFlight) return;
+    var me = state.actors[state.owner];
+    var d = dist(me, RIGHT_HOOP);
+    var three = d > THREE_DIST;
+    var guarded = dist(state.actors[2], me) < OPEN_PX;
+    if (guarded && Math.random() < FOUL_CHANCE) {
+      startFreeThrow();
+      return;
+    }
+    var chance = (guarded ? ODDS_GUARDED : ODDS_OPEN) - (three ? ODDS_THREE_PEN : 0);
+    var made = Math.random() < chance;
+    state.shot = {
+      t: 0, ticks: FLIGHT_TICKS, made: made, three: three,
+      team: "you", fromX: me.x, fromY: me.y - 40,
+      toX: RIGHT_HOOP.x, toY: RIGHT_HOOP.y
+    };
+    state.status = three ? "letting it fly from deep..." : "pulling up for the shot...";
+    render();
+  }
+  function rivalShoot() {
+    var opp = state.actors[3];
+    var d = dist(opp, LEFT_HOOP);
+    var three = d > THREE_DIST;
+    var defended = dist(state.actors[0], opp) < DEFEND_PX;
+    var chance = (OPP_BASE_CHANCE - (defended ? OPP_DEF_PEN : 0)) - (three ? ODDS_THREE_PEN : 0);
+    var made = Math.random() < chance;
+    state.shot = {
+      t: 0, ticks: FLIGHT_TICKS, made: made, three: three,
+      team: "rival", fromX: opp.x, fromY: opp.y - 40,
+      toX: LEFT_HOOP.x, toY: LEFT_HOOP.y
+    };
+    state.status = defended ? "great defense — they shoot over you!" : "the rivals are shooting...";
+    render();
+  }
+
+  // ---------- free throws ----------
+  function startFreeThrow() {
+    state.mode = "ft";
+    state.ft = { marker: 0, dir: 1 };
+    state.shot = null;
+    state.passFlight = null;
+    toast("FOUL! FREE THROW!");
+    render();
+  }
+  function tapFT() {
+    if (state.mode !== "ft" || !state.ft) return;
+    var m = state.ft.marker;
+    var d = Math.abs(m - 50);
+    if (d < FT_GREEN) {
+      var pts = 1 + state.ftStreak;
+      state.scoreYou += pts;
+      state.ftStreak++;
+      if (state.ftStreak > state.matchBestStreak) state.matchBestStreak = state.ftStreak;
+      if (d < FT_PERFECT) {
+        toast("SWISH! +" + pts);
+        state.floats.push({ x: 270, y: 320, text: "SWISH! +" + pts, ms: 1100 });
+      } else {
+        toast("GOOD! +" + pts);
+        state.floats.push({ x: 270, y: 320, text: "+" + pts, ms: 1100 });
+      }
+    } else {
+      state.ftStreak = 0;
+      toast("MISS! STREAK RESET");
+      state.floats.push({ x: 270, y: 320, text: "MISS!", ms: 1100 });
+    }
+    state.mode = "play";
+    state.ft = null;
+    state.possession = "rival";
+    state.ctrl = 0;
+    state.oppTimer = 22 + Math.floor(hash(state.frame + 3) * OPP_CD_SPAN);
+    render();
+  }
+
+  // ---------- clock tick ----------
+  function tick() {
+    if (state.screen !== "running") return;
+    state.frame++;
+
+    // free throw: the clock pauses, the marker sweeps
+    if (state.mode === "ft") {
+      if (state.ft) {
+        state.ft.marker += FT_SPEED * state.ft.dir;
+        if (state.ft.marker >= 100) { state.ft.marker = 100; state.ft.dir = -1; }
+        if (state.ft.marker <= 0) { state.ft.marker = 0; state.ft.dir = 1; }
+      }
+      render();
+      return;
+    }
+
+    // match clock
+    state.clockTicks--;
+    if (state.clockTicks <= 0) {
+      state.clockTicks = 0;
+      gameOver();
+      return;
+    }
+
+    // ball handler movement (you always drive a blue jersey)
+    var me = state.actors[state.ctrl];
+    var turbo = state.turboHeld && state.turboFuel >= TURBO_MIN;
+    var speed = DRIVE_SPEED * (turbo ? TURBO_MULT : 1);
+    if (state.turboHeld && state.turboFuel >= TURBO_MIN) state.turboFuel -= TURBO_DRAIN;
+    else state.turboFuel = Math.min(100, state.turboFuel + TURBO_REFILL);
+    if (state.move.l) me.x -= speed;
+    if (state.move.r) me.x += speed;
+    if (state.move.u) me.y -= speed;
+    if (state.move.d) me.y += speed;
+    if (me.x < 40) me.x = 40;
+    if (me.x > 500) me.x = 500;
+    if (me.y < 320) me.y = 320;
+    if (me.y > 560) me.y = 560;
+
+    // teammate drifts to an open spot
+    var mate = state.actors[state.ctrl === 0 ? 1 : 0];
+    var mateTarget = { x: Math.max(60, Math.min(480, (state.possession === "you" ? state.actors[state.owner].x : 300) + 140)), y: 430 };
+    mate.x += (mateTarget.x - mate.x) * 0.05;
+    mate.y += (mateTarget.y - mate.y) * 0.05;
+
+    // the rival guard chases your ball handler (or roams),
+    // holding a small standoff so the sprites stay readable
+    var guard = state.actors[2];
+    var gTarget = state.possession === "you"
+      ? { x: state.actors[state.owner].x - 30, y: state.actors[state.owner].y + 8 }
+      : { x: 300, y: 440 };
+    var gx = gTarget.x - guard.x;
+    var gy = gTarget.y - guard.y;
+    var gd = Math.sqrt(gx * gx + gy * gy) || 1;
+    guard.x += (gx / gd) * GUARD_SPEED;
+    guard.y += (gy / gd) * GUARD_SPEED;
+
+    // rival ball handler attacks the left hoop
+    var opp = state.actors[3];
+    if (state.possession === "rival") {
+      var wobble = hash(Math.floor(state.frame / 40) * 17);
+      var spot = { x: 120 + wobble * 120, y: 380 + wobble * 120 };
+      opp.x += (spot.x - opp.x) * 0.04;
+      opp.y += (spot.y - opp.y) * 0.04;
+      state.oppTimer--;
+      if (state.oppTimer <= 0 && !state.shot) {
+        rivalShoot();
+        state.oppTimer = OPP_CD_MIN + Math.floor(hash(state.frame + 7) * OPP_CD_SPAN);
+      }
+    } else {
+      opp.x += (160 - opp.x) * 0.03;
+      opp.y += (420 - opp.y) * 0.03;
+    }
+
+    // pass flight
+    if (state.passFlight) {
+      state.passFlight.t++;
+      if (state.passFlight.t >= state.passFlight.ticks) {
+        state.owner = state.passFlight.to;
+        state.ctrl = state.owner;
+        state.passFlight = null;
+        state.status = "the teammate has the rock!";
+        render();
+      }
+    }
+
+    // shot flight
+    if (state.shot) {
+      state.shot.t++;
+      if (state.shot.t >= state.shot.ticks) {
+        var s = state.shot;
+        if (s.made) {
+          var pts = s.three ? 3 : 2;
+          if (s.team === "you") state.scoreYou += pts;
+          else state.scoreRival += pts;
+          toast((s.team === "you" ? "SWISH! +" : "THEY SCORE! +") + pts);
+          state.floats.push({ x: s.toX, y: s.toY + 60, text: "+" + pts, ms: 1100 });
+        } else {
+          toast(s.team === "you" ? "BRICK! OFF THE RIM" : "MISSED! YOUR BALL");
+          state.floats.push({ x: s.toX, y: s.toY + 60, text: "BRICK!", ms: 1100 });
+        }
+        state.shot = null;
+        state.possession = s.team === "you" ? "rival" : "you";
+        state.owner = 0;
+        state.ctrl = 0;
+        if (state.possession === "rival") {
+          state.oppTimer = OPP_CD_MIN + Math.floor(hash(state.frame + 11) * OPP_CD_SPAN);
+        }
+        render();
+      }
+    }
+
+    // floats fade
+    for (var fl = state.floats.length - 1; fl >= 0; fl--) {
+      state.floats[fl].ms -= TICK_MS;
+      state.floats[fl].y -= 1.4;
+      if (state.floats[fl].ms <= 0) state.floats.splice(fl, 1);
+    }
+
+    render();
+  }
+
+  // ---------- DOM render ----------
+  function render() {
+    document.getElementById("hud-you").textContent = String(state.scoreYou);
+    document.getElementById("hud-rivals").textContent = String(state.scoreRival);
+    document.getElementById("hud-clock").textContent = formatClock(state.clockTicks);
+    document.getElementById("hud-streak").textContent = String(state.ftStreak);
+
+    var ready = document.getElementById("screen-ready");
+    var over = document.getElementById("screen-over");
+    if (state.screen === "ready") {
+      ready.classList.remove("hidden");
+      over.classList.add("hidden");
+      var hasRec = state.bestMargin !== 0 || state.bestStreak !== 0;
+      document.getElementById("ready-records").textContent = hasRec
+        ? "BEST MARGIN " + (state.bestMargin > 0 ? "+" : "") + state.bestMargin +
+          " · LONGEST STREAK " + state.bestStreak
+        : "NO RECORDS YET";
+    } else if (state.screen === "over") {
+      ready.classList.add("hidden");
+      over.classList.remove("hidden");
+      var r = state.result || { scoreYou: 0, scoreRival: 0, margin: 0, streak: 0, newBest: false };
+      var title = document.getElementById("over-title");
+      title.textContent = r.margin > 0 ? "YOU WIN!" : (r.margin < 0 ? "RIVALS WIN" : "TIE GAME");
+      title.className = "banner " + (r.margin > 0 ? "win" : (r.margin < 0 ? "lose" : ""));
+      document.getElementById("over-score").textContent = r.scoreYou + " — " + r.scoreRival;
+      document.getElementById("over-info").textContent =
+        "MARGIN " + (r.margin > 0 ? "+" : "") + r.margin + " · STREAK " + r.streak;
+      var nb = document.getElementById("over-newbest");
+      if (r.newBest) nb.classList.remove("hidden");
+      else nb.classList.add("hidden");
+    } else {
+      ready.classList.add("hidden");
+      over.classList.add("hidden");
+    }
+    document.getElementById("status").textContent =
+      state.status || "the court is warming up... all ball!";
+  }
+
+  // ---------- canvas draw ----------
+  function draw() {
+    var canvas = document.getElementById("road");
+    var ctx = canvas.getContext("2d");
+
+    // sunset sky
+    var sky = ctx.createLinearGradient(0, 0, 0, 340);
+    sky.addColorStop(0, "#7a2d5c");
+    sky.addColorStop(0.55, "#ff6b35");
+    sky.addColorStop(1, "#ffb13d");
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, 540, 340);
+
+    // sun glow
+    var glow = ctx.createRadialGradient(270, 120, 10, 270, 120, 110);
+    glow.addColorStop(0, "rgba(255, 233, 199, 0.9)");
+    glow.addColorStop(1, "rgba(255, 107, 53, 0)");
+    ctx.fillStyle = glow;
+    ctx.fillRect(150, 0, 240, 240);
+    ctx.fillStyle = "#ffe9c7";
+    ctx.beginPath();
+    ctx.arc(270, 120, 34, 0, Math.PI * 2);
+    ctx.fill();
+
+    // city skyline
+    for (var b = 0; b < 9; b++) {
+      var bx = b * 62 + (hash(b * 7 + 1) * 12);
+      var bh = 60 + hash(b * 13 + 3) * 90;
+      ctx.fillStyle = b % 2 ? "#5c2d52" : "#4a2458";
+      ctx.fillRect(bx, 300 - bh, 46, bh + 40);
+    }
+
+    // chain-link fence
+    ctx.fillStyle = "rgba(138, 146, 158, 0.22)";
+    ctx.fillRect(0, 210, 540, 130);
+    ctx.strokeStyle = "rgba(138, 146, 158, 0.55)";
+    ctx.lineWidth = 2;
+    for (var fx = -140; fx < 700; fx += 22) {
+      ctx.beginPath();
+      ctx.moveTo(fx, 210);
+      ctx.lineTo(fx + 130, 340);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(fx + 130, 210);
+      ctx.lineTo(fx, 340);
+      ctx.stroke();
+    }
+    ctx.strokeStyle = "#8a929e";
+    ctx.lineWidth = 5;
+    for (var p = 0; p < 6; p++) {
+      ctx.beginPath();
+      ctx.moveTo(p * 110 + 10, 205);
+      ctx.lineTo(p * 110 + 10, 345);
+      ctx.stroke();
+    }
+
+    // painted fence scoreboard
+    ctx.fillStyle = "#1c1e24";
+    ctx.fillRect(160, 222, 220, 52);
+    ctx.fillStyle = "#f4f1ea";
+    ctx.font = "900 22px 'Trebuchet MS', sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("YOU " + state.scoreYou + "  —  " + state.scoreRival + " RIVALS", 270, 246);
+    ctx.fillStyle = "#ffb13d";
+    ctx.font = "900 16px 'Trebuchet MS', sans-serif";
+    ctx.fillText(formatClock(state.clockTicks), 270, 268);
+
+    // asphalt
+    ctx.fillStyle = "#3a3d44";
+    ctx.fillRect(0, 340, 540, 380);
+    ctx.fillStyle = "#43474f";
+    ctx.fillRect(0, 340, 540, 26);
+
+    // chalk court lines
+    ctx.strokeStyle = "rgba(244, 241, 234, 0.8)";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(0, 360);
+    ctx.lineTo(540, 360);
+    ctx.stroke();
+    // keys
+    ctx.strokeRect(20, 430, 130, 150);
+    ctx.strokeRect(390, 430, 130, 150);
+    // arcs around each key
+    ctx.beginPath();
+    ctx.arc(150, 505, 95, -Math.PI / 2, Math.PI / 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(390, 505, 95, Math.PI / 2, -Math.PI / 2);
+    ctx.stroke();
+    // half-court line
+    ctx.beginPath();
+    ctx.moveTo(270, 360);
+    ctx.lineTo(270, 640);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(270, 505, 46, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // rims + backboards + nets
+    drawHoop(ctx, LEFT_HOOP, 1);
+    drawHoop(ctx, RIGHT_HOOP, -1);
+
+    // players
+    drawPlayer(ctx, state.actors[1], state.ctrl === 1);
+    drawPlayer(ctx, state.actors[3], false);
+    drawPlayer(ctx, state.actors[2], false);
+    drawPlayer(ctx, state.actors[0], state.ctrl === 0);
+
+    // the rock
+    if (state.shot) {
+      var t = state.shot.t / state.shot.ticks;
+      var bx = state.shot.fromX + (state.shot.toX - state.shot.fromX) * t;
+      var by = state.shot.fromY + (state.shot.toY - state.shot.fromY) * t - Math.sin(Math.PI * t) * 110;
+      drawBall(ctx, bx, by, 1);
+    } else if (state.passFlight) {
+      var pt = state.passFlight.t / state.passFlight.ticks;
+      var a0 = state.actors[state.owner];
+      var a1 = state.actors[state.passFlight.to];
+      drawBall(ctx, a0.x + (a1.x - a0.x) * pt, a0.y - 40 + (a1.y - a0.y) * pt - Math.sin(Math.PI * pt) * 60, 1);
+    } else {
+      var me = state.actors[state.possession === "you" ? state.owner : 3];
+      var bounce = Math.abs(Math.sin(state.frame * 0.25)) * 26;
+      drawBall(ctx, me.x + 26, me.y - 30 - bounce, 0.9);
+    }
+
+    // free-throw meter
+    if (state.mode === "ft" && state.ft) {
+      ctx.fillStyle = "rgba(28, 30, 36, 0.82)";
+      ctx.fillRect(60, 600, 420, 88);
+      ctx.fillStyle = "#f4f1ea";
+      ctx.font = "900 18px 'Trebuchet MS', sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("FREE THROW — TAP SHOOT!", 270, 626);
+      // bar
+      ctx.fillStyle = "#1c1e24";
+      ctx.fillRect(100, 644, 340, 22);
+      // green + perfect zones
+      ctx.fillStyle = "rgba(90, 125, 42, 0.9)";
+      ctx.fillRect(100 + (50 - FT_GREEN) * 3.4, 644, FT_GREEN * 2 * 3.4, 22);
+      ctx.fillStyle = "rgba(255, 177, 61, 0.95)";
+      ctx.fillRect(100 + (50 - FT_PERFECT) * 3.4, 644, FT_PERFECT * 2 * 3.4, 22);
+      // marker
+      var mx = 100 + state.ft.marker * 3.4;
+      ctx.fillStyle = "#e8482f";
+      ctx.fillRect(mx - 3, 638, 6, 34);
+    }
+
+    // splash floats
+    ctx.textAlign = "center";
+    for (var fl = 0; fl < state.floats.length; fl++) {
+      var ft = state.floats[fl];
+      ctx.fillStyle = ft.text === "MISS!" || ft.text === "BRICK!" ? "#e8482f" : "#ffe9c7";
+      ctx.font = "900 22px 'Trebuchet MS', sans-serif";
+      ctx.fillText(ft.text, ft.x, ft.y);
+    }
+  }
+
+  function drawHoop(ctx, h, face) {
+    // backboard
+    ctx.fillStyle = "#f4f1ea";
+    ctx.fillRect(h.x - 8, h.y - 70, 16, 76);
+    ctx.fillStyle = "#e8482f";
+    ctx.fillRect(h.x - 2, h.y - 42, 4, 22);
+    // pole
+    ctx.fillStyle = "#5c2d52";
+    ctx.fillRect(h.x + face * 8, h.y - 6, 10, 100);
+    // rim
+    ctx.strokeStyle = "#e8482f";
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(h.x - face * 26, h.y);
+    ctx.lineTo(h.x + face * 6, h.y);
+    ctx.stroke();
+    // net
+    ctx.strokeStyle = "#f4f1ea";
+    ctx.lineWidth = 2;
+    for (var n = 0; n < 5; n++) {
+      var nx = h.x - face * 22 + n * face * 6;
+      ctx.beginPath();
+      ctx.moveTo(nx, h.y + 2);
+      ctx.lineTo(nx + face * 4, h.y + 30);
+      ctx.stroke();
+    }
+  }
+
+  function drawPlayer(ctx, a, hasBall) {
+    var scale = 0.85 + (a.y - 320) / 240 * 0.35;
+    ctx.save();
+    ctx.translate(a.x, a.y);
+    ctx.scale(scale, scale);
+    // shadow
+    ctx.fillStyle = "rgba(0,0,0,0.35)";
+    ctx.beginPath();
+    ctx.ellipse(0, 14, 26, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // legs + sneakers
+    ctx.fillStyle = "#1c1e24";
+    ctx.fillRect(-16, -12, 12, 26);
+    ctx.fillRect(4, -12, 12, 26);
+    ctx.fillStyle = "#f4f1ea";
+    ctx.fillRect(-18, 10, 16, 8);
+    ctx.fillRect(2, 10, 16, 8);
+    // jersey
+    ctx.fillStyle = a.team === "team" ? "#2f6fed" : "#e8482f";
+    ctx.fillRect(-22, -52, 44, 44);
+    ctx.fillStyle = "#f4f1ea";
+    ctx.fillRect(-22, -52, 44, 8);
+    // arms
+    ctx.fillStyle = a.team === "team" ? "#2f6fed" : "#e8482f";
+    ctx.fillRect(-32, -48, 12, 28);
+    ctx.fillRect(20, -48, 12, 28);
+    // head + headband
+    ctx.fillStyle = "#d9a05b";
+    ctx.beginPath();
+    ctx.arc(0, -70, 16, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = a.team === "team" ? "#ffb13d" : "#ffe9c7";
+    ctx.fillRect(-16, -80, 32, 8);
+    // ball indicator ring on the handler
+    if (hasBall) {
+      ctx.strokeStyle = "#ffb13d";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(0, -70, 22, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawBall(ctx, x, y, s) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(s, s);
+    ctx.fillStyle = "#ff7a2f";
+    ctx.beginPath();
+    ctx.arc(0, 0, 13, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#2a1408";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-13, 0);
+    ctx.lineTo(13, 0);
+    ctx.moveTo(0, -13);
+    ctx.lineTo(0, 13);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(0, 0, 8, -0.9, 0.9);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // ---------- wiring ----------
+  document.addEventListener("keydown", function (e) {
+    var k = e.key;
+    if (k === "Enter") {
+      if (state.screen !== "running") startGame();
+      return;
+    }
+    if (k === " " || k === "Spacebar") { action(); return; }
+    if (k === "p" || k === "P") { pass(); return; }
+    if (k === "Shift") { setTurbo(true); return; }
+    if (k === "ArrowLeft" || k === "a" || k === "A") setMove("l", true);
+    else if (k === "ArrowRight" || k === "d" || k === "D") setMove("r", true);
+    else if (k === "ArrowUp" || k === "w" || k === "W") setMove("u", true);
+    else if (k === "ArrowDown" || k === "s" || k === "S") setMove("d", true);
+  });
+  document.addEventListener("keyup", function (e) {
+    var k = e.key;
+    if (k === "Shift") { setTurbo(false); return; }
+    if (k === "ArrowLeft" || k === "a" || k === "A") setMove("l", false);
+    else if (k === "ArrowRight" || k === "d" || k === "D") setMove("r", false);
+    else if (k === "ArrowUp" || k === "w" || k === "W") setMove("u", false);
+    else if (k === "ArrowDown" || k === "s" || k === "S") setMove("d", false);
+  });
+
+  document.getElementById("btn-start").addEventListener("click", startGame);
+  document.getElementById("btn-again").addEventListener("click", startGame);
+  document.getElementById("btn-left").addEventListener("click", function () { setMove("l", !state.move.l); });
+  document.getElementById("btn-right").addEventListener("click", function () { setMove("r", !state.move.r); });
+  document.getElementById("btn-up").addEventListener("click", function () { setMove("u", !state.move.u); });
+  document.getElementById("btn-down").addEventListener("click", function () { setMove("d", !state.move.d); });
+  document.getElementById("btn-pass").addEventListener("click", pass);
+  document.getElementById("btn-shoot").addEventListener("click", action);
+  document.getElementById("btn-turbo").addEventListener("click", function () { setTurbo(!state.turboHeld); });
+  document.getElementById("btn-records").addEventListener("click", function () {
+    state.bestMargin = 0;
+    state.bestStreak = 0;
+    saveRecords();
+    toast("RECORDS CLEARED");
+    render();
+  });
+
+  // ---------- boot ----------
+  (function boot() {
+    var rec = loadRecords();
+    state.bestMargin = rec.bestMargin;
+    state.bestStreak = rec.bestStreak;
+    render();
+    setInterval(function () {
+      tick();
+      draw();
+    }, TICK_MS);
+  })();
+</script>
+</body>
+</html>
