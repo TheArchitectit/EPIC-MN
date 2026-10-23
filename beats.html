@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beat Booth — the CRT-synth rhythm game</title>
+<style>
+  :root {
+    --void:#0b0518; --board:#140b2e; --ink:#e9e2ff; --neon:#ff4fd8;
+    --cyan:#41e8ff; --gold:#ffd24a; --lime:#6dff8a; --dim:#7a68b8;
+    --danger:#ff5a6a; --scan:rgba(0,0,0,0.28);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--void);
+    color: var(--ink);
+    font-family: "Courier New", monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 8px 24px;
+    min-height: 100vh;
+    touch-action: manipulation;
+  }
+  h1 {
+    font-size: 34px;
+    letter-spacing: 6px;
+    color: var(--neon);
+    text-shadow: 0 0 12px var(--neon), 0 0 28px var(--neon);
+    text-align: center;
+  }
+  .tag {
+    color: var(--dim);
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-align: center;
+  }
+  .boardwrap {
+    position: relative;
+    width: 540px;
+    max-width: 100%;
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    background: var(--void);
+    border: 3px solid var(--neon);
+    border-radius: 8px;
+    box-shadow: 0 0 24px rgba(255, 79, 216, 0.4), 0 0 60px rgba(65, 232, 255, 0.18);
+  }
+  .toast {
+    position: absolute;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--board);
+    color: var(--gold);
+    border: 2px solid var(--gold);
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s;
+    white-space: nowrap;
+    z-index: 5;
+  }
+  .toast.show { opacity: 1; }
+  .screen {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    background: rgba(11, 5, 24, 0.82);
+    border-radius: 8px;
+    text-align: center;
+    padding: 16px;
+  }
+  .screen.show { display: flex; }
+  .screen h2 {
+    font-size: 30px;
+    letter-spacing: 4px;
+    color: var(--cyan);
+    text-shadow: 0 0 14px var(--cyan);
+  }
+  .screen .sub {
+    color: var(--neon);
+    letter-spacing: 2px;
+    font-size: 13px;
+    font-weight: bold;
+  }
+  .screen .how {
+    color: var(--ink);
+    font-size: 12px;
+    max-width: 380px;
+    line-height: 1.6;
+  }
+  .screen .big {
+    font-size: 22px;
+    color: var(--gold);
+    text-shadow: 0 0 10px var(--gold);
+    font-weight: bold;
+  }
+  button {
+    font-family: inherit;
+    font-weight: bold;
+    letter-spacing: 2px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 2px solid var(--cyan);
+    background: var(--board);
+    color: var(--cyan);
+    padding: 10px 18px;
+    font-size: 13px;
+  }
+  button:hover { background: var(--cyan); color: var(--void); }
+  .screen button {
+    border-color: var(--gold);
+    background: var(--gold);
+    color: var(--void);
+    font-size: 16px;
+    padding: 12px 26px;
+    box-shadow: 0 0 18px rgba(255, 210, 74, 0.5);
+  }
+  .screen button:hover { background: var(--ink); border-color: var(--ink); }
+  #over-best {
+    display: none;
+    background: var(--neon);
+    color: var(--void);
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-weight: bold;
+    letter-spacing: 3px;
+    box-shadow: 0 0 18px var(--neon);
+  }
+  #over-best.show { display: block; }
+  .strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    width: 540px;
+    max-width: 100%;
+  }
+  .pad {
+    width: 72px;
+    height: 56px;
+    font-size: 18px;
+    padding: 0;
+  }
+  #btn-pad0 { border-color: var(--gold); color: var(--gold); }
+  #btn-pad1 { border-color: var(--neon); color: var(--neon); }
+  #btn-pad2 { border-color: var(--cyan); color: var(--cyan); }
+  #btn-pad3 { border-color: var(--lime); color: var(--lime); }
+  #btn-pad0:hover { background: var(--gold); color: var(--void); }
+  #btn-pad1:hover { background: var(--neon); color: var(--void); }
+  #btn-pad2:hover { background: var(--cyan); color: var(--void); }
+  #btn-pad3:hover { background: var(--lime); color: var(--void); }
+  #btn-clear { border-color: var(--dim); color: var(--dim); }
+  #btn-clear:hover { background: var(--dim); color: var(--void); }
+  #strip-records {
+    color: var(--dim);
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+  <h1>BEAT BOOTH</h1>
+  <p class="tag">THE CRT-SYNTH RHYTHM GAME &middot; HIT THE BEAT AT THE NEON CLUB</p>
+
+  <div class="boardwrap">
+    <div class="toast" id="toast"></div>
+    <canvas id="board" width="540" height="720"></canvas>
+
+    <div class="screen" id="screen-ready">
+      <h2>BEAT BOOTH</h2>
+      <p class="sub">HIT THE BEAT AT THE NEON CLUB</p>
+      <p class="how">Notes rush down four lanes. Press
+        <b>D F J K</b> (or the pads) the instant they cross the
+        glowing line &mdash; perfect strikes keep the crowd alive!</p>
+      <p class="big" id="ready-records">NO RECORDS YET</p>
+      <button id="btn-start">DROP THE BEAT!</button>
+    </div>
+
+    <div class="screen" id="screen-over">
+      <h2 id="over-result">The set's over!</h2>
+      <p class="big" id="over-score">&nbsp;</p>
+      <p class="how" id="over-stats">&nbsp;</p>
+      <div id="over-best">NEW BEST!</div>
+      <button id="btn-again">PLAY AGAIN</button>
+    </div>
+  </div>
+
+  <div class="strip">
+    <button class="pad" id="btn-pad0">D</button>
+    <button class="pad" id="btn-pad1">F</button>
+    <button class="pad" id="btn-pad2">J</button>
+    <button class="pad" id="btn-pad3">K</button>
+    <button id="btn-clear">CLEAR RECORDS</button>
+  </div>
+  <div id="strip-records">NO RECORDS YET</div>
+
+<script>
+// ---------- constants ----------
+var GKEY = "beat-booth:v1";
+var TICK_MS = 50;
+var BEAT_MS = 500;
+var BARS = 16;
+var BEATS = 64;
+var LANE_X = [120, 210, 300, 390];
+var LANE_W = 90;
+var HIT_Y = 600;
+var SPAWN_Y = 90;
+var TRAVEL_MS = 1800;
+var PERFECT_MS = 60;
+var HIT_MS = 120;
+var PTS_PERFECT = 100;
+var PTS_HIT = 50;
+var CROWD_START = 55;
+var CROWD_PERFECT = 4;
+var CROWD_HIT = 2;
+var CROWD_MISS = -8;
+var CANVAS_W = 540;
+var CANVAS_H = 720;
+var LANE_COLORS = ["gold", "neon", "cyan", "lime"];
+var LANE_KEYS = ["D", "F", "J", "K"];
+
+// ---------- house records ----------
+var rec = { bestScore: 0, bestStreak: 0 };
+var toastTimer = null;
+
+function loadRec() {
+  try {
+    var raw = localStorage.getItem(GKEY);
+    if (raw) {
+      var d = JSON.parse(raw);
+      if (typeof d.bestScore === "number") rec.bestScore = d.bestScore;
+      if (typeof d.bestStreak === "number") rec.bestStreak = d.bestStreak;
+    }
+  } catch (e) { /* storage down — play on */ }
+}
+function saveRec() {
+  try { localStorage.setItem(GKEY, JSON.stringify(rec)); } catch (e) {}
+}
+function clearRecords() {
+  rec = { bestScore: 0, bestStreak: 0 };
+  saveRec();
+  toast("Records cleared");
+  render();
+}
+function toast(msg) {
+  var t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () { t.classList.remove("show"); }, 1800);
+}
+
+// ---------- state ----------
+var state = {
+  phase: "ready",
+  songStart: 0,
+  songT: 0,
+  score: 0,
+  streak: 0,
+  bestStreakRun: 0,
+  crowd: CROWD_START,
+  notes: [],
+  audioBeat: -1,
+  judge: null,
+  padFlash: [0, 0, 0, 0],
+  beatPulse: 0,
+  newBest: false,
+  endReason: ""
+};
+
+// ---------- helpers ----------
+function css(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue("--" + name).trim();
+}
+function clamp(v, lo, hi) { return v < lo ? lo : (v > hi ? hi : v); }
+function multOf(streak) { return Math.min(4, 1 + Math.floor(streak / 10)); }
+function glowAmt() { return 12 + 18 * (state.crowd / 100); }
+function noteY(n) {
+  return HIT_Y - (n.hitTime - state.songT) * (HIT_Y - SPAWN_Y) / TRAVEL_MS;
+}
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+// ---------- the chart: invented tune "Neon Pulse" ----------
+function buildChart() {
+  // one deterministic 16-bar pattern: kick, snare, hat, bass lanes
+  var pairs = [];
+  for (var bar = 0; bar < BARS; bar++) {
+    var b0 = bar * 4;
+    pairs.push([b0, 0]);            // kick on 1
+    pairs.push([b0 + 2, 0]);        // kick on 3
+    if (bar >= 2) {
+      pairs.push([b0 + 1, 1]);      // snare on 2
+      pairs.push([b0 + 3, 1]);      // snare on 4
+    }
+    if (bar >= 1) pairs.push([b0, 2]);         // hat
+    if (bar >= 3) pairs.push([b0 + 2, 2]);     // hat
+    if (bar >= 4 && bar % 2 === 0) pairs.push([b0 + 3, 2]);  // busy hat
+    if (bar >= 3 && bar % 2 === 1) pairs.push([b0 + 3, 3]);  // bass
+    if (bar >= 8) pairs.push([b0 + 1, 3]);     // bass line grows
+    if (bar >= 12) pairs.push([b0 + 2, 3]);    // bass full
+  }
+  var notes = [];
+  for (var i = 0; i < pairs.length; i++) {
+    notes.push({
+      beat: pairs[i][0],
+      lane: pairs[i][1],
+      hitTime: pairs[i][0] * BEAT_MS + TRAVEL_MS,
+      judged: 0
+    });
+  }
+  return notes;
+}
+
+// ---------- synthesized beat (optional Web Audio) ----------
+var actx = null;
+try {
+  if (typeof AudioContext !== "undefined") actx = new AudioContext();
+} catch (e) { actx = null; }
+
+function blip(freq, dur, type, gain, slideTo) {
+  if (!actx) return;
+  try {
+    var o = actx.createOscillator();
+    var g = actx.createGain();
+    o.type = type;
+    if (o.frequency.setValueAtTime) o.frequency.setValueAtTime(freq, actx.currentTime);
+    else o.frequency.value = freq;
+    if (slideTo && o.frequency.exponentialRampToValueAtTime) {
+      o.frequency.exponentialRampToValueAtTime(slideTo, actx.currentTime + dur);
+    }
+    if (g.gain.setValueAtTime) g.gain.setValueAtTime(gain, actx.currentTime);
+    else g.gain.value = gain;
+    if (g.gain.exponentialRampToValueAtTime) {
+      g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + dur);
+    }
+    o.connect(g);
+    g.connect(actx.destination);
+    o.start();
+    o.stop(actx.currentTime + dur);
+  } catch (e) { /* audio hiccup — never break the game */ }
+}
+function kickSnd() { blip(150, 0.18, "sine", 0.5, 40); }
+function snareSnd() { blip(220, 0.12, "square", 0.18, 120); }
+function hatSnd() { blip(6000, 0.05, "square", 0.07); }
+function bassSnd(f) { blip(f, 0.22, "triangle", 0.28); }
+function hitSnd(perfect) { blip(perfect ? 940 : 620, 0.08, "square", 0.12); }
+function missSnd() { blip(180, 0.14, "sawtooth", 0.08, 90); }
+
+function playBeat(beat) {
+  var b = beat % 4;
+  if (b === 0 || b === 2) kickSnd();
+  if (b === 1 || b === 3) snareSnd();
+  hatSnd();
+  if (b === 3) bassSnd([110, 98, 123, 110][Math.floor(beat / 4) % 4]);
+}
+
+// ---------- the set ----------
+function startSet() {
+  state.phase = "playing";
+  state.songStart = Date.now();
+  state.songT = 0;
+  state.score = 0;
+  state.streak = 0;
+  state.bestStreakRun = 0;
+  state.crowd = CROWD_START;
+  state.notes = buildChart();
+  state.audioBeat = -1;
+  state.judge = null;
+  state.padFlash = [0, 0, 0, 0];
+  state.newBest = false;
+  state.endReason = "";
+  render();
+}
+
+function endSet(reason) {
+  state.phase = "over";
+  state.endReason = reason;
+  var improved = false;
+  if (state.score > rec.bestScore) { rec.bestScore = state.score; improved = true; }
+  if (state.bestStreakRun > rec.bestStreak) { rec.bestStreak = state.bestStreakRun; improved = true; }
+  state.newBest = improved;
+  if (improved) saveRec();
+  render();
+}
+
+function hitLane(lane) {
+  if (state.phase !== "playing") return;
+  state.songT = Date.now() - state.songStart;
+  state.padFlash[lane] = 6;
+  var best = null, bestD = 1e9;
+  for (var i = 0; i < state.notes.length; i++) {
+    var n = state.notes[i];
+    if (n.lane !== lane || n.judged) continue;
+    var d = Math.abs(n.hitTime - state.songT);
+    if (d < bestD) { bestD = d; best = n; }
+  }
+  if (!best || bestD > HIT_MS) return;   // empty tap just flashes the pad
+  best.judged = 1;
+  state.streak += 1;
+  if (state.streak > state.bestStreakRun) state.bestStreakRun = state.streak;
+  if (bestD <= PERFECT_MS) {
+    state.score += PTS_PERFECT * multOf(state.streak);
+    state.crowd = clamp(state.crowd + CROWD_PERFECT, 0, 100);
+    state.judge = { text: "PERFECT!", life: 12, lane: lane, perfect: 1 };
+    hitSnd(true);
+  } else {
+    state.score += PTS_HIT * multOf(state.streak);
+    state.crowd = clamp(state.crowd + CROWD_HIT, 0, 100);
+    state.judge = { text: "HIT", life: 12, lane: lane, perfect: 0 };
+    hitSnd(false);
+  }
+}
+
+function stepSong() {
+  if (state.phase !== "playing") return;
+  state.songT = Date.now() - state.songStart;
+  // beat pulse + backing track
+  var beat = Math.floor(state.songT / BEAT_MS);
+  while (state.audioBeat < beat) {
+    state.audioBeat += 1;
+    playBeat(state.audioBeat);
+    state.beatPulse = 5;
+  }
+  // unstruck notes drift into a miss
+  for (var i = 0; i < state.notes.length; i++) {
+    var n = state.notes[i];
+    if (!n.judged && n.hitTime + HIT_MS < state.songT) {
+      n.judged = -1;
+      state.streak = 0;
+      state.crowd = clamp(state.crowd + CROWD_MISS, 0, 100);
+      state.judge = { text: "MISS", life: 12, lane: n.lane, miss: 1 };
+      missSnd();
+      if (state.crowd <= 0) { endSet("crowd"); return; }
+    }
+  }
+  // track complete?
+  if (state.songT > BEATS * BEAT_MS + TRAVEL_MS + 800) endSet("complete");
+}
+
+// ---------- canvas ----------
+var canvas = document.getElementById("board");
+var ctx = canvas.getContext("2d");
+
+function drawHUD() {
+  ctx.fillStyle = "rgba(11, 5, 24, 0.92)";
+  ctx.fillRect(0, 0, CANVAS_W, 54);
+  ctx.strokeStyle = css("neon");
+  ctx.lineWidth = 3;
+  ctx.strokeRect(0, 0, CANVAS_W, 54);
+
+  ctx.textAlign = "left";
+  ctx.fillStyle = css("gold");
+  ctx.font = "bold 14px Courier New";
+  ctx.fillText("SCORE " + state.score, 14, 22);
+  ctx.fillStyle = css("cyan");
+  ctx.font = "bold 12px Courier New";
+  ctx.fillText("STREAK " + state.streak + "  x" + multOf(state.streak), 14, 42);
+
+  ctx.textAlign = "center";
+  ctx.fillStyle = css("dim");
+  ctx.font = "bold 11px Courier New";
+  ctx.fillText("CROWD", 300, 16);
+  ctx.fillStyle = "rgba(255,255,255,0.12)";
+  ctx.fillRect(220, 24, 160, 14);
+  ctx.fillStyle = state.crowd > 30 ? css("lime") : css("danger");
+  ctx.fillRect(220, 24, 160 * (state.crowd / 100), 14);
+  ctx.strokeStyle = css("ink");
+  ctx.lineWidth = 1;
+  ctx.strokeRect(220, 24, 160, 14);
+
+  ctx.textAlign = "right";
+  ctx.fillStyle = css("ink");
+  ctx.font = "bold 13px Courier New";
+  var barNow = 1;
+  if (state.phase === "playing") {
+    barNow = Math.min(BARS, Math.floor(state.songT / (BEAT_MS * 4)) + 1);
+  } else if (state.phase === "over") {
+    barNow = BARS;
+  }
+  ctx.fillText("SET " + barNow + "/" + BARS, 526, 22);
+  ctx.fillStyle = css("neon");
+  ctx.font = "bold 11px Courier New";
+  ctx.fillText("NEON PULSE", 526, 42);
+}
+
+function draw() {
+  // void backdrop
+  ctx.fillStyle = css("void");
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+  // lanes
+  for (var i = 0; i < 4; i++) {
+    var x = LANE_X[i] - LANE_W / 2;
+    ctx.fillStyle = css("board");
+    ctx.fillRect(x, SPAWN_Y - 10, LANE_W, HIT_Y - SPAWN_Y + 10);
+    ctx.strokeStyle = css(LANE_COLORS[i]);
+    ctx.lineWidth = 3;
+    ctx.globalAlpha = 0.35 + 0.45 * (state.crowd / 100);
+    ctx.strokeRect(x, SPAWN_Y - 10, LANE_W, HIT_Y - SPAWN_Y + 10);
+    ctx.globalAlpha = 1;
+  }
+
+  // hit line
+  ctx.fillStyle = css("ink");
+  ctx.fillRect(60, HIT_Y - 3, 420, 6);
+  ctx.fillStyle = css("neon");
+  ctx.fillRect(60, HIT_Y - 3, 420, 2);
+
+  // pads under the line
+  for (var p = 0; p < 4; p++) {
+    var px = LANE_X[p], py = HIT_Y + 44;
+    var flash = state.padFlash[p];
+    ctx.fillStyle = flash > 0 ? css(LANE_COLORS[p]) : css("board");
+    roundRect(px - 36, py - 24, 72, 48, 10);
+    ctx.fill();
+    ctx.strokeStyle = css(LANE_COLORS[p]);
+    ctx.lineWidth = 3;
+    roundRect(px - 36, py - 24, 72, 48, 10);
+    ctx.stroke();
+    ctx.fillStyle = flash > 0 ? css("void") : css(LANE_COLORS[p]);
+    ctx.font = "bold 18px Courier New";
+    ctx.textAlign = "center";
+    ctx.fillText(LANE_KEYS[p], px, py + 6);
+  }
+
+  // notes
+  for (var j = 0; j < state.notes.length; j++) {
+    var n = state.notes[j];
+    if (n.judged) continue;
+    var y = noteY(n);
+    if (y < SPAWN_Y - 30 || y > HIT_Y + 14) continue;
+    ctx.shadowBlur = glowAmt();
+    ctx.shadowColor = css(LANE_COLORS[n.lane]);
+    ctx.fillStyle = css(LANE_COLORS[n.lane]);
+    roundRect(LANE_X[n.lane] - 30, y - 12, 60, 24, 8);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+
+  // judge float
+  if (state.judge) {
+    var jf = state.judge;
+    ctx.fillStyle = jf.miss ? css("danger") : (jf.perfect ? css("gold") : css("cyan"));
+    ctx.font = "bold 22px Courier New";
+    ctx.textAlign = "center";
+    ctx.fillText(jf.text, LANE_X[jf.lane], HIT_Y - 50 - (12 - jf.life) * 2);
+  }
+
+  // downbeat pulse bar
+  if (state.beatPulse > 0) {
+    ctx.fillStyle = "rgba(255, 79, 216, " + (0.08 * state.beatPulse) + ")";
+    ctx.fillRect(0, 54, CANVAS_W, HIT_Y - 54);
+  }
+
+  // HUD
+  drawHUD();
+
+  // CRT scanlines
+  for (var sy = 0; sy < CANVAS_H; sy += 3) {
+    ctx.fillStyle = css("scan");
+    ctx.fillRect(0, sy, CANVAS_W, 1);
+  }
+  // flicker
+  var fl = 0.012 + 0.01 * Math.abs(Math.sin(state.songT / 90));
+  ctx.fillStyle = "rgba(255,255,255," + fl + ")";
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+  // vignette
+  var vg = ctx.createRadialGradient(270, 360, 180, 270, 360, 470);
+  vg.addColorStop(0, "rgba(0,0,0,0)");
+  vg.addColorStop(1, "rgba(0,0,0,0.55)");
+  ctx.fillStyle = vg;
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+}
+
+// ---------- DOM render ----------
+function render() {
+  var ph = state.phase;
+  document.getElementById("screen-ready").classList.toggle("show", ph === "ready");
+  document.getElementById("screen-over").classList.toggle("show", ph === "over");
+
+  var recLine = (rec.bestScore > 0 || rec.bestStreak > 0)
+    ? ("BEST " + rec.bestScore + " · STREAK " + rec.bestStreak)
+    : "NO RECORDS YET";
+  document.getElementById("ready-records").textContent = recLine;
+  document.getElementById("strip-records").textContent = recLine;
+
+  if (ph === "over") {
+    document.getElementById("over-result").textContent =
+      state.endReason === "crowd" ? "The crowd went home!" : "The set's over!";
+    document.getElementById("over-score").textContent =
+      "Score " + state.score + " · streak " + state.bestStreakRun;
+    document.getElementById("over-stats").textContent =
+      "Best " + rec.bestScore + " · longest streak " + rec.bestStreak;
+    document.getElementById("over-best").classList.toggle("show", state.newBest);
+  }
+}
+
+// ---------- controls ----------
+document.getElementById("btn-start").addEventListener("click", function () { startSet(); });
+document.getElementById("btn-again").addEventListener("click", function () { startSet(); });
+document.getElementById("btn-clear").addEventListener("click", function () { clearRecords(); });
+document.getElementById("btn-pad0").addEventListener("click", function () { hitLane(0); });
+document.getElementById("btn-pad1").addEventListener("click", function () { hitLane(1); });
+document.getElementById("btn-pad2").addEventListener("click", function () { hitLane(2); });
+document.getElementById("btn-pad3").addEventListener("click", function () { hitLane(3); });
+
+var KEYMAP = { d: 0, f: 1, j: 2, k: 3, ArrowLeft: 0, ArrowDown: 1, ArrowUp: 2, ArrowRight: 3 };
+document.addEventListener("keydown", function (e) {
+  if (e.repeat) { if (e.preventDefault) e.preventDefault(); return; }
+  var k = (e.key && e.key.length === 1) ? e.key.toLowerCase() : e.key;
+  if (KEYMAP.hasOwnProperty(k)) {
+    if (e.preventDefault) e.preventDefault();
+    hitLane(KEYMAP[k]);
+  } else if (k === "Enter" || k === " ") {
+    if (e.preventDefault) e.preventDefault();
+    if (state.phase !== "playing") startSet();
+  }
+});
+
+// ---------- clock ----------
+loadRec();
+render();
+draw();
+setInterval(function () {
+  stepSong();
+  for (var i = 0; i < 4; i++) {
+    if (state.padFlash[i] > 0) state.padFlash[i] -= 1;
+  }
+  if (state.judge) {
+    state.judge.life -= 1;
+    if (state.judge.life <= 0) state.judge = null;
+  }
+  if (state.beatPulse > 0) state.beatPulse -= 1;
+  draw();
+  render();
+}, TICK_MS);
+</script>
+</body>
+</html>

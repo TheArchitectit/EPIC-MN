@@ -48,6 +48,7 @@ open train.html        # Example #14, Harvest Haunt (the autumn ghost-train shoo
 open hoops.html        # Example #15, Street Hoops (the blacktop streetball arcade)
 open football.html     # Example #16, Gridiron Rush (the retro football arcade)
 open backyard.html     # Example #17, Backyard Bastion (the golden-hour siege game)
+open beats.html        # Example #18, Beat Booth (the CRT-synth rhythm game)
 xdg-open index.html    # Linux same files
 
 # option B — serve everything
@@ -68,7 +69,8 @@ python3 -m http.server 8123
 #         http://localhost:8123/train.html (autumn ghost-train shooter), and
 #         http://localhost:8123/hoops.html (blacktop streetball arcade), and
 #         http://localhost:8123/football.html (retro football arcade), and
-#         http://localhost:8123/backyard.html (golden-hour siege game)
+#         http://localhost:8123/backyard.html (golden-hour siege game), and
+#         http://localhost:8123/beats.html (CRT-synth rhythm game)
 ```
 
 Everything is local-only, invented data, no accounts, no installs.
@@ -94,6 +96,7 @@ Everything is local-only, invented data, no accounts, no installs.
 | `hoops.html` | **Example #15 — Street Hoops**: the blacktop streetball arcade — drive the ball handler around the sunset court, shake the defender for the open look, fire from deep for three, and sink free-throw streaks before the buzzer |
 | `football.html` | **Example #16 — Gridiron Rush**: the retro football arcade — call the play and hike the ball, steer the run or fire to your streaking receivers, juke past tacklers, and make the tackle on defense before the final whistle |
 | `backyard.html` | **Example #17 — Backyard Bastion**: the golden-hour siege game — build spike traps, pebble turrets, and stick walls around your fort, zap waves of bugs as a tiny hero, and rescue friendly bugs to fight beside you before the fort falls |
+| `beats.html` | **Example #18 — Beat Booth**: the CRT-synth rhythm game — you're the DJ at the neon club, notes rush four glowing lanes to the hit line, strike D F J K on the beat to feed the streak, and keep the crowd roaring until the set drops |
 | `docs/reverse-prompt-guide.md` | **The playbook** — how students reverse-prompt with OpenSpec, with examples and drills |
 | `docs/runbook.md` | The 10-minute demo session script for the teacher/host (with troubleshooting) |
 | `docs/event-card.md` | A printable one-page journey card for the booth |
@@ -137,6 +140,7 @@ archived into its spec:
 - `openspec/specs/street-hoops/spec.md` — the blacktop streetball arcade (Example #15)
 - `openspec/specs/gridiron-rush/spec.md` — the retro football arcade (Example #16)
 - `openspec/specs/backyard-bastion/spec.md` — the golden-hour siege game (Example #17)
+- `openspec/specs/beat-booth/spec.md` — the CRT-synth rhythm game (Example #18)
 
 `openspec/changes/archive/` holds the complete history of every change.
 
