@@ -1,0 +1,852 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maze Maker</title>
+<style>
+  :root {
+    --ink: #eaf6ff;
+    --pink: #ff2d95;
+    --cyan: #2de2e6;
+    --yellow: #ffd166;
+    --mint: #6ff2c5;
+    --purple: #8b5cf6;
+    --bg: #060617;
+    --panel: #0d0d2e;
+    --mono: "Courier New", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --hard: 6px 6px 0 rgba(255, 45, 149, 0.35);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--mono);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.03) 0 2px,
+      transparent 2px 4px
+    );
+    z-index: 50;
+  }
+  .top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 20px 10px;
+  }
+  h1 {
+    font-size: clamp(20px, 4vw, 34px);
+    letter-spacing: 4px;
+    color: var(--cyan);
+    text-shadow: 0 0 10px var(--cyan), 0 0 32px var(--cyan);
+  }
+  main {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 4px 16px 40px;
+    position: relative;
+  }
+  .toolbar, .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 10px 0;
+    justify-content: center;
+  }
+  .btn {
+    font-family: var(--mono);
+    font-size: 13px;
+    letter-spacing: 2px;
+    border-radius: 10px;
+    padding: 10px 16px;
+    cursor: pointer;
+    border: 3px solid var(--cyan);
+    background: var(--cyan);
+    color: var(--bg);
+    font-weight: bold;
+    box-shadow: 4px 4px 0 rgba(45, 226, 230, 0.4);
+  }
+  .btn:hover { filter: brightness(1.12); }
+  .btn.big { font-size: 17px; padding: 14px 28px; }
+  .btn.ghost {
+    background: transparent;
+    color: var(--cyan);
+    border-color: var(--purple);
+    box-shadow: 4px 4px 0 rgba(139, 92, 246, 0.35);
+    font-size: 12px;
+    padding: 9px 13px;
+  }
+  .btn.tool {
+    background: var(--panel);
+    color: var(--ink);
+    border-color: var(--purple);
+  }
+  .btn.tool.picked {
+    color: var(--pink);
+    border-color: var(--pink);
+    box-shadow: 4px 4px 0 rgba(255, 45, 149, 0.5);
+    text-shadow: 0 0 12px var(--pink);
+  }
+  .boardwrap {
+    position: relative;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+  canvas {
+    width: 100%;
+    height: auto;
+    display: block;
+    border: 3px solid var(--purple);
+    border-radius: 10px;
+    box-shadow: var(--hard), 0 0 48px rgba(139, 92, 246, 0.4);
+    background: var(--bg);
+    cursor: crosshair;
+  }
+  .hud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 14px 0 6px;
+    justify-content: space-between;
+  }
+  .stat {
+    background: var(--panel);
+    border: 2px solid var(--cyan);
+    border-radius: 8px;
+    padding: 8px 14px;
+    min-width: 120px;
+    box-shadow: 4px 4px 0 rgba(45, 226, 230, 0.25);
+    flex: 1 1 auto;
+    text-align: center;
+  }
+  .stat .lbl {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--cyan);
+  }
+  .stat .val {
+    display: block;
+    font-size: clamp(16px, 2.6vw, 24px);
+    font-weight: bold;
+    color: var(--yellow);
+    text-shadow: 0 0 12px rgba(255, 209, 102, 0.8);
+    margin-top: 2px;
+  }
+  .status {
+    text-align: center;
+    letter-spacing: 2px;
+    font-size: 12px;
+    color: var(--purple);
+    min-height: 18px;
+    margin: 6px 0 2px;
+  }
+  .screen {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    top: 40px;
+    background: rgba(6, 6, 23, 0.93);
+    border: 3px solid var(--pink);
+    border-radius: 12px;
+    box-shadow: var(--hard), 0 0 60px rgba(255, 45, 149, 0.4);
+    padding: 28px 20px;
+    text-align: center;
+    z-index: 10;
+  }
+  .screen.hidden { display: none; }
+  .screen h2 {
+    color: var(--cyan);
+    letter-spacing: 5px;
+    text-shadow: 0 0 16px var(--cyan);
+    margin-bottom: 14px;
+  }
+  .win-stats {
+    color: var(--ink);
+    letter-spacing: 2px;
+    font-size: 15px;
+    line-height: 2;
+    margin-bottom: 10px;
+  }
+  .big-time {
+    font-size: clamp(36px, 7vw, 56px);
+    color: var(--yellow);
+    text-shadow: 0 0 26px var(--yellow);
+    margin: 4px 0 10px;
+  }
+  .newbest {
+    color: var(--pink);
+    font-size: 20px;
+    letter-spacing: 4px;
+    text-shadow: 0 0 20px var(--pink);
+    margin-bottom: 12px;
+    animation: pulse 0.9s ease-in-out infinite alternate;
+  }
+  .newbest.hidden { display: none; }
+  @keyframes pulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.08); }
+  }
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 26px;
+    transform: translateX(-50%);
+    background: var(--mint);
+    color: var(--bg);
+    font-weight: bold;
+    letter-spacing: 2px;
+    padding: 12px 22px;
+    border-radius: 999px;
+    box-shadow: var(--hard);
+    z-index: 60;
+  }
+  .toast.hidden { display: none; }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>MAZE MAKER</h1>
+  <button id="btn-records" class="btn ghost">CLEAR RECORDS</button>
+</header>
+<main>
+  <div class="toolbar">
+    <button id="btn-tool-wall" class="btn tool">WALL</button>
+    <button id="btn-tool-erase" class="btn tool">ERASE</button>
+    <button id="btn-tool-start" class="btn tool">BALL START</button>
+    <button id="btn-tool-goal" class="btn tool">GOAL FLAG</button>
+    <button id="btn-tool-treasure" class="btn tool">TREASURE</button>
+    <button id="btn-clear-board" class="btn ghost">CLEAR BOARD</button>
+  </div>
+
+  <div class="boardwrap">
+    <canvas id="maze" width="600" height="600"></canvas>
+    <div id="screen-win" class="screen hidden">
+      <h2>MAZE COMPLETE!</h2>
+      <div id="win-time" class="big-time">0.0S</div>
+      <div id="win-newbest" class="newbest hidden">NEW BEST!</div>
+      <div id="win-stats" class="win-stats">
+        <div id="win-steps">0 STEPS</div>
+        <div id="win-treasures">0/0 TREASURES</div>
+      </div>
+      <button id="btn-again" class="btn big">PLAY AGAIN</button>
+      <button id="btn-edit" class="btn ghost">EDIT MAZE</button>
+    </div>
+  </div>
+
+  <section class="hud">
+    <div class="stat"><span class="lbl">TIME</span><span id="hud-time" class="val">0.0S</span></div>
+    <div class="stat"><span class="lbl">STEPS</span><span id="hud-steps" class="val">0</span></div>
+    <div class="stat"><span class="lbl">TREASURES</span><span id="hud-treasures" class="val">0/0</span></div>
+    <div class="stat"><span class="lbl">BEST</span><span id="hud-best" class="val">--</span></div>
+  </section>
+
+  <div class="actions">
+    <button id="btn-play" class="btn big">PLAY!</button>
+    <button id="btn-reset-run" class="btn ghost">RESET RUN</button>
+  </div>
+  <div id="status" class="status">CLICK CELLS TO PAINT · DRAG TO DRAW WALLS</div>
+</main>
+<div id="toast" class="toast hidden"></div>
+
+<script>
+  "use strict";
+
+  // ---------- constants ----------
+  var GRID = 15;
+  var CELL = 40;
+  var GKEY = "maze-maker:v1";
+  var TICK_MS = 100;
+  var MAX_TREASURES = 5;
+  var MAX_BESTS = 12;
+
+  // ---------- state ----------
+  var state = {
+    mode: "build", // build | solve | won
+    tool: "wall", // wall | erase | start | goal | treasure
+    walls: [],
+    start: null,
+    goal: null,
+    treasures: [],
+    collectedList: [],
+    ball: { x: 0, y: 0 },
+    trail: [],
+    steps: 0,
+    elapsedMs: 0,
+    bests: {},
+    status: "",
+    newBestTime: false,
+    newBestSteps: false
+  };
+
+  var frame = 0;
+  var sparks = [];
+
+  // ---------- persistence (house machinery) ----------
+  function seed() {
+    return { bests: {} };
+  }
+  function load() {
+    try {
+      var raw = localStorage.getItem(GKEY);
+      if (!raw) return seed();
+      var data = JSON.parse(raw);
+      if (!data || typeof data !== "object" || !data.bests || typeof data.bests !== "object") return seed();
+      var s = seed();
+      var keys = Object.keys(data.bests);
+      for (var i = 0; i < keys.length; i++) {
+        var e = data.bests[keys[i]];
+        if (e && typeof e.timeMs === "number" && isFinite(e.timeMs) &&
+            typeof e.steps === "number" && isFinite(e.steps)) {
+          s.bests[keys[i]] = { timeMs: e.timeMs, steps: e.steps };
+        }
+      }
+      return s;
+    } catch (err) {
+      return seed();
+    }
+  }
+  function save() {
+    try {
+      // keep storage bounded: newest signatures win
+      var keys = Object.keys(state.bests);
+      if (keys.length > MAX_BESTS) {
+        for (var i = 0; i < keys.length - MAX_BESTS; i++) delete state.bests[keys[i]];
+      }
+      localStorage.setItem(GKEY, JSON.stringify({ bests: state.bests }));
+    } catch (err) { /* storage blocked: keep playing */ }
+  }
+  var toastTimer = null;
+  function toast(msg) {
+    var el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.remove("hidden");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      el.classList.add("hidden");
+    }, 2200);
+  }
+
+  // ---------- juice ----------
+  function sparkBurst() {
+    var cx = state.ball.x * CELL + CELL / 2;
+    var cy = state.ball.y * CELL + CELL / 2;
+    for (var i = 0; i < 12; i++) {
+      var a = Math.random() * Math.PI * 2;
+      var sp = 1.2 + Math.random() * 2.8;
+      sparks.push({
+        x: cx, y: cy,
+        vx: Math.cos(a) * sp,
+        vy: Math.sin(a) * sp,
+        life: 26,
+        max: 26,
+        c: i % 2 ? "#2de2e6" : "#ffd166"
+      });
+    }
+    if (sparks.length > 260) sparks.splice(0, sparks.length - 260);
+  }
+  function flourish() {
+    sparkBurst();
+    sparkBurst();
+    toast("GOAL REACHED!");
+  }
+
+  // ---------- helpers ----------
+  function fmtTime(ms) {
+    if (ms == null || !isFinite(ms)) return "--";
+    return (ms / 1000).toFixed(1) + "S";
+  }
+  function inBounds(x, y) {
+    return x >= 0 && y >= 0 && x < GRID && y < GRID;
+  }
+  function emptyWalls() {
+    var w = [];
+    for (var y = 0; y < GRID; y++) {
+      var row = [];
+      for (var x = 0; x < GRID; x++) row.push(false);
+      w.push(row);
+    }
+    return w;
+  }
+  function isCollected(x, y) {
+    for (var i = 0; i < state.collectedList.length; i++) {
+      if (state.collectedList[i].x === x && state.collectedList[i].y === y) return true;
+    }
+    return false;
+  }
+  function treasureIndexAt(x, y) {
+    for (var i = 0; i < state.treasures.length; i++) {
+      if (state.treasures[i].x === x && state.treasures[i].y === y) return i;
+    }
+    return -1;
+  }
+  function mazeSignature() {
+    var bits = "";
+    for (var y = 0; y < GRID; y++) {
+      for (var x = 0; x < GRID; x++) bits += state.walls[y][x] ? "1" : "0";
+    }
+    var s = state.start ? state.start.x + "," + state.start.y : "-";
+    var g = state.goal ? state.goal.x + "," + state.goal.y : "-";
+    return bits + "|" + s + "|" + g;
+  }
+
+  // ---------- build tools ----------
+  function setTool(name) {
+    state.tool = name;
+    render();
+  }
+  function paintAt(x, y) {
+    if (state.mode !== "build" || !inBounds(x, y)) return;
+    var t = state.tool;
+    if (t === "wall") {
+      if (state.start && state.start.x === x && state.start.y === y) return;
+      if (state.goal && state.goal.x === x && state.goal.y === y) return;
+      var ti = treasureIndexAt(x, y);
+      if (ti >= 0) state.treasures.splice(ti, 1);
+      state.walls[y][x] = true;
+    } else if (t === "erase") {
+      state.walls[y][x] = false;
+      var te = treasureIndexAt(x, y);
+      if (te >= 0) state.treasures.splice(te, 1);
+    } else if (t === "start") {
+      if (state.walls[y][x]) return;
+      state.start = { x: x, y: y };
+    } else if (t === "goal") {
+      if (state.walls[y][x]) return;
+      state.goal = { x: x, y: y };
+    } else if (t === "treasure") {
+      if (state.walls[y][x]) return;
+      if (state.start && state.start.x === x && state.start.y === y) return;
+      if (state.goal && state.goal.x === x && state.goal.y === y) return;
+      var tt = treasureIndexAt(x, y);
+      if (tt >= 0) {
+        state.treasures.splice(tt, 1);
+      } else if (state.treasures.length < MAX_TREASURES) {
+        state.treasures.push({ x: x, y: y });
+      } else {
+        toast("TREASURE LIMIT IS " + MAX_TREASURES);
+      }
+    }
+    state.status = "";
+    render();
+  }
+  function clearBoard() {
+    state.walls = emptyWalls();
+    state.start = null;
+    state.goal = null;
+    state.treasures = [];
+    state.collectedList = [];
+    state.status = "";
+    render();
+    toast("BOARD CLEARED");
+  }
+
+  // ---------- validation ----------
+  function hasPath() {
+    if (!state.start || !state.goal) return false;
+    var seen = {};
+    var q = [{ x: state.start.x, y: state.start.y }];
+    seen[state.start.x + "," + state.start.y] = true;
+    var dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+    while (q.length) {
+      var c = q.shift();
+      if (c.x === state.goal.x && c.y === state.goal.y) return true;
+      for (var d = 0; d < dirs.length; d++) {
+        var nx = c.x + dirs[d][0];
+        var ny = c.y + dirs[d][1];
+        if (!inBounds(nx, ny) || state.walls[ny][nx]) continue;
+        var key = nx + "," + ny;
+        if (seen[key]) continue;
+        seen[key] = true;
+        q.push({ x: nx, y: ny });
+      }
+    }
+    return false;
+  }
+  function validateMaze() {
+    if (!state.start) return "PLACE THE BALL START";
+    if (!state.goal) return "PLACE THE GOAL FLAG";
+    if (!hasPath()) return "NO PATH FROM START TO GOAL";
+    return "";
+  }
+
+  // ---------- solve flow ----------
+  function startSolve() {
+    var msg = validateMaze();
+    if (msg) {
+      state.status = msg;
+      toast(msg);
+      render();
+      return;
+    }
+    state.mode = "solve";
+    state.ball = { x: state.start.x, y: state.start.y };
+    state.trail = [{ x: state.ball.x, y: state.ball.y }];
+    state.steps = 0;
+    state.elapsedMs = 0;
+    state.collectedList = [];
+    state.newBestTime = false;
+    state.newBestSteps = false;
+    state.status = "";
+    render();
+  }
+  function moveBall(dx, dy) {
+    if (state.mode !== "solve") return false;
+    var nx = state.ball.x + dx;
+    var ny = state.ball.y + dy;
+    if (!inBounds(nx, ny) || state.walls[ny][nx]) return false;
+    state.ball.x = nx;
+    state.ball.y = ny;
+    state.steps++;
+    state.trail.push({ x: nx, y: ny });
+    if (state.trail.length > 40) state.trail.shift();
+    var ti = treasureIndexAt(nx, ny);
+    if (ti >= 0 && !isCollected(nx, ny)) {
+      state.collectedList.push({ x: nx, y: ny });
+      sparkBurst();
+      toast("TREASURE!");
+    }
+    if (state.goal && nx === state.goal.x && ny === state.goal.y) {
+      winGame();
+    }
+    render();
+    return true;
+  }
+  function clickCell(x, y) {
+    if (state.mode !== "solve" || !inBounds(x, y)) return;
+    var dx = x - state.ball.x;
+    var dy = y - state.ball.y;
+    if (dx === 0 && dy === 0) return;
+    if (Math.abs(dx) >= Math.abs(dy)) moveBall(dx > 0 ? 1 : -1, 0);
+    else moveBall(0, dy > 0 ? 1 : -1);
+  }
+  function winGame() {
+    if (state.mode === "won") return;
+    state.mode = "won";
+    var sig = mazeSignature();
+    var prev = state.bests[sig] || null;
+    state.newBestTime = !prev || state.elapsedMs < prev.timeMs;
+    state.newBestSteps = !prev || state.steps < prev.steps;
+    if (state.newBestTime || state.newBestSteps) {
+      state.bests[sig] = {
+        timeMs: state.newBestTime ? state.elapsedMs : prev.timeMs,
+        steps: state.newBestSteps ? state.steps : prev.steps
+      };
+      save();
+      toast("NEW BEST TIME!");
+    }
+    flourish();
+    render();
+  }
+  function resetRun() {
+    if (!state.start) return;
+    state.mode = "solve";
+    state.ball = { x: state.start.x, y: state.start.y };
+    state.trail = [{ x: state.ball.x, y: state.ball.y }];
+    state.steps = 0;
+    state.elapsedMs = 0;
+    state.collectedList = [];
+    state.newBestTime = false;
+    state.newBestSteps = false;
+    render();
+  }
+  function editMaze() {
+    state.mode = "build";
+    render();
+  }
+  function resetRecords() {
+    state.bests = seed().bests;
+    save();
+    toast("BEST RUNS CLEARED");
+    render();
+  }
+
+  function tick() {
+    if (state.mode !== "solve") return;
+    state.elapsedMs += TICK_MS;
+    render();
+  }
+
+  function onKey(e) {
+    if (!e || !e.key) return;
+    var k = String(e.key).toLowerCase();
+    if (k === "arrowup" || k === "w") moveBall(0, -1);
+    else if (k === "arrowdown" || k === "s") moveBall(0, 1);
+    else if (k === "arrowleft" || k === "a") moveBall(-1, 0);
+    else if (k === "arrowright" || k === "d") moveBall(1, 0);
+    else if (k === "enter") {
+      if (state.mode === "build" || state.mode === "won") startSolve();
+    }
+  }
+
+  // ---------- canvas input ----------
+  function onCanvasDown(x, y) {
+    if (state.mode === "build") paintAt(x, y);
+    else if (state.mode === "solve") clickCell(x, y);
+  }
+  function onCanvasMove(x, y, dragging) {
+    if (state.mode !== "build" || !dragging) return;
+    if (state.tool === "wall" || state.tool === "erase") paintAt(x, y);
+  }
+  function onCanvasUp() {}
+
+  // ---------- canvas scene ----------
+  function draw() {
+    var canvas = document.getElementById("maze");
+    var ctx = canvas.getContext("2d");
+    frame++;
+
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = "#060617";
+    ctx.fillRect(0, 0, 600, 600);
+
+    // dim neon grid
+    ctx.strokeStyle = "rgba(139, 92, 246, 0.22)";
+    ctx.lineWidth = 1;
+    for (var i = 0; i <= GRID; i++) {
+      ctx.beginPath();
+      ctx.moveTo(i * CELL, 0);
+      ctx.lineTo(i * CELL, 600);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(0, i * CELL);
+      ctx.lineTo(600, i * CELL);
+      ctx.stroke();
+    }
+
+    // glowing wireframe walls
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = "#2de2e6";
+    for (var y = 0; y < GRID; y++) {
+      for (var x = 0; x < GRID; x++) {
+        if (!state.walls[y][x]) continue;
+        ctx.fillStyle = "#0b1030";
+        ctx.fillRect(x * CELL + 2, y * CELL + 2, CELL - 4, CELL - 4);
+        ctx.strokeStyle = "#2de2e6";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x * CELL + 2, y * CELL + 2, CELL - 4, CELL - 4);
+      }
+    }
+    ctx.shadowBlur = 0;
+
+    // light-cycle trail
+    for (var t = 0; t < state.trail.length - 1; t++) {
+      var tp = state.trail[t];
+      ctx.globalAlpha = 0.12 + 0.4 * (t / Math.max(1, state.trail.length));
+      ctx.fillStyle = t % 2 ? "#2de2e6" : "#ff2d95";
+      ctx.fillRect(tp.x * CELL + 10, tp.y * CELL + 10, CELL - 20, CELL - 20);
+    }
+    ctx.globalAlpha = 1;
+
+    // treasures (uncollected)
+    for (var r = 0; r < state.treasures.length; r++) {
+      var tr = state.treasures[r];
+      if (isCollected(tr.x, tr.y)) continue;
+      var tx = tr.x * CELL + CELL / 2;
+      var ty = tr.y * CELL + CELL / 2;
+      ctx.save();
+      ctx.translate(tx, ty);
+      ctx.rotate(Math.PI / 4);
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = "#6ff2c5";
+      ctx.fillStyle = "#6ff2c5";
+      ctx.fillRect(-9, -9, 18, 18);
+      ctx.restore();
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = "#eaf6ff";
+      ctx.lineWidth = 2;
+      var tw = 4 + Math.abs(Math.sin(frame * 0.2 + r)) * 5;
+      ctx.beginPath();
+      ctx.moveTo(tx - tw, ty);
+      ctx.lineTo(tx + tw, ty);
+      ctx.moveTo(tx, ty - tw);
+      ctx.lineTo(tx, ty + tw);
+      ctx.stroke();
+    }
+
+    // goal beacon (pulsing)
+    if (state.goal) {
+      var gx = state.goal.x * CELL + CELL / 2;
+      var gy = state.goal.y * CELL + CELL / 2;
+      var pulse = 0.5 + 0.5 * Math.sin(frame * 0.12);
+      ctx.strokeStyle = "#ffd166";
+      ctx.lineWidth = 2;
+      for (var k = 1; k <= 3; k++) {
+        ctx.globalAlpha = 0.7 - k * 0.15;
+        ctx.beginPath();
+        ctx.arc(gx, gy, 6 + k * 7 + pulse * 4, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = "#ffd166";
+      ctx.beginPath();
+      ctx.moveTo(gx, gy - 14);
+      ctx.lineTo(gx, gy + 14);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(gx, gy - 14);
+      ctx.lineTo(gx + 16, gy - 8);
+      ctx.lineTo(gx, gy - 2);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // light-cycle ball
+    var bx = state.ball.x * CELL + CELL / 2;
+    var by = state.ball.y * CELL + CELL / 2;
+    ctx.shadowBlur = 16;
+    ctx.shadowColor = "#ff2d95";
+    ctx.fillStyle = "#ff2d95";
+    ctx.beginPath();
+    ctx.arc(bx, by, 13, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = "#eaf6ff";
+    ctx.beginPath();
+    ctx.arc(bx, by, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // sparks
+    for (var s = 0; s < sparks.length; s++) {
+      var sp = sparks[s];
+      sp.x += sp.vx;
+      sp.y += sp.vy;
+      sp.vx *= 0.96;
+      sp.vy = sp.vy * 0.96 + 0.05;
+      sp.life--;
+      ctx.globalAlpha = Math.max(0, sp.life / sp.max);
+      ctx.fillStyle = sp.c;
+      ctx.fillRect(sp.x, sp.y, 3, 3);
+    }
+    ctx.globalAlpha = 1;
+    var alive = [];
+    for (var q = 0; q < sparks.length; q++) {
+      if (sparks[q].life > 0) alive.push(sparks[q]);
+    }
+    sparks = alive;
+  }
+
+  // ---------- DOM render ----------
+  function render() {
+    document.getElementById("hud-time").textContent = fmtTime(state.elapsedMs);
+    document.getElementById("hud-steps").textContent = String(state.steps);
+    var total = state.treasures.length;
+    document.getElementById("hud-treasures").textContent =
+      state.collectedList.length + "/" + total;
+    var sig = mazeSignature();
+    var b = state.bests[sig];
+    document.getElementById("hud-best").textContent =
+      b ? fmtTime(b.timeMs) + " / " + b.steps : "--";
+
+    var tools = ["wall", "erase", "start", "goal", "treasure"];
+    for (var i = 0; i < tools.length; i++) {
+      var btn = document.getElementById("btn-tool-" + tools[i]);
+      if (!btn) continue;
+      if (tools[i] === state.tool) btn.classList.add("picked");
+      else btn.classList.remove("picked");
+    }
+
+    var win = document.getElementById("screen-win");
+    if (state.mode === "won") {
+      win.classList.remove("hidden");
+      document.getElementById("win-time").textContent = fmtTime(state.elapsedMs);
+      document.getElementById("win-steps").textContent = state.steps + " STEPS";
+      document.getElementById("win-treasures").textContent =
+        state.collectedList.length + "/" + state.treasures.length + " TREASURES";
+      var nb = document.getElementById("win-newbest");
+      if (state.newBestTime || state.newBestSteps) nb.classList.remove("hidden");
+      else nb.classList.add("hidden");
+    } else {
+      win.classList.add("hidden");
+    }
+
+    var statusEl = document.getElementById("status");
+    if (state.status) {
+      statusEl.textContent = state.status;
+    } else if (state.mode === "build") {
+      statusEl.textContent = "CLICK CELLS TO PAINT · DRAG TO DRAW WALLS";
+    } else {
+      statusEl.textContent = "ARROWS / WASD OR CLICK TO ROLL";
+    }
+    draw();
+  }
+
+  // ---------- boot ----------
+  function boot() {
+    var data = load();
+    state.bests = data.bests;
+    if (!state.walls.length) state.walls = emptyWalls();
+    sparks = [];
+
+    document.addEventListener("keydown", onKey);
+    document.getElementById("btn-tool-wall").addEventListener("click", function () { setTool("wall"); });
+    document.getElementById("btn-tool-erase").addEventListener("click", function () { setTool("erase"); });
+    document.getElementById("btn-tool-start").addEventListener("click", function () { setTool("start"); });
+    document.getElementById("btn-tool-goal").addEventListener("click", function () { setTool("goal"); });
+    document.getElementById("btn-tool-treasure").addEventListener("click", function () { setTool("treasure"); });
+    document.getElementById("btn-clear-board").addEventListener("click", clearBoard);
+    document.getElementById("btn-play").addEventListener("click", startSolve);
+    document.getElementById("btn-reset-run").addEventListener("click", resetRun);
+    document.getElementById("btn-again").addEventListener("click", startSolve);
+    document.getElementById("btn-edit").addEventListener("click", editMaze);
+    document.getElementById("btn-records").addEventListener("click", resetRecords);
+
+    var canvas = document.getElementById("maze");
+    var dragging = false;
+    function cellFromEvent(e) {
+      var rect = canvas.getBoundingClientRect();
+      var x = Math.floor(((e.clientX - rect.left) / rect.width) * GRID);
+      var y = Math.floor(((e.clientY - rect.top) / rect.height) * GRID);
+      return { x: x, y: y };
+    }
+    canvas.addEventListener("mousedown", function (e) {
+      dragging = true;
+      var c = cellFromEvent(e);
+      onCanvasDown(c.x, c.y);
+    });
+    canvas.addEventListener("mousemove", function (e) {
+      var c = cellFromEvent(e);
+      onCanvasMove(c.x, c.y, dragging);
+    });
+    canvas.addEventListener("mouseup", function () {
+      dragging = false;
+      onCanvasUp();
+    });
+    canvas.addEventListener("touchstart", function (e) {
+      if (e.touches && e.touches[0]) {
+        var c = cellFromEvent(e.touches[0]);
+        dragging = true;
+        onCanvasDown(c.x, c.y);
+      }
+      if (e.preventDefault) e.preventDefault();
+    }, { passive: false });
+    canvas.addEventListener("touchmove", function (e) {
+      if (e.touches && e.touches[0]) {
+        var c = cellFromEvent(e.touches[0]);
+        onCanvasMove(c.x, c.y, dragging);
+      }
+      if (e.preventDefault) e.preventDefault();
+    }, { passive: false });
+    canvas.addEventListener("touchend", function () {
+      dragging = false;
+      onCanvasUp();
+    });
+
+    setInterval(tick, TICK_MS);
+    render();
+  }
+
+  boot();
+</script>
+</body>
+</html>
