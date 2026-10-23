@@ -5,7 +5,7 @@ hand-built — zero frameworks, zero plugins, zero internet calls — and
 designed so a **student drives** the building process, with the engineer
 (Claude) executing and narrating every step.
 
-This is the public showcase for **https://epic-mn.com/**. Every example,
+This is the public showcase for the pod I was in for  **https://epic-mn.com/**. Every example,
 playbook, and script here is meant to be run live, in front of a class, on
 a laptop with nothing but a browser.
 
