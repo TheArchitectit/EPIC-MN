@@ -1,0 +1,575 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Time Monster — EPIC-MN</title>
+<meta name="description" content="A friendly time-tracking monster: your day's app usage grows a cute monster with colorful fur patches, a happiness meter, and kind 1-3 star summaries. Example #6 of EPIC-MN.">
+<style>
+/* ============================================================
+   TIME MONSTER · friendly day-tracker arcade · hand-built
+   ============================================================ */
+:root{
+  --ink:#12062b; --ink2:#1d0b3f; --txt:#fff6e9; --dim:rgba(255,246,233,.66);
+  --card:rgba(255,255,255,.07); --line:rgba(255,255,255,.16);
+  --pink:#ff2d95; --cyan:#2de2e6; --yellow:#ffd166; --mint:#6ff2c5; --purple:#8b5cf6;
+  --hard:6px 6px 0 rgba(0,0,0,.45);
+  --mono:ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --sans:"Trebuchet MS","Gill Sans",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;min-height:100%}
+body{
+  font-family:var(--sans);color:var(--txt);
+  background:
+    radial-gradient(1200px 600px at 50% -10%, #2a1060 0%, transparent 60%),
+    repeating-linear-gradient(0deg, transparent 0 38px, rgba(255,255,255,.03) 38px 39px),
+    repeating-linear-gradient(90deg, transparent 0 38px, rgba(255,255,255,.03) 38px 39px),
+    var(--ink);
+  user-select:none;-webkit-user-select:none;touch-action:manipulation;
+}
+
+/* ---------- chrome ---------- */
+#top{max-width:980px;margin:0 auto;padding:22px 18px 8px;display:flex;
+  justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap}
+#brand h1{margin:0;font-family:var(--mono);font-size:clamp(26px,6vw,44px);
+  font-weight:900;letter-spacing:.08em;line-height:1;
+  color:var(--mint);text-shadow:3px 3px 0 var(--pink), 6px 6px 0 rgba(0,0,0,.45)}
+#brand p{margin:8px 0 0;font-family:var(--mono);font-size:11px;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--dim)}
+
+/* ---------- buttons ---------- */
+.btn{font:inherit;font-family:var(--mono);font-weight:900;font-size:13px;
+  letter-spacing:.12em;text-transform:uppercase;cursor:pointer;
+  border:3px solid var(--txt);border-radius:6px;padding:12px 18px;
+  background:var(--ink2);color:var(--txt);box-shadow:var(--hard);
+  transition:transform .08s, box-shadow .08s}
+.btn:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 rgba(0,0,0,.45)}
+.btn:active{transform:translate(3px,3px);box-shadow:2px 2px 0 rgba(0,0,0,.45)}
+.btn.primary{background:var(--pink);color:#fff}
+.btn.cyan{background:var(--cyan);color:#08222a}
+.btn.mint{background:var(--mint);color:#06331f}
+.btn.ghost{background:transparent;border-color:var(--line);color:var(--dim);box-shadow:none}
+.btn.ghost:hover{color:var(--txt);border-color:var(--txt)}
+
+/* ---------- studio layout ---------- */
+main{max-width:980px;margin:0 auto;padding:10px 18px 40px}
+.lede{font-size:15px;color:var(--dim);max-width:620px;margin:6px 0 18px}
+.studio{display:grid;grid-template-columns:minmax(280px,420px) 1fr;gap:22px;align-items:start}
+@media (max-width:760px){.studio{grid-template-columns:1fr}}
+
+/* ---------- stage ---------- */
+.stage{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px}
+#stage{width:100%;max-width:420px;height:auto;image-rendering:auto;
+  border:4px solid var(--txt);border-radius:12px;box-shadow:var(--hard);display:block}
+.moodrow{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;
+  font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase}
+.moodrow .pill{background:var(--card);border:3px solid var(--line);border-radius:999px;
+  padding:7px 14px;box-shadow:var(--hard)}
+.moodrow .pill b{color:var(--yellow)}
+
+/* ---------- panel ---------- */
+.panel h2{font-family:var(--mono);font-size:18px;letter-spacing:.14em;
+  text-transform:uppercase;margin:0 0 12px;color:var(--yellow)}
+.panel h2.cyanh{color:var(--cyan)}
+.apps{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 22px}
+@media (max-width:520px){.apps{grid-template-columns:1fr}}
+.app{display:flex;align-items:center;gap:10px;font:inherit;font-family:var(--mono);
+  font-size:12px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;
+  background:var(--card);border:3px solid var(--line);border-radius:10px;
+  padding:11px 12px;box-shadow:var(--hard);color:var(--txt);text-align:left;
+  transition:transform .08s, border-color .08s}
+.app:hover{transform:translate(-2px,-2px)}
+.app .dot{width:16px;height:16px;border-radius:50%;flex:none;
+  border:2px solid rgba(255,255,255,.55)}
+.app .aname{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.app .amins{color:var(--dim)}
+.app.on{border-color:var(--yellow);outline:3px solid var(--yellow);outline-offset:1px}
+.app.on .amins{color:var(--yellow)}
+
+/* ---------- today list ---------- */
+.daylist{display:flex;flex-direction:column;gap:8px;margin:0 0 22px}
+.drow{display:flex;align-items:center;gap:10px;background:var(--card);
+  border:3px solid var(--line);border-radius:10px;padding:8px 12px}
+.drow .dot{width:14px;height:14px;border-radius:50%;flex:none}
+.drow .dname{font-family:var(--mono);font-size:11px;letter-spacing:.1em;
+  text-transform:uppercase;width:112px;flex:none;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.drow .dbar{flex:1;height:12px;background:rgba(255,255,255,.1);border-radius:999px;overflow:hidden}
+.drow .dbarfill{height:100%;border-radius:999px}
+.drow .dmins{font-family:var(--mono);font-size:11px;letter-spacing:.1em;
+  color:var(--dim);width:52px;text-align:right;flex:none}
+
+/* ---------- happiness meter ---------- */
+.hapwrap{margin:0 0 20px;background:var(--card);border:3px solid var(--line);
+  border-radius:10px;padding:14px;box-shadow:var(--hard)}
+.haphead{display:flex;justify-content:space-between;gap:10px;margin:0 0 10px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase}
+.haphead b{color:var(--mint)}
+.hapbar{height:18px;background:rgba(255,255,255,.1);border-radius:999px;overflow:hidden;
+  border:2px solid var(--line)}
+#hapfill{height:100%;width:0;border-radius:999px;
+  background:linear-gradient(90deg, var(--cyan), var(--mint), var(--yellow));
+  transition:width .4s}
+
+/* ---------- summary overlay ---------- */
+#summary{display:none;position:fixed;inset:0;z-index:60;background:rgba(10,2,26,.72);
+  align-items:center;justify-content:center;padding:18px}
+#summary.show{display:flex}
+.scard{position:relative;background:var(--ink2);border:4px solid var(--cyan);
+  border-radius:14px;box-shadow:var(--hard);padding:26px 24px 22px;max-width:420px;
+  width:100%;text-align:center}
+.scard h3{font-family:var(--mono);font-size:18px;letter-spacing:.14em;
+  text-transform:uppercase;margin:12px 0 4px;color:var(--cyan)}
+#thumb{width:210px;height:210px;border:3px solid var(--line);border-radius:10px;
+  background:var(--ink)}
+#stars{font-size:44px;letter-spacing:.14em;color:var(--yellow);
+  text-shadow:3px 3px 0 rgba(0,0,0,.45);margin:10px 0 2px}
+#smsg{font-size:15px;line-height:1.5;color:var(--txt);margin:8px 0 18px}
+
+/* ---------- flourishes / toast ---------- */
+.fl{position:fixed;z-index:40;pointer-events:none;font-family:var(--mono);
+  font-weight:900;font-size:22px;letter-spacing:.08em;text-transform:uppercase;
+  text-shadow:2px 2px 0 rgba(0,0,0,.5);animation:fl .85s ease-out forwards}
+@keyframes fl{to{transform:translateY(-72px);opacity:0}}
+.fl.got{color:var(--mint)}
+.fl.miss{color:var(--pink)}
+.spark{position:absolute;font-size:22px;pointer-events:none;animation:spark 1.4s ease-out forwards}
+@keyframes spark{to{transform:translateY(-70px) rotate(220deg);opacity:0}}
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);
+  opacity:0;background:var(--ink2);border:3px solid var(--cyan);color:var(--txt);
+  font-family:var(--mono);font-size:13px;letter-spacing:.12em;text-transform:uppercase;
+  padding:12px 20px;border-radius:8px;box-shadow:var(--hard);z-index:50;
+  transition:.25s;pointer-events:none;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ---------- foot ---------- */
+.foot{max-width:980px;margin:10px auto 30px;padding:0 18px;font-family:var(--mono);
+  font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);text-align:center}
+.foot b{color:var(--mint)}
+</style>
+</head>
+<body>
+
+<header id="top">
+  <div id="brand">
+    <h1>TIME MONSTER</h1>
+    <p>track · grow · glow · be kind</p>
+  </div>
+  <button class="btn ghost" id="btn-reset">↺ reset</button>
+</header>
+
+<main>
+  <p class="lede">Every minute you spend in an app feeds a <b>friendly</b> monster.
+    It grows bigger with your day and wears <b>colorful fur patches</b> that show
+    which apps you used. Mix it up to keep it happy — then
+    <b>finish your day</b> for stars. 🧸</p>
+
+  <div class="studio">
+    <div class="stage">
+      <canvas id="stage" width="420" height="420" aria-label="friendly time monster"></canvas>
+      <div class="moodrow">
+        <span class="pill">mood · <b id="mood">feeling · happy!</b></span>
+        <span class="pill"><b id="total">tracked today · 0m</b></span>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>👆 use an app</h2>
+      <div class="apps" id="apps"></div>
+
+      <h2 class="cyanh">📅 today</h2>
+      <div class="daylist" id="daylist"></div>
+
+      <div class="hapwrap">
+        <div class="haphead"><span>😊 happiness</span><b id="hap-label">happy!</b></div>
+        <div class="hapbar"><div id="hapfill"></div></div>
+      </div>
+
+      <button class="btn primary" id="btn-finish">★ finish my day</button>
+    </div>
+  </div>
+
+  <section id="summary" aria-live="polite">
+    <div class="scard">
+      <canvas id="thumb" width="210" height="210" aria-label="your monster"></canvas>
+      <h3>your day</h3>
+      <div id="stars">★★★</div>
+      <p id="smsg"></p>
+      <button class="btn cyan" id="btn-close">keep playing</button>
+    </div>
+  </section>
+</main>
+
+<div class="foot"><b>EPIC-MN</b> · example #6 · all data invented · local-only</div>
+<div id="toast" role="status"></div>
+
+<script>
+"use strict";
+/* ============================================================
+   TIME MONSTER · friendly day-tracker · localStorage · zero deps
+   size = total minutes · fur patches = app mix · never scary
+   ============================================================ */
+
+const STAGE = 420;
+const GKEY = "time-monster-day:v1";
+const MIN_PER_TICK = 1.25;   /* demo clock: ~5 demo-min per real second */
+const TICK_MS = 250;
+
+const APPS = [
+  { id:"math",  name:"Math Quest",  emoji:"➕", color:"#2de2e6", seedMin:35 },
+  { id:"draw",  name:"Drawing Pad", emoji:"🎨", color:"#ff2d95", seedMin:45 },
+  { id:"video", name:"Video Tube",  emoji:"📺", color:"#ff8a3d", seedMin:50 },
+  { id:"book",  name:"Book Nook",   emoji:"📚", color:"#ffd166", seedMin:25 },
+  { id:"chat",  name:"Chat Club",   emoji:"💬", color:"#6ff2c5", seedMin:20 },
+  { id:"music", name:"Music Maker", emoji:"🎵", color:"#8b5cf6", seedMin:15 },
+];
+
+/* fixed fur-patch slots in body-local coords (face stays clear) */
+const PATCH_SLOTS = [
+  [-78, -66], [78, -66], [-96, 6], [96, 6], [-64, 74], [64, 74],
+];
+
+/* ---------- day state + persistence ---------- */
+function seed(){
+  const mins = {};
+  APPS.forEach(a => { mins[a.id] = a.seedMin; });
+  return { mins: mins, active: null, finished: false };
+}
+
+function loadDay(){
+  try{
+    const raw = localStorage.getItem(GKEY);
+    if(!raw) return seed();
+    const d = JSON.parse(raw);
+    if(!d || typeof d !== "object" || !d.mins || typeof d.mins !== "object") return seed();
+    const mins = {};
+    APPS.forEach(a => {
+      const v = Number(d.mins[a.id]);
+      mins[a.id] = (isFinite(v) && v > 0) ? v : 0;
+    });
+    return {
+      mins: mins,
+      active: APPS.some(a => a.id === d.active) ? d.active : null,
+      finished: !!d.finished,
+    };
+  }catch(e){ return seed(); }
+}
+
+function saveDay(){
+  try{ localStorage.setItem(GKEY, JSON.stringify(state)); }catch(e){}
+}
+
+let state = loadDay();
+
+function fmtMin(m){ return Math.round(m) + "m"; }
+function totalMin(){ return APPS.reduce((s, a) => s + (state.mins[a.id] || 0), 0); }
+
+/* ---------- toast & flourishes ---------- */
+const toastEl = document.getElementById("toast");
+let toastT;
+function toast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add("show");
+  clearTimeout(toastT);
+  toastT = setTimeout(() => toastEl.classList.remove("show"), 2600);
+}
+
+function flourish(text, kind, x, y){
+  const el = document.createElement("div");
+  el.className = "fl " + (kind || "got");
+  el.textContent = text;
+  el.style.left = (x != null ? x : innerWidth / 2 - 60) + "px";
+  el.style.top = (y != null ? y : innerHeight / 2 - 40) + "px";
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 900);
+}
+
+function sparkBurst(host){
+  const glyphs = ["✦","★","◆","✧","★"];
+  for(let i = 0; i < 8; i++){
+    const s = document.createElement("div");
+    s.className = "spark";
+    s.textContent = glyphs[i % glyphs.length];
+    s.style.left = (10 + Math.random() * 80) + "%";
+    s.style.top = (30 + Math.random() * 50) + "%";
+    s.style.color = ["var(--yellow)","var(--pink)","var(--cyan)","var(--mint)"][i % 4];
+    s.style.animationDelay = (Math.random() * .5) + "s";
+    host.appendChild(s);
+    setTimeout(() => s.remove(), 2200);
+  }
+}
+
+/* ---------- happiness & stars (kind-only) ---------- */
+function happiness(){
+  const total = totalMin();
+  if(total <= 0) return 0;
+  const used = APPS.filter(a => state.mins[a.id] > 0);
+  const variety = used.length / APPS.length;
+  const top = Math.max.apply(null, used.map(a => state.mins[a.id])) / total;
+  const balance = 1 - top;
+  return Math.max(0, Math.min(100, Math.round((variety * 0.6 + balance * 0.4) * 100)));
+}
+
+const HAP_LABELS = [
+  [0, "still cute!"],
+  [25, "getting cozy"],
+  [55, "happy!"],
+  [80, "over the moon!"],
+];
+function hapLabel(h){
+  let label = HAP_LABELS[0][1];
+  for(const [min, l] of HAP_LABELS){ if(h >= min) label = l; }
+  return label;
+}
+
+function starsFor(h){ return h >= 80 ? 3 : (h >= 45 ? 2 : 1); }
+
+const STAR_MSGS = {
+  3: ["Wow! Your day was full of variety — the monster is over the moon!",
+      "So many apps, such balance — your monster is BEAMING!"],
+  2: ["Nice mix today! One more app and it's 3 stars next time.",
+      "Your monster had a cozy, happy day with you!"],
+  1: ["Your monster still loves you — maybe try a new app tomorrow?",
+      "Small days are okay! Tomorrow is a fresh start for your little pal."],
+};
+function msgFor(stars){
+  const arr = STAR_MSGS[stars];
+  return arr[Math.floor(totalMin()) % arr.length];
+}
+
+/* ---------- drawing: the friendly monster ---------- */
+function drawMonster(c, mins){
+  const total = APPS.reduce((s, a) => s + (mins[a.id] || 0), 0);
+  const scale = Math.max(0.55, Math.min(1.25, 0.55 + 0.45 * Math.sqrt(total / 240)));
+
+  /* backdrop */
+  const g = c.createLinearGradient(0, 0, 0, STAGE);
+  g.addColorStop(0, "#2a1060");
+  g.addColorStop(1, "#5b2288");
+  c.fillStyle = g;
+  c.fillRect(0, 0, STAGE, STAGE);
+  c.fillStyle = "rgba(255,255,255,.14)";
+  const dots = [[52,64],[128,36],[210,58],[300,40],[368,72],[86,130],[340,140],[46,240],[382,250],[150,42],[268,90]];
+  for(const [x, y] of dots){
+    c.beginPath(); c.arc(x, y, 3, 0, Math.PI * 2); c.fill();
+  }
+
+  /* ground shadow */
+  c.fillStyle = "rgba(0,0,0,.28)";
+  c.beginPath(); c.ellipse(210, 386, 116 * scale, 22, 0, 0, Math.PI * 2); c.fill();
+
+  c.save();
+  c.translate(210, 250);
+  c.scale(scale, scale);
+  drawBody(c, mins, total);
+  c.restore();
+}
+
+function drawBody(c, mins, total){
+  const INK = "#12062b";
+  const BODY = "#c9a7ff";
+  const BODY_D = "#b08af5";
+
+  /* antennae (ball-tipped — cute, never horns) */
+  c.strokeStyle = INK; c.lineWidth = 6; c.lineCap = "round";
+  c.beginPath(); c.moveTo(-42, -112); c.lineTo(-56, -152); c.stroke();
+  c.beginPath(); c.moveTo(42, -112); c.lineTo(56, -152); c.stroke();
+  c.fillStyle = "#ffd166";
+  c.beginPath(); c.arc(-56, -156, 11, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.arc(56, -156, 11, 0, Math.PI * 2); c.fill();
+
+  /* ears, scallop fur, arms, feet (peek from behind the body) */
+  c.fillStyle = BODY_D;
+  c.beginPath(); c.arc(-104, -84, 26, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.arc(104, -84, 26, 0, Math.PI * 2); c.fill();
+  for(const [x, y, r] of [[-70,-102,18],[-24,-116,20],[24,-116,20],[70,-102,18]]){
+    c.fillStyle = BODY_D;
+    c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = INK; c.lineWidth = 4; c.stroke();
+  }
+  c.fillStyle = BODY_D;
+  c.beginPath(); c.ellipse(-118, 14, 22, 34, 0, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.ellipse(118, 14, 22, 34, 0, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.ellipse(-54, 128, 34, 22, 0, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.ellipse(54, 128, 34, 22, 0, 0, Math.PI * 2); c.fill();
+
+  /* body blob */
+  c.fillStyle = BODY;
+  c.beginPath(); c.ellipse(0, 0, 118, 126, 0, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = INK; c.lineWidth = 5; c.stroke();
+
+  /* belly */
+  c.fillStyle = "#f3e8ff";
+  c.beginPath(); c.ellipse(0, 36, 66, 62, 0, 0, Math.PI * 2); c.fill();
+
+  /* fur patches: one per app, radius = share of the day */
+  APPS.forEach((a, i) => {
+    const m = mins[a.id] || 0;
+    if(m <= 0 || total <= 0) return;
+    const r = Math.max(12, Math.min(34, (m / total) * 70));
+    const [px, py] = PATCH_SLOTS[i];
+    c.fillStyle = a.color;
+    c.beginPath(); c.arc(px, py, r, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = "rgba(18,6,43,.55)"; c.lineWidth = 3; c.stroke();
+  });
+
+  /* face — smiling in EVERY state (the never-scary rule) */
+  for(const ex of [-38, 38]){
+    c.fillStyle = "#fff6e9";
+    c.beginPath(); c.ellipse(ex, -28, 21, 25, 0, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = INK; c.lineWidth = 4; c.stroke();
+    c.fillStyle = INK;
+    c.beginPath(); c.arc(ex + 2, -24, 10, 0, Math.PI * 2); c.fill();
+    c.fillStyle = "#fff6e9";
+    c.beginPath(); c.arc(ex + 6, -30, 4, 0, Math.PI * 2); c.fill();
+  }
+  c.fillStyle = "rgba(255,122,182,.55)";
+  c.beginPath(); c.arc(-66, 12, 13, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.arc(66, 12, 13, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = INK; c.lineWidth = 6; c.lineCap = "round";
+  c.beginPath(); c.arc(0, -10, 30, 0.15 * Math.PI, 0.85 * Math.PI); c.stroke();
+}
+
+/* ---------- rendering ---------- */
+const appEls = {};
+function buildApps(){
+  const host = document.getElementById("apps");
+  host.textContent = "";
+  APPS.forEach(a => {
+    const b = document.createElement("button");
+    b.className = "app";
+    b.setAttribute("data-id", a.id);
+    const dot = document.createElement("span");
+    dot.className = "dot";
+    dot.style.background = a.color;
+    const nm = document.createElement("span");
+    nm.className = "aname";
+    nm.textContent = a.emoji + " " + a.name;
+    const mt = document.createElement("span");
+    mt.className = "amins";
+    b.appendChild(dot); b.appendChild(nm); b.appendChild(mt);
+    b.addEventListener("click", () => tapApp(a.id));
+    host.appendChild(b);
+    appEls[a.id] = { btn: b, mins: mt };
+  });
+}
+
+function renderApps(){
+  APPS.forEach(a => {
+    const el = appEls[a.id];
+    el.btn.classList.toggle("on", state.active === a.id);
+    el.mins.textContent = fmtMin(state.mins[a.id]);
+  });
+}
+
+function renderDay(){
+  const host = document.getElementById("daylist");
+  host.textContent = "";
+  const total = totalMin();
+  APPS.forEach(a => {
+    const m = state.mins[a.id] || 0;
+    if(m <= 0) return;
+    const row = document.createElement("div");
+    row.className = "drow";
+    row.setAttribute("data-id", a.id);
+    const dot = document.createElement("span");
+    dot.className = "dot";
+    dot.style.background = a.color;
+    const nm = document.createElement("span");
+    nm.className = "dname";
+    nm.textContent = a.name;
+    const bar = document.createElement("div");
+    bar.className = "dbar";
+    const fill = document.createElement("div");
+    fill.className = "dbarfill";
+    fill.style.width = (total > 0 ? (m / total) * 100 : 0) + "%";
+    fill.style.background = a.color;
+    bar.appendChild(fill);
+    const mt = document.createElement("span");
+    mt.className = "dmins";
+    mt.textContent = fmtMin(m);
+    row.appendChild(dot); row.appendChild(nm); row.appendChild(bar); row.appendChild(mt);
+    host.appendChild(row);
+  });
+}
+
+function renderHappiness(){
+  const h = happiness();
+  document.getElementById("hapfill").style.width = h + "%";
+  document.getElementById("hap-label").textContent = hapLabel(h);
+  document.getElementById("mood").textContent = "feeling · " + hapLabel(h);
+  document.getElementById("total").textContent = "tracked today · " + fmtMin(totalMin());
+}
+
+function renderStage(){
+  const c = document.getElementById("stage").getContext("2d");
+  drawMonster(c, state.mins);
+}
+
+function render(){
+  renderApps();
+  renderDay();
+  renderHappiness();
+  renderStage();
+}
+
+/* ---------- live tap-to-use (demo clock) ---------- */
+function tapApp(id){
+  const a = APPS.find(x => x.id === id);
+  if(!a) return;
+  if(state.active === id){
+    state.active = null;
+  }else{
+    state.active = id;
+    flourish("▶ " + a.name, "got");
+  }
+  render();
+  saveDay();
+}
+
+setInterval(() => {
+  if(!state.active) return;
+  state.mins[state.active] += MIN_PER_TICK;
+  render();
+  saveDay();   /* every tick: reload must never lose minutes */
+}, TICK_MS);
+
+/* ---------- finish the day (stars + kind coaching) ---------- */
+function finishDay(){
+  const h = happiness();
+  const s = starsFor(h);
+  state.finished = true;
+  saveDay();
+  document.getElementById("stars").textContent = "★".repeat(s) + "☆".repeat(3 - s);
+  document.getElementById("smsg").textContent = msgFor(s);
+  const tc = document.getElementById("thumb").getContext("2d");
+  tc.save();
+  tc.scale(0.5, 0.5);
+  drawMonster(tc, state.mins);
+  tc.restore();
+  const sum = document.getElementById("summary");
+  sum.classList.add("show");
+  sparkBurst(sum);
+  flourish(s + " star day!", "got");
+}
+
+function closeSummary(){
+  document.getElementById("summary").classList.remove("show");
+}
+
+function resetAll(){
+  state = seed();
+  saveDay();
+  render();
+  toast("↺ fresh day restored");
+}
+
+document.getElementById("btn-finish").addEventListener("click", finishDay);
+document.getElementById("btn-close").addEventListener("click", closeSummary);
+document.getElementById("btn-reset").addEventListener("click", resetAll);
+
+buildApps();
+render();
+</script>
+</body>
+</html>
