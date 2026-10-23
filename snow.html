@@ -1,0 +1,911 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Powder Tricks</title>
+<style>
+  :root {
+    --sky: #8fd6ff;
+    --snow: #ffffff;
+    --snow2: #cfe9ff;
+    --ink: #1e3a5f;
+    --pink: #ff6b9d;
+    --gold: #ffc93c;
+    --green: #3cb878;
+    --shadow: 4px 4px 0 var(--ink);
+    --font: "Trebuchet MS", "Verdana", sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: linear-gradient(#6fc3f5, var(--sky) 40%, #b8e6ff);
+    color: var(--ink);
+    font-family: var(--font);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  .top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 20px 10px;
+    max-width: 620px;
+    margin: 0 auto;
+  }
+  h1 {
+    font-size: clamp(22px, 4.5vw, 36px);
+    letter-spacing: 2px;
+    color: var(--ink);
+    text-shadow: 3px 3px 0 #fff;
+    font-weight: 900;
+  }
+  main {
+    max-width: 620px;
+    margin: 0 auto;
+    padding: 4px 16px 40px;
+    position: relative;
+  }
+  .btn {
+    font-family: var(--font);
+    font-size: 15px;
+    letter-spacing: 2px;
+    border-radius: 14px;
+    padding: 12px 18px;
+    cursor: pointer;
+    border: 3px solid var(--ink);
+    background: var(--pink);
+    color: #fff;
+    font-weight: 900;
+    text-shadow: 1px 1px 0 rgba(30, 58, 95, 0.5);
+    box-shadow: var(--shadow);
+  }
+  .btn:hover { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 var(--ink); }
+  .btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+  .btn.big { font-size: 18px; padding: 14px 30px; }
+  .btn.gold { background: var(--gold); color: var(--ink); text-shadow: none; }
+  .btn.cyan { background: var(--sky); color: var(--ink); text-shadow: none; }
+  .btn.ghost {
+    background: var(--snow);
+    color: var(--ink);
+    font-size: 12px;
+    padding: 9px 12px;
+  }
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: var(--shadow);
+  }
+  .boardwrap {
+    position: relative;
+    margin: 0 auto;
+    border-radius: 18px;
+    border: 4px solid var(--ink);
+    box-shadow: 8px 8px 0 rgba(30, 58, 95, 0.35);
+    overflow: hidden;
+    background: var(--snow);
+  }
+  canvas {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .hud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 12px 0 6px;
+    justify-content: space-between;
+  }
+  .stat {
+    background: var(--snow);
+    border: 3px solid var(--ink);
+    border-radius: 12px;
+    padding: 7px 10px;
+    min-width: 88px;
+    flex: 1 1 auto;
+    text-align: center;
+    box-shadow: 3px 3px 0 rgba(30, 58, 95, 0.3);
+  }
+  .stat .lbl {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--pink);
+    font-weight: 900;
+  }
+  .stat .val {
+    display: block;
+    font-size: clamp(15px, 2.4vw, 21px);
+    font-weight: 900;
+    color: var(--ink);
+    margin-top: 2px;
+  }
+  .levers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 12px 0 4px;
+    justify-content: center;
+    align-items: center;
+  }
+  .steer {
+    font-size: 24px;
+    min-width: 92px;
+    padding: 14px 0;
+  }
+  .trick {
+    font-size: 19px;
+    min-width: 170px;
+    background: var(--gold);
+    color: var(--ink);
+  }
+  .status {
+    text-align: center;
+    letter-spacing: 1px;
+    font-size: 13px;
+    color: var(--ink);
+    min-height: 19px;
+    margin: 8px 0 2px;
+    font-weight: bold;
+  }
+  .screen {
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    top: 24px;
+    background: rgba(255, 255, 255, 0.94);
+    border: 4px solid var(--ink);
+    border-radius: 18px;
+    box-shadow: 8px 8px 0 rgba(30, 58, 95, 0.35);
+    padding: 26px 18px;
+    text-align: center;
+    z-index: 10;
+  }
+  .screen.hidden { display: none; }
+  .screen h2 {
+    color: var(--pink);
+    letter-spacing: 3px;
+    text-shadow: 2px 2px 0 var(--ink);
+    margin-bottom: 12px;
+    font-size: clamp(21px, 3.8vw, 30px);
+    font-weight: 900;
+  }
+  .rules {
+    font-size: 14px;
+    line-height: 2.1;
+    letter-spacing: 0.5px;
+    margin: 8px 0 16px;
+    color: var(--ink);
+    font-weight: bold;
+  }
+  .big-score {
+    font-size: clamp(32px, 6vw, 48px);
+    color: var(--ink);
+    text-shadow: 3px 3px 0 var(--gold);
+    margin: 6px 0;
+    font-weight: 900;
+  }
+  .banner {
+    display: inline-block;
+    background: var(--gold);
+    color: var(--ink);
+    font-size: 15px;
+    letter-spacing: 2px;
+    padding: 8px 14px;
+    border-radius: 12px;
+    border: 3px solid var(--ink);
+    box-shadow: var(--shadow);
+    margin: 6px;
+    font-weight: 900;
+    animation: bounce 0.7s ease-in-out infinite alternate;
+  }
+  .banner.hidden { display: none; }
+  @keyframes bounce {
+    from { transform: translateY(0) rotate(-2deg); }
+    to { transform: translateY(-5px) rotate(2deg); }
+  }
+  .toast {
+    position: absolute;
+    left: 50%;
+    bottom: 18px;
+    transform: translateX(-50%);
+    background: var(--gold);
+    color: var(--ink);
+    font-weight: 900;
+    letter-spacing: 1px;
+    padding: 12px 22px;
+    border-radius: 999px;
+    border: 3px solid var(--ink);
+    box-shadow: var(--shadow);
+    z-index: 60;
+  }
+  .toast.hidden { display: none; }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>POWDER TRICKS</h1>
+  <button id="btn-records" class="btn ghost">CLEAR RECORDS</button>
+</header>
+<main>
+  <div class="boardwrap">
+    <canvas id="slope" width="540" height="720"></canvas>
+    <div id="screen-ready" class="screen">
+      <h2>SNOW DAY!</h2>
+      <div class="rules">
+        🏂 YOUR RIDER ZOOMS DOWN ON THEIR OWN<br>
+        ◀ ▶ CARVE BETWEEN THE LANES<br>
+        🛹 TRICK POPS YOU OFF RAMPS — TAP IT AGAIN IN THE AIR!<br>
+        🌲 THREE TUMBLES AND THE RUN IS OVER
+      </div>
+      <button id="btn-start" class="btn big">START THE RUN</button>
+      <div class="status">← → or A / D to carve · Space to trick · Enter to start</div>
+    </div>
+    <div id="screen-over" class="screen hidden">
+      <h2>WIPEOUT!</h2>
+      <div id="over-newbest" class="banner hidden">NEW BEST!</div>
+      <div id="over-score" class="big-score">0</div>
+      <div id="over-info" class="rules">0 TUMBLES</div>
+      <button id="btn-again" class="btn big">PLAY AGAIN</button>
+    </div>
+    <div id="toast" class="toast hidden"></div>
+  </div>
+
+  <section class="hud">
+    <div class="stat"><span class="lbl">SCORE</span><span id="hud-score" class="val">0</span></div>
+    <div class="stat"><span class="lbl">COMBO</span><span id="hud-combo" class="val">×1</span></div>
+    <div class="stat"><span class="lbl">TUMBLES</span><span id="hud-tumbles" class="val">0/3</span></div>
+    <div class="stat"><span class="lbl">BEST</span><span id="hud-best" class="val">--</span></div>
+  </section>
+
+  <div class="levers">
+    <button id="btn-left" class="btn steer cyan">◀</button>
+    <button id="btn-trick" class="btn trick">🛹 TRICK!</button>
+    <button id="btn-right" class="btn steer cyan">▶</button>
+  </div>
+  <div id="status" class="status">fresh powder awaits... ride!</div>
+</main>
+
+<script>
+  "use strict";
+
+  // ---------- constants ----------
+  var GKEY = "powder-tricks:v1";
+  var TICK_MS = 100;
+  var LANES = 5;
+  var LANE_W = 96;
+  var ROAD_L = 30;
+  var HERO_Y = 560;
+  var ROW_GAP = 220;
+  var HOP_TICKS = 10;
+  var RAMP_TICKS = 22;
+  var RAMP_WINDOW = 50;
+  var TREE_WINDOW = 36;
+  var MAX_TRICKS = 6;
+  var OVER_ROTATE = 4;
+  var COMBO_CAP = 8;
+  var TUMBLE_MS = 900;
+  var MAX_TUMBLES = 3;
+
+  // ---------- state ----------
+  var state = {
+    screen: "ready", // ready | running | over
+    runDist: 0,
+    score: 0,
+    targetLane: 2,
+    heroX: 270,
+    airTicks: 0,
+    trickCount: 0,
+    airPoints: 0,
+    comboMult: 1,
+    comboMax: 0,
+    tumbles: 0,
+    tumbleMs: 0,
+    rows: [],
+    rowCount: 0,
+    bestScore: 0,
+    bestCombo: 0,
+    result: null,
+    status: ""
+  };
+
+  var frame = 0;
+  var spray = [];
+  var floats = [];
+
+  // ---------- persistence (house machinery) ----------
+  function seed() {
+    return { bestScore: 0, bestCombo: 0 };
+  }
+  function load() {
+    try {
+      var raw = localStorage.getItem(GKEY);
+      if (!raw) return seed();
+      var d = JSON.parse(raw);
+      if (!d || typeof d !== "object") return seed();
+      var s = seed();
+      if (typeof d.bestScore === "number" && isFinite(d.bestScore)) s.bestScore = d.bestScore;
+      if (typeof d.bestCombo === "number" && isFinite(d.bestCombo)) s.bestCombo = d.bestCombo;
+      return s;
+    } catch (err) {
+      return seed();
+    }
+  }
+  function save() {
+    try {
+      localStorage.setItem(GKEY, JSON.stringify({
+        bestScore: state.bestScore,
+        bestCombo: state.bestCombo
+      }));
+    } catch (err) { /* storage blocked: keep riding */ }
+  }
+  var toastTimer = null;
+  function toast(msg) {
+    var el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.remove("hidden");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      el.classList.add("hidden");
+    }, 2200);
+  }
+  function refuse(msg) {
+    state.status = msg;
+    toast(msg);
+    render();
+  }
+
+  // ---------- helpers ----------
+  function hash(i) {
+    var x = Math.sin(i * 127.1) * 43758.5453;
+    return x - Math.floor(x);
+  }
+  function laneCenter(i) {
+    return ROAD_L + LANE_W * i + LANE_W / 2;
+  }
+  function runSpeed() {
+    return Math.min(420, 300 + Math.floor(state.runDist / 3000) * 15);
+  }
+  function addSpray(x, y) {
+    spray.push({
+      x: x, y: y,
+      vx: (Math.random() - 0.5) * 1.6,
+      vy: 1 + Math.random() * 1.4,
+      life: 14,
+      max: 14
+    });
+    if (spray.length > 120) spray.splice(0, spray.length - 120);
+  }
+  function addFloat(text, x, y) {
+    floats.push({ text: text, x: x, y: y, life: 40, max: 40 });
+    if (floats.length > 12) floats.shift();
+  }
+
+  // ---------- terrain ----------
+  function ensureRows() {
+    var needed = Math.floor((state.runDist + 1400) / ROW_GAP) + 1;
+    while (state.rowCount <= needed) {
+      var k = state.rowCount++;
+      var y = 300 + k * ROW_GAP;
+      var t = hash(k * 7 + 1);
+      var row = { y: y, type: "open", lane: -1, trees: [] };
+      if (t < 0.25) {
+        row.type = "ramp";
+        row.lane = Math.floor(hash(k * 11 + 2) * 5) % 5;
+      } else if (t < 0.7) {
+        row.type = "trees";
+        var n = hash(k * 13 + 3) < 0.5 ? 1 : 2;
+        var used = {};
+        for (var j = 0; j < n; j++) {
+          var lane = Math.floor(hash(k * 17 + j * 3 + 4) * 5) % 5;
+          if (used[lane]) lane = (lane + 1) % 5;
+          used[lane] = true;
+          row.trees.push(lane);
+        }
+      }
+      state.rows.push(row);
+    }
+  }
+
+  // ---------- flow ----------
+  function startGame() {
+    state.screen = "running";
+    state.runDist = 0;
+    state.score = 0;
+    state.targetLane = 2;
+    state.heroX = laneCenter(2);
+    state.airTicks = 0;
+    state.trickCount = 0;
+    state.airPoints = 0;
+    state.comboMult = 1;
+    state.comboMax = 0;
+    state.tumbles = 0;
+    state.tumbleMs = 0;
+    state.rows = [];
+    state.rowCount = 0;
+    state.result = null;
+    state.status = "";
+    spray = [];
+    floats = [];
+    ensureRows();
+    render();
+  }
+  function gameOver() {
+    if (state.screen !== "running") return;
+    state.screen = "over";
+    var newBest = false;
+    if (state.score > state.bestScore) {
+      state.bestScore = state.score;
+      newBest = true;
+    }
+    if (state.comboMax > state.bestCombo) {
+      state.bestCombo = state.comboMax;
+      newBest = true;
+    }
+    save();
+    state.result = {
+      score: state.score,
+      combo: state.comboMax,
+      tumbles: state.tumbles,
+      newBest: newBest
+    };
+    if (newBest) toast("NEW BEST!");
+    render();
+  }
+  function resetRecords() {
+    state.bestScore = 0;
+    state.bestCombo = 0;
+    save();
+    toast("RECORDS CLEARED");
+    render();
+  }
+
+  // ---------- controls ----------
+  function steer(dir) {
+    if (state.screen !== "running" || state.tumbleMs > 0) return;
+    var next = state.targetLane + dir;
+    if (next < 0 || next >= LANES) return;
+    state.targetLane = next;
+    state.status = "";
+    render();
+  }
+  function pop() {
+    if (state.screen !== "running" || state.tumbleMs > 0) return;
+    if (state.airTicks > 0) {
+      // mid-air trick
+      state.trickCount++;
+      if (state.trickCount > MAX_TRICKS) state.trickCount = MAX_TRICKS;
+      state.airPoints += 100 * state.trickCount;
+      render();
+      return;
+    }
+    // grounded pop: hop, or big air over a ramp
+    var rampAir = false;
+    for (var i = 0; i < state.rows.length; i++) {
+      var r = state.rows[i];
+      if (r.type !== "ramp") continue;
+      if (Math.abs(r.y - state.runDist) < RAMP_WINDOW &&
+          Math.abs(state.heroX - laneCenter(r.lane)) < 60) {
+        rampAir = true;
+        break;
+      }
+    }
+    state.airTicks = rampAir ? RAMP_TICKS : HOP_TICKS;
+    state.trickCount = 0;
+    state.airPoints = 0;
+    if (rampAir) toast("BIG AIR!");
+    render();
+  }
+  function tumble(msg) {
+    state.tumbles++;
+    state.airPoints = 0;
+    state.trickCount = 0;
+    state.airTicks = 0;
+    state.comboMult = 1;
+    state.tumbleMs = TUMBLE_MS;
+    toast(msg + " TUMBLE!");
+    if (state.tumbles >= MAX_TUMBLES) {
+      gameOver();
+    } else {
+      render();
+    }
+  }
+
+  // ---------- run sim ----------
+  function tick() {
+    if (state.screen !== "running") return;
+    var dt = TICK_MS / 1000;
+    state.runDist += runSpeed() * dt;
+
+    // hero eases toward the target lane (carving spray)
+    var tx = laneCenter(state.targetLane);
+    var before = state.heroX;
+    state.heroX += (tx - state.heroX) * 0.25;
+    if (Math.abs(state.heroX - before) > 0.5 && state.airTicks === 0 && state.tumbleMs <= 0) {
+      addSpray(state.heroX - (state.heroX - before) * 6, HERO_Y + 16);
+    }
+
+    ensureRows();
+
+    // tumble timer
+    if (state.tumbleMs > 0) {
+      state.tumbleMs -= TICK_MS;
+      render();
+      return;
+    }
+
+    // tree collisions (ground or air)
+    for (var i = 0; i < state.rows.length; i++) {
+      var r = state.rows[i];
+      if (r.type !== "trees") continue;
+      if (Math.abs(r.y - state.runDist) >= TREE_WINDOW) continue;
+      for (var j = 0; j < r.trees.length; j++) {
+        if (Math.abs(state.heroX - laneCenter(r.trees[j])) < 46) {
+          tumble("TREE!");
+          return;
+        }
+      }
+    }
+
+    // air & landing
+    if (state.airTicks > 0) {
+      state.airTicks--;
+      if (state.airTicks === 0) {
+        if (state.trickCount >= OVER_ROTATE) {
+          tumble("TOO SHOWY!");
+          return;
+        }
+        if (state.airPoints > 0) {
+          var used = state.comboMult;
+          var banked = state.airPoints * used;
+          state.score += banked;
+          state.comboMult = Math.min(state.comboMult + 1, COMBO_CAP);
+          if (used > state.comboMax) state.comboMax = used;
+          toast("CLEAN LANDING! +" + banked + " ×" + used);
+          addFloat("+" + banked + " ×" + used, state.heroX, HERO_Y - 110);
+        }
+      }
+    }
+
+    render();
+  }
+
+  function onKey(e) {
+    if (!e || !e.key) return;
+    var k = String(e.key).toLowerCase();
+    if (k === "enter") {
+      if (state.screen === "ready" || state.screen === "over") startGame();
+    } else if (k === "arrowleft" || k === "a") {
+      steer(-1);
+    } else if (k === "arrowright" || k === "d") {
+      steer(1);
+    } else if (k === " " || k === "arrowup" || k === "w") {
+      pop();
+    }
+  }
+
+  // ---------- canvas scene ----------
+  function drawPine(ctx, x, y, wob) {
+    // trunk
+    ctx.fillStyle = "#8a5a33";
+    ctx.fillRect(x - 5, y - 8, 10, 16);
+    // stacked squishy triangles
+    for (var i = 0; i < 3; i++) {
+      var ty = y - 12 - i * 24;
+      var tw = 34 - i * 8 + wob;
+      ctx.beginPath();
+      ctx.moveTo(x, ty - 30);
+      ctx.lineTo(x + tw, ty + 6);
+      ctx.lineTo(x - tw, ty + 6);
+      ctx.closePath();
+      ctx.fillStyle = "#3cb878";
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "#1e3a5f";
+      ctx.stroke();
+    }
+    // snow cap
+    ctx.beginPath();
+    ctx.arc(x, y - 96 + wob, 10, 0, Math.PI * 2);
+    ctx.fillStyle = "#ffffff";
+    ctx.fill();
+    ctx.stroke();
+  }
+  function drawRamp(ctx, x, y) {
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "#1e3a5f";
+    // body
+    ctx.fillStyle = "#ff6b9d";
+    ctx.beginPath();
+    ctx.moveTo(x - 48, y + 14);
+    ctx.lineTo(x - 40, y - 16);
+    ctx.lineTo(x + 40, y - 16);
+    ctx.lineTo(x + 48, y + 14);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // candy stripes
+    ctx.fillStyle = "#ffffff";
+    for (var s = -30; s <= 30; s += 20) {
+      ctx.fillRect(x + s - 5, y - 14, 10, 26);
+    }
+  }
+  function draw() {
+    var canvas = document.getElementById("slope");
+    var ctx = canvas.getContext("2d");
+    frame++;
+
+    // sky
+    var sky = ctx.createLinearGradient(0, 0, 0, 720);
+    sky.addColorStop(0, "#6fc3f5");
+    sky.addColorStop(1, "#b8e6ff");
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, 540, 720);
+
+    // sun
+    ctx.fillStyle = "#ffc93c";
+    ctx.beginPath();
+    ctx.arc(460, 80, 36, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "#1e3a5f";
+    ctx.stroke();
+    for (var ray = 0; ray < 8; ray++) {
+      var a = ray * Math.PI / 4 + frame * 0.01;
+      ctx.beginPath();
+      ctx.moveTo(460 + Math.cos(a) * 44, 80 + Math.sin(a) * 44);
+      ctx.lineTo(460 + Math.cos(a) * 58, 80 + Math.sin(a) * 58);
+      ctx.stroke();
+    }
+
+    // puffy clouds
+    for (var c = 0; c < 3; c++) {
+      var cx = ((c * 220 + frame * 0.4) % 700) - 80;
+      var cy = 50 + c * 38;
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.arc(cx, cy, 22, 0, Math.PI * 2);
+      ctx.arc(cx + 24, cy - 6, 18, 0, Math.PI * 2);
+      ctx.arc(cx + 46, cy, 20, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // puffy edge hills (parallax)
+    var hillOff = (state.runDist * 0.3) % 140;
+    for (var hh = -1; hh < 7; hh++) {
+      var hy = hh * 140 + hillOff;
+      ctx.fillStyle = "#eef7ff";
+      ctx.beginPath();
+      ctx.arc(10, hy, 60, 0, Math.PI * 2);
+      ctx.arc(530, hy + 70, 60, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // slope
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(ROAD_L, 150, LANES * LANE_W, 570);
+    // shade bands
+    ctx.fillStyle = "rgba(207, 233, 255, 0.8)";
+    var bandOff = state.runDist % 160;
+    for (var by = -160 + bandOff; by < 720; by += 160) {
+      ctx.fillRect(ROAD_L, by, LANES * LANE_W, 40);
+    }
+    // slope edges
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = "#1e3a5f";
+    ctx.beginPath();
+    ctx.moveTo(ROAD_L, 150);
+    ctx.lineTo(ROAD_L, 720);
+    ctx.moveTo(ROAD_L + LANES * LANE_W, 150);
+    ctx.lineTo(ROAD_L + LANES * LANE_W, 720);
+    ctx.stroke();
+
+    // terrain rows
+    for (var i = 0; i < state.rows.length; i++) {
+      var r = state.rows[i];
+      var ry = HERO_Y - (r.y - state.runDist);
+      if (ry < -140 || ry > 820) continue;
+      if (r.type === "ramp") {
+        drawRamp(ctx, laneCenter(r.lane), ry);
+      } else if (r.type === "trees") {
+        for (var j = 0; j < r.trees.length; j++) {
+          var wob = Math.sin(frame * 0.08 + i + j) * 2;
+          drawPine(ctx, laneCenter(r.trees[j]), ry, wob);
+        }
+      }
+    }
+
+    // rider
+    var hx = state.heroX;
+    var air = state.airTicks > 0;
+    var tumbling = state.tumbleMs > 0;
+    ctx.save();
+    ctx.translate(hx, HERO_Y);
+    if (tumbling) {
+      ctx.rotate((state.tumbleMs / TUMBLE_MS) * Math.PI * 3);
+    } else if (air) {
+      ctx.rotate(state.trickCount * 0.32);
+    }
+    // board
+    ctx.fillStyle = "#ffc93c";
+    ctx.strokeStyle = "#1e3a5f";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(-30, 22);
+    ctx.quadraticCurveTo(-36, 12, -26, 10);
+    ctx.lineTo(26, 10);
+    ctx.quadraticCurveTo(36, 12, 30, 22);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // legs
+    ctx.fillStyle = "#1e3a5f";
+    ctx.fillRect(-14, -2, 10, 16);
+    ctx.fillRect(4, -2, 10, 16);
+    // jacket
+    ctx.fillStyle = "#ff6b9d";
+    ctx.strokeStyle = "#1e3a5f";
+    ctx.beginPath();
+    ctx.moveTo(-16, -42);
+    ctx.lineTo(16, -42);
+    ctx.lineTo(13, -2);
+    ctx.lineTo(-13, -2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // arms
+    ctx.lineWidth = 7;
+    ctx.strokeStyle = "#ff6b9d";
+    if (air) {
+      ctx.beginPath();
+      ctx.moveTo(-13, -36);
+      ctx.lineTo(-28, -54);
+      ctx.moveTo(13, -36);
+      ctx.lineTo(28, -54);
+      ctx.stroke();
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(-13, -34);
+      ctx.lineTo(-27, -22);
+      ctx.moveTo(13, -34);
+      ctx.lineTo(27, -22);
+      ctx.stroke();
+    }
+    // head
+    ctx.lineWidth = 3;
+    ctx.fillStyle = "#ffe0c2";
+    ctx.strokeStyle = "#1e3a5f";
+    ctx.beginPath();
+    ctx.arc(0, -56, 13, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    // goggles
+    ctx.fillStyle = "#39c8f0";
+    ctx.fillRect(-12, -60, 24, 8);
+    ctx.strokeRect(-12, -60, 24, 8);
+    // hat pom
+    ctx.fillStyle = "#ff6b9d";
+    ctx.beginPath();
+    ctx.arc(0, -70, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+
+    // dizzy stars while tumbling
+    if (tumbling) {
+      for (var d = 0; d < 4; d++) {
+        var da = frame * 0.15 + d * Math.PI / 2;
+        var dx = hx + Math.cos(da) * 34;
+        var dy = HERO_Y - 84 + Math.sin(da) * 10;
+        ctx.fillStyle = "#ffc93c";
+        ctx.beginPath();
+        ctx.arc(dx, dy, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "#1e3a5f";
+        ctx.stroke();
+      }
+    }
+
+    // snow spray
+    for (var p = 0; p < spray.length; p++) {
+      var sp = spray[p];
+      sp.x += sp.vx;
+      sp.y += sp.vy;
+      sp.life--;
+      ctx.globalAlpha = Math.max(0, sp.life / sp.max) * 0.8;
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.arc(sp.x, sp.y, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    var aliveS = [];
+    for (var q = 0; q < spray.length; q++) {
+      if (spray[q].life > 0) aliveS.push(spray[q]);
+    }
+    spray = aliveS;
+
+    // floating bank text
+    ctx.font = "bold 20px Trebuchet MS, sans-serif";
+    for (var f = 0; f < floats.length; f++) {
+      var fl = floats[f];
+      fl.y -= 1.2;
+      fl.life--;
+      ctx.globalAlpha = Math.max(0, fl.life / fl.max);
+      ctx.fillStyle = "#1e3a5f";
+      ctx.fillText(fl.text, fl.x + 2, fl.y + 2);
+      ctx.fillStyle = "#ffc93c";
+      ctx.fillText(fl.text, fl.x, fl.y);
+    }
+    ctx.globalAlpha = 1;
+    var aliveF = [];
+    for (var g = 0; g < floats.length; g++) {
+      if (floats[g].life > 0) aliveF.push(floats[g]);
+    }
+    floats = aliveF;
+  }
+
+  // ---------- DOM render ----------
+  function render() {
+    var ready = document.getElementById("screen-ready");
+    var over = document.getElementById("screen-over");
+    if (state.screen === "ready") ready.classList.remove("hidden");
+    else ready.classList.add("hidden");
+    if (state.screen === "over") over.classList.remove("hidden");
+    else over.classList.add("hidden");
+
+    document.getElementById("hud-score").textContent = String(state.score);
+    document.getElementById("hud-combo").textContent = "×" + state.comboMult;
+    document.getElementById("hud-tumbles").textContent = state.tumbles + "/" + MAX_TUMBLES;
+    document.getElementById("hud-best").textContent =
+      state.bestScore > 0 ? state.bestScore + " · ×" + state.bestCombo : "--";
+
+    if (state.result) {
+      document.getElementById("over-score").textContent = String(state.result.score);
+      document.getElementById("over-info").textContent =
+        state.result.tumbles + " TUMBLES · BEST COMBO ×" + state.result.combo;
+      var nb = document.getElementById("over-newbest");
+      if (state.result.newBest) nb.classList.remove("hidden");
+      else nb.classList.add("hidden");
+    }
+
+    var statusEl = document.getElementById("status");
+    if (state.status) {
+      statusEl.textContent = state.status;
+    } else if (state.screen === "ready") {
+      statusEl.textContent = "fresh powder awaits... ride!";
+    } else if (state.screen === "running") {
+      statusEl.textContent = state.tumbleMs > 0
+        ? "oof! dust the snow off..."
+        : "carve clean · trick big · land it!";
+    } else {
+      statusEl.textContent = "the mountain remembers your best line";
+    }
+    draw();
+  }
+
+  // ---------- boot ----------
+  function boot() {
+    var data = load();
+    state.bestScore = data.bestScore;
+    state.bestCombo = data.bestCombo;
+
+    document.addEventListener("keydown", onKey);
+    document.getElementById("btn-start").addEventListener("click", startGame);
+    document.getElementById("btn-again").addEventListener("click", startGame);
+    document.getElementById("btn-left").addEventListener("click", function () { steer(-1); });
+    document.getElementById("btn-right").addEventListener("click", function () { steer(1); });
+    document.getElementById("btn-trick").addEventListener("click", pop);
+    document.getElementById("btn-records").addEventListener("click", resetRecords);
+
+    setInterval(tick, TICK_MS);
+    render();
+  }
+
+  boot();
+</script>
+</body>
+</html>
