@@ -1,5 +1,8 @@
 # 🔷 EPIC-MN — AI in IT, built by hand
 
+[![Sponsor](https://img.shields.io/badge/Sponsor-TheArchitectit-FF69B4?style=flat&logo=github-sponsors)](https://github.com/sponsors/TheArchitectit)
+[![License](https://img.shields.io/badge/License-BSD--3--Clause-blue.svg)](./LICENSE)
+
 **Mission: get students excited about AI in IT.** Everything in this repo is
 hand-built — zero frameworks, zero plugins, zero internet calls — and
 designed so a **student drives** the building process, with the engineer
@@ -9,9 +12,9 @@ This is the public showcase for the pod I was in for  **https://epic-mn.com/**. 
 playbook, and script here is meant to be run live, in front of a class, on
 a laptop with nothing but a browser.
 
-**Made with Claude Code** — the first two examples (the Clubhouse,
-Bubblegum Zap) were made with **Mercury**; every example from #3 onward
-was made with **NeuralWatt**.
+**Made with Claude Code.** The first two examples (the Clubhouse, Bubblegum
+Zap) were made with **Mercury** (Inception Labs); every example from #3
+onward was made with **NeuralWatt**.
 
 ---
 
@@ -165,15 +168,35 @@ You're the boss. The engineer does the typing. Read the full playbook in
 
 ## 🛠️ Made with
 
+| Examples | Model | Platform |
+|---|---|---|
+| **#1–#2** (Clubhouse, Bubblegum Zap) | **Mercury 3** | [Inception Labs](https://platform.inceptionlabs.ai/) |
+| **#3–#20** (Study Quest through Sunstone Vale) | **NeuralWatt** | [neuralwatt.com](https://portal.neuralwatt.com/) |
+
+Every example was driven from **Claude Code**, with the student as product
+owner and the model doing the typing. Only the model changed between the
+first two examples and the rest — the method did not.
+
 | What | Name | Role |
 |---|---|---|
-| Model | **Mercury 3** | the AI model driving the building |
 | App | **Claude Code** | the tool where the model does the work |
-| Platform | **[Inception Labs](https://platform.inceptionlabs.ai/)** | where Mercury 3 runs |
 | Method | **OpenSpec** | spec-driven delivery (student-driver mode) |
 
-This whole project was **driven by [Mercury 3](https://platform.inceptionlabs.ai/)
-running in Claude Code**, with the student as product owner.
+---
+
+## ☕ Support This Project
+
+If this project helps you, consider [sponsoring on GitHub](https://github.com/sponsors/TheArchitectit). Every donation goes straight back into the work — GPU hardware and cloud compute for AI development, API credits for the agents that build and test these projects, and keeping everything free and open source. As a solo architect shipping on nights and weekends, even a small monthly sponsor makes a real difference.
+
+Help keep this project going — use a referral link below and both of us get credits!
+
+| Service | Your Bonus | Details | Referral Code |
+| --------- | ----------- | --------- | --------------- |
+| [**Neuralwatt**](https://portal.neuralwatt.com/auth/register?ref=NW-ROGER-ET3Y) | $10 in credits | Spend $10+ → you get $10, we get $20 | `NW-ROGER-ET3Y` |
+| [**Synthetic**](https://synthetic.new/?referral=UAWqkKQQLFkzMkY) | $10 in credits | Subscribe → both get $10 credit | `UAWqkKQQLFkzMkY` |
+| [**Ozore**](https://ozore.com/?ref=cwe4kdx0) | 50% off first month | AI-ready cloud — code **lundrog50** | `lundrog50` |
+
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-TheArchitectit-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/TheArchitectit)
 
 ---
 
